@@ -173,10 +173,36 @@
       </form>
     </section>
 
-    <section class="card wide">
-      <h2>40 days <span class="muted small">— each square is a day, colored by how much you completed</span></h2>
-      <div class="grid40" id="grid40"></div>
-      <div class="legend"><span><i class="l0"></i>0%</span><span><i class="l1"></i>&lt;50%</span><span><i class="l2"></i>50–79%</span><span><i class="l3"></i>80%+</span></div>
+    <section class="card wide calendar">
+      <h2>Calendar <span class="muted small" id="cal-progress"></span></h2>
+      <div class="cal-layout">
+        <div>
+          <div class="cal-nav">
+            <button data-cal="-1" aria-label="Previous month">‹</button>
+            <b id="cal-title"></b>
+            <button data-cal="1" aria-label="Next month">›</button>
+            <button data-cal="today" class="cal-today">Today</button>
+          </div>
+          <div class="cal-grid" id="cal-grid" role="grid"></div>
+          <div class="legend">
+            <span><i class="l1"></i>&lt;50%</span><span><i class="l2"></i>50–79%</span><span><i class="l3"></i>80%+</span>
+            <span><i class="dot-key s1"></i>Event</span><span><i class="dot-key s2"></i>Exam</span><span><i class="ch-key"></i>Challenge day</span>
+          </div>
+        </div>
+        <div class="cal-side">
+          <div id="cal-day"></div>
+          <form id="event-form" class="event-form">
+            <input name="title" placeholder="Add event (e.g. Dentist, Group study)" required autocomplete="off">
+            <div class="inline-form">
+              <input name="time" type="time" aria-label="Time (optional)">
+              <select name="type" aria-label="Type"><option value="event">Event</option><option value="exam">Exam</option></select>
+              <button>Add</button>
+            </div>
+          </form>
+          <h3 class="row-label">Upcoming</h3>
+          <ul class="list" id="upcoming"></ul>
+        </div>
+      </div>
     </section>
 
     <section class="card wide">

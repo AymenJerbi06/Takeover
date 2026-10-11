@@ -59,6 +59,7 @@ function freshState() {
     weights: [],
     running: null,
     exams: [],
+    events: [],
     debts: DEFAULT_DEBTS.map(d => ({ ...d, paid: 0 })),
   };
 }
@@ -442,16 +443,67 @@ function renderMoney() {
   }).join('');
 }
 
-function renderGrid() {
+/* ---------- Calendar ---------- */
+let calMonth = todayKey().slice(0, 7); // YYYY-MM shown
+let calSel = todayKey();
+
+// Events and exams for one day, in time order.
+function itemsOn(k) {
+  const ev = (state.events || []).map((e, i) => ({ ...e, kind: 'event', i })).filter(e => e.date === k);
+  const ex = state.exams.map((e, i) => ({ title: e.name, date: e.date, time: e.time || '', kind: 'exam', i })).filter(e => e.date === k);
+  return [...ex, ...ev].sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
+}
+function upcomingItems(limit = 6) {
   const k = todayKey();
-  let html = '';
-  for (let i = 0; i < GOALS.days; i++) {
-    const dk = addDays(state.startDate, i);
-    const future = dk > k;
-    const s = future ? 0 : score(dk);
-    html += `<div class="${future ? 'future' : level(s)} ${dk === k ? 'today' : ''}" title="Day ${i + 1} · ${dk}${future ? '' : ` · ${pct(s)}`}">${i + 1}</div>`;
+  return [
+    ...(state.events || []).map((e, i) => ({ ...e, kind: 'event', i })),
+    ...state.exams.map((e, i) => ({ title: e.name, date: e.date, time: e.time || '', kind: 'exam', i })),
+  ].filter(e => e.date >= k).sort((a, b) => (a.date + (a.time || '99')).localeCompare(b.date + (b.time || '99'))).slice(0, limit);
+}
+const inDays = n => (n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`);
+
+function renderCalendar() {
+  const k = todayKey();
+  const end = addDays(state.startDate, GOALS.days - 1);
+  const dayN = diffDays(state.startDate, k) + 1;
+  $('cal-progress').textContent = dayN >= 1 && dayN <= GOALS.days
+    ? `· challenge day ${dayN} of ${GOALS.days}, ends ${parseKey(end).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`
+    : dayN < 1 ? `· challenge starts ${shortDate(state.startDate)}` : '· challenge complete';
+
+  const first = parseKey(`${calMonth}-01`);
+  $('cal-title').textContent = first.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const gridStart = addDays(`${calMonth}-01`, -((first.getDay() + 6) % 7)); // Monday
+  const weekdays = Array.from({ length: 7 }, (_, i) => parseKey(addDays(gridStart, i)).toLocaleDateString(undefined, { weekday: 'narrow' }));
+  let html = weekdays.map(w => `<div class="cal-wd">${w}</div>`).join('');
+  const weeks = Math.ceil((diffDays(gridStart, `${calMonth}-01`) + new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate()) / 7);
+  for (let i = 0; i < weeks * 7; i++) {
+    const dk = addDays(gridStart, i), dd = parseKey(dk);
+    const out = dk.slice(0, 7) !== calMonth;
+    const hasData = dk <= k && state.days[dk];
+    const sc = hasData ? score(dk) : 0;
+    const items = itemsOn(dk);
+    const ch = dk >= state.startDate && dk <= end;
+    const cls = ['cal-cell', out && 'out', hasData && level(sc), dk === k && 'today', dk === calSel && 'sel', ch && 'ch'].filter(Boolean).join(' ');
+    const tip = [shortDate(dk), ch ? `Challenge day ${diffDays(state.startDate, dk) + 1}` : '', hasData ? `Score ${pct(sc)}` : '', ...items.map(e => `${e.kind === 'exam' ? 'Exam: ' : ''}${e.time ? e.time + ' ' : ''}${e.title}`)].filter(Boolean).join('\n');
+    html += `<button class="${cls}" data-day="${dk}" aria-label="${esc(tip.replace(/\n/g, ', '))}">
+      <span class="n">${dd.getDate()}</span>
+      <span class="dots">${items.slice(0, 3).map(e => `<i class="${e.kind === 'exam' ? 's2' : 's1'}"></i>`).join('')}${items.length > 3 ? '<b>+</b>' : ''}</span></button>`;
   }
-  $('grid40').innerHTML = html;
+  $('cal-grid').innerHTML = html;
+
+  // Selected day panel
+  const items = itemsOn(calSel);
+  const sd = state.days[calSel];
+  const chN = diffDays(state.startDate, calSel) + 1;
+  $('cal-day').innerHTML = `<div class="cal-day-head"><b>${esc(parseKey(calSel).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</b>
+    <span class="muted small">${[calSel === k ? 'Today' : calSel > k ? inDays(diffDays(k, calSel)) : '', chN >= 1 && chN <= GOALS.days ? `Challenge day ${chN}` : '', sd && calSel <= k ? `Score ${pct(score(calSel))}` : ''].filter(Boolean).join(' · ')}</span></div>
+    <ul class="list">${items.length ? items.map(e => `<li><i class="dot-key ${e.kind === 'exam' ? 's2' : 's1'}"></i><span class="grow">${e.time ? `<span class="muted mono">${esc(e.time)}</span> ` : ''}${esc(e.title)}${e.kind === 'exam' ? ' <span class="badge">exam</span>' : ''}</span><button class="x" data-del-item="${e.kind}:${e.i}" aria-label="Remove">✕</button></li>`).join('') : '<li class="muted small">Nothing planned for this day.</li>'}</ul>`;
+
+  const up = upcomingItems();
+  $('upcoming').innerHTML = up.length ? up.map(e => {
+    const n = diffDays(k, e.date);
+    return `<li><i class="dot-key ${e.kind === 'exam' ? 's2' : 's1'}"></i><button class="link up-item grow" data-day="${e.date}">${esc(e.title)} <span class="muted small">${esc(parseKey(e.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}${e.time ? ` · ${esc(e.time)}` : ''}</span></button><span class="badge ${n <= 3 ? 'soon' : n <= 7 ? 'near' : ''}">${inDays(n)}</span></li>`;
+  }).join('') : '<li class="muted small">No upcoming events. Tap a day to add one.</li>';
 }
 
 function renderSettings() {
@@ -463,7 +515,7 @@ function renderSettings() {
 
 function render() {
   renderHeader(); renderNow(); renderDeen(); renderFocus(); renderBody();
-  renderGlance(); renderWeight(); renderTimeline(); renderTrends(); renderExams(); renderMoney(); renderGrid(); renderSettings();
+  renderGlance(); renderWeight(); renderTimeline(); renderTrends(); renderExams(); renderMoney(); renderCalendar(); renderSettings();
 }
 
 /* Lightweight per-second refresh: only the live numbers. */
@@ -491,6 +543,19 @@ document.addEventListener('click', e => {
   const d = day();
   const ds = b.dataset;
   if (ds.start) return startTimer(ds.start);
+  if (ds.day) { calSel = ds.day; calMonth = ds.day.slice(0, 7); return renderCalendar(); }
+  if (ds.cal) {
+    if (ds.cal === 'today') { calSel = todayKey(); calMonth = calSel.slice(0, 7); }
+    else { const d = parseKey(`${calMonth}-01`); d.setMonth(d.getMonth() + Number(ds.cal)); calMonth = keyOf(d).slice(0, 7); }
+    return renderCalendar();
+  }
+  if (ds.delItem) {
+    const [kind, i] = ds.delItem.split(':');
+    const list = kind === 'exam' ? state.exams : state.events;
+    const name = kind === 'exam' ? list[i].name : list[i].title;
+    if (confirm(`Remove "${name}"?`)) { list.splice(Number(i), 1); commit(); }
+    return;
+  }
   if (ds.range) {
     trendRange = ds.range;
     try { localStorage.setItem('takeover.range', trendRange); } catch { /* per-device preference only */ }
@@ -574,6 +639,14 @@ onSubmit('weight-form', f => {
   state.weights = state.weights.filter(w => w.date !== k).concat({ date: k, kg });
   if (state.startWeight == null) state.startWeight = kg;
   f.reset(); commit('Weight logged');
+});
+onSubmit('event-form', f => {
+  const title = f.title.value.trim(), time = f.time.value;
+  if (!title) return;
+  if (f.type.value === 'exam') state.exams.push({ name: title, date: calSel, ...(time ? { time } : {}) });
+  else (state.events ||= []).push({ title, date: calSel, time });
+  f.title.value = ''; f.time.value = ''; f.type.value = 'event';
+  commit(`Added to ${shortDate(calSel)}`);
 });
 onSubmit('exam-form', f => { state.exams.push({ name: f.name.value.trim(), date: f.date.value }); f.reset(); commit(); });
 onSubmit('debt-form', f => { state.debts.push({ name: f.name.value.trim(), amount: Number(f.amount.value), paid: 0 }); f.reset(); commit(); });

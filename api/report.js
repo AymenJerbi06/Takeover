@@ -84,7 +84,10 @@ function analyze(state, today) {
       total: lastW.kg - startW,
       left: lastW.kg - (startW - GOALS.weightLoss),
     } : null,
-    exams: (state.exams || []).map(e => ({ ...e, left: diffDays(today, e.date) })).filter(e => e.left >= 0 && e.left <= 10).sort((a, b) => a.left - b.left),
+    exams: [
+      ...(state.exams || []).map(e => ({ name: `${e.name} (exam)`, date: e.date })),
+      ...(state.events || []).map(e => ({ name: e.title, date: e.date })),
+    ].map(e => ({ ...e, left: diffDays(today, e.date) })).filter(e => e.left >= 0 && e.left <= 10).sort((a, b) => a.left - b.left),
     money: { back: debts.reduce((s, d) => s + Math.min(d.paid || 0, d.amount), 0), total: debts.reduce((s, d) => s + d.amount, 0), currency: state.currency || '' },
   };
 }
