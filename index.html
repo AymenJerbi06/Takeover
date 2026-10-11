@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Takeover">
+  <title>Takeover · 40 Days</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Takeover</h1>
+      <div class="sub"><span id="today-date"></span> · <span id="clock" class="mono"></span></div>
+    </div>
+    <div class="top-stats">
+      <div class="pill"><b id="challenge-day"></b><span>day</span></div>
+      <div class="pill"><b id="streak"></b><span>streak</span></div>
+      <div class="pill score"><b id="today-score"></b><span>today</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card now" id="now-card"></section>
+
+    <section class="card">
+      <h2>Deen</h2>
+      <div class="row-label">Five prayers</div>
+      <div class="chips" id="prayers"></div>
+      <div class="split">
+        <div>
+          <div class="row-label">Quran pages <span class="muted">/ 3</span></div>
+          <div class="stepper" data-field="quran">
+            <button data-step="-1" aria-label="minus">−</button><b id="quran-val"></b><button data-step="1" aria-label="plus">+</button>
+          </div>
+        </div>
+        <div>
+          <div class="row-label">Call parents</div>
+          <button class="toggle" id="call-btn"></button>
+        </div>
+      </div>
+      <div class="row-label">Tasbih <span class="muted" id="tasbih-label"></span></div>
+      <button class="tasbih" id="tasbih-btn"><span id="tasbih-val">0</span><small>tap to count</small></button>
+      <div class="tiny-actions"><button id="tasbih-undo" class="link">undo</button><button id="tasbih-33" class="link">+33</button></div>
+    </section>
+
+    <section class="card">
+      <h2>Focus work</h2>
+      <p class="muted small">Tap ▶ when you start. Only one timer runs at a time — that's what you're "currently doing".</p>
+      <div id="focus-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>Body</h2>
+      <div class="metric">
+        <div class="metric-head"><span>Calories <span class="muted">(max 1,400)</span></span><b id="kcal-total"></b></div>
+        <div class="bar"><i id="kcal-bar"></i></div>
+        <form id="food-form" class="inline-form">
+          <input name="name" placeholder="Food (e.g. 2 eggs)" autocomplete="off">
+          <input name="kcal" type="number" inputmode="numeric" placeholder="kcal" min="0" required>
+          <button>Add</button>
+        </form>
+        <ul class="food-list" id="food-list"></ul>
+      </div>
+
+      <div class="metric">
+        <div class="metric-head"><span>Steps <span class="muted">(20,000)</span></span><b id="steps-total"></b></div>
+        <div class="bar"><i id="steps-bar"></i></div>
+        <form id="steps-form" class="inline-form">
+          <input name="steps" type="number" inputmode="numeric" placeholder="Steps from Fitness app" min="0">
+          <button>Save</button>
+        </form>
+      </div>
+
+      <div class="metric">
+        <div class="metric-head"><span>Gym <span class="muted">(3× per week)</span></span><b id="gym-week"></b></div>
+        <div class="week-dots" id="gym-dots"></div>
+        <button class="toggle" id="gym-btn"></button>
+      </div>
+
+      <div class="split">
+        <div class="metric">
+          <div class="metric-head"><span>Sleep <span class="muted">(7h+)</span></span></div>
+          <form id="sleep-form" class="inline-form">
+            <input name="sleep" type="number" inputmode="decimal" step="0.25" min="0" max="16" placeholder="hours">
+            <button>Save</button>
+          </form>
+        </div>
+        <div class="metric">
+          <div class="metric-head"><span>Screen time</span></div>
+          <form id="screen-form" class="inline-form">
+            <input name="screen" type="number" inputmode="numeric" min="0" placeholder="minutes">
+            <button>Save</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Weight <span class="muted small" id="weight-summary"></span></h2>
+      <svg id="weight-chart" class="spark" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="Weight trend"></svg>
+      <form id="weight-form" class="inline-form">
+        <input name="kg" type="number" inputmode="decimal" step="0.1" min="20" placeholder="Today's weight (kg)">
+        <button>Log</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Today's plan <button class="link right" id="edit-plan">edit</button></h2>
+      <ol class="timeline" id="timeline"></ol>
+      <div id="plan-editor" hidden>
+        <p class="muted small">One block per line: <code>HH:MM-HH:MM | Title | link</code>. Link is optional: <code>study</code>, <code>drop</code>, <code>fullstack</code>, <code>video</code>, <code>gym</code>, <code>quran</code>, <code>call</code>, <code>pray</code>.</p>
+        <textarea id="plan-text" rows="16" spellcheck="false"></textarea>
+        <div class="tiny-actions"><button id="plan-save">Save plan</button><button id="plan-reset" class="link">reset to default</button></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Exams</h2>
+      <ul class="list" id="exam-list"></ul>
+      <form id="exam-form" class="inline-form">
+        <input name="name" placeholder="Course / exam" required autocomplete="off">
+        <input name="date" type="date" required>
+        <button>Add</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Money owed to you <span class="muted small" id="money-summary"></span></h2>
+      <ul class="list" id="debt-list"></ul>
+      <form id="debt-form" class="inline-form">
+        <input name="name" placeholder="Name" required autocomplete="off">
+        <input name="amount" type="number" inputmode="decimal" min="0" placeholder="Amount" required>
+        <button>Add</button>
+      </form>
+    </section>
+
+    <section class="card wide">
+      <h2>40 days <span class="muted small">— each square is a day, colored by how much you completed</span></h2>
+      <div class="grid40" id="grid40"></div>
+      <div class="legend"><span><i class="l0"></i>0%</span><span><i class="l1"></i>&lt;50%</span><span><i class="l2"></i>50–79%</span><span><i class="l3"></i>80%+</span></div>
+    </section>
+
+    <section class="card wide">
+      <h2>Settings &amp; data</h2>
+      <div class="settings">
+        <label>Challenge start <input type="date" id="start-date"></label>
+        <label>Starting weight (kg) <input type="number" step="0.1" id="start-weight" inputmode="decimal"></label>
+        <label>Currency <input id="currency" placeholder="e.g. TND, €, $" maxlength="5"></label>
+      </div>
+      <div class="tiny-actions">
+        <button id="export">Export backup</button>
+        <label class="btn-like">Import backup<input type="file" id="import" accept="application/json" hidden></label>
+      </div>
+      <details>
+        <summary>Sync steps &amp; sleep from your iPhone automatically</summary>
+        <p class="small">Apple Health has no web API, so a website can't read it directly. An iOS Shortcut can push the numbers here instead:</p>
+        <ol class="small">
+          <li>Shortcuts app → <b>+</b> → add <b>Find Health Samples</b>: Type <i>Steps</i>, Start Date <i>is today</i>.</li>
+          <li>Add <b>Calculate Statistics</b> → <i>Sum</i> of the Health Samples.</li>
+          <li>Add <b>URL</b>: <code id="shortcut-url"></code><i>[Statistics result]</i></li>
+          <li>Add <b>Open URLs</b>. Name it “Sync Takeover”.</li>
+          <li>Optional: Automation → <i>Time of Day</i> (e.g. 21:00) → run it every night.</li>
+        </ol>
+        <p class="small">Also supported: <code>&amp;sleep=7.5</code> (hours) and <code>&amp;screen=180</code> (minutes). Screen time from Flora / iOS Screen Time can't be read by any app or Shortcut, so type it in at night.</p>
+      </details>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
