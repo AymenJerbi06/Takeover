@@ -1,14 +1,7 @@
 'use strict';
 
 /* ---------- Goals ---------- */
-const GOALS = { kcal: 1400, steps: 20000, gymPerWeek: 3, quran: 3, tasbih: 100, sleep: 7, days: 40, weightLoss: 15 };
-const FOCUS = [
-  { id: 'study', label: 'University study', goal: 240 },
-  { id: 'drop', label: 'Dropshipping course', goal: 120 },
-  { id: 'fullstack', label: 'Full-stack dev', goal: 60 },
-  { id: 'video', label: 'Video basics', goal: 60 },
-];
-const PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+const { GOALS, FOCUS, PRAYERS, kcalOf, dayParts, dayScore } = window.TakeoverMetrics;
 // The "day" rolls over at 4am, so a late night still counts toward the day you were living.
 const DAY_START_HOUR = 4;
 const STORE_KEY = 'takeover.v1';
@@ -91,7 +84,6 @@ function day(k = todayKey()) {
 }
 
 /* ---------- Scoring ---------- */
-const kcalOf = d => d.food.reduce((s, f) => s + f.kcal, 0);
 function runningMins(id, k) {
   const r = state.running;
   return r && r.id === id && r.day === k ? (Date.now() - r.start) / 60000 : 0;
@@ -99,22 +91,11 @@ function runningMins(id, k) {
 function focusMins(d, id, k) { return (d.mins[id] || 0) + runningMins(id, k); }
 function parts(k) {
   const d = state.days[k];
-  if (!d) return null;
-  const kcal = kcalOf(d);
-  return [
-    ['Prayers', d.prayers.filter(Boolean).length / 5],
-    ['Quran', Math.min(d.quran / GOALS.quran, 1)],
-    ['Tasbih', Math.min(d.tasbih / GOALS.tasbih, 1)],
-    ['Steps', Math.min(d.steps / GOALS.steps, 1)],
-    ['Calories', kcal > 0 && kcal <= GOALS.kcal ? 1 : 0],
-    ...FOCUS.map(f => [f.label, Math.min(focusMins(d, f.id, k) / f.goal, 1)]),
-    ['Call parents', d.call ? 1 : 0],
-    ['Sleep', d.sleep != null ? Math.min(d.sleep / GOALS.sleep, 1) : 0],
-  ];
+  return d ? dayParts(d, id => focusMins(d, id, k)) : null;
 }
 function score(k) {
-  const p = parts(k);
-  return p ? p.reduce((s, [, v]) => s + v, 0) / p.length : 0;
+  const d = state.days[k];
+  return dayScore(d, d && (id => focusMins(d, id, k)));
 }
 function streak() {
   let k = todayKey(), n = 0;

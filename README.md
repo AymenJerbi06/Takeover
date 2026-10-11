@@ -53,3 +53,24 @@ Without it, data lives only in the browser on one device. With it, you sign in a
 The anon key is designed to be public; Row Level Security in `supabase.sql` makes sure only your account can read or write your row. Never put the `service_role` key in `config.js`.
 
 When a device signs in for the first time and the cloud already has data, the cloud copy is used (it asks first if that device already has its own data). After that, the most recent change wins.
+
+## Progress email every 3 days (Resend)
+
+`api/report.js` runs on Vercel Cron once a day (`vercel.json`, 06:00 UTC) and sends an email on challenge days 4, 7, 10, … (and day 41) covering the three days before: daily scores, every goal vs. target, what to focus on next, weight, upcoming exams and money recovered. It needs Supabase sync set up, because it reads your data from there.
+
+1. Create an account at [resend.com](https://resend.com) → **API Keys** → create one.
+2. In Vercel → your project → **Settings → Environment Variables**, add:
+
+   | Name | Value |
+   | --- | --- |
+   | `RESEND_API_KEY` | the Resend key (`re_…`) |
+   | `REPORT_TO` | the email you signed up to Resend with |
+   | `SUPABASE_URL` | same Project URL as in `config.js` |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** / secret key. Keep it secret: only here, never in `config.js` |
+   | `CRON_SECRET` | any long random string |
+   | `REPORT_TZ` | your time zone, e.g. `Africa/Tunis` |
+
+3. Redeploy (Deployments → … → Redeploy) so the variables and the cron take effect.
+4. Test it: open `https://<your-app>.vercel.app/api/report?key=<CRON_SECRET>&preview=1` to see the email, or `&force=1` instead of `&preview=1` to send it now.
+
+Without your own domain, Resend's `onboarding@resend.dev` sender can only email the address on your Resend account. To send from your own address, verify a domain in Resend and set `REPORT_FROM`, e.g. `Takeover <report@yourdomain.com>`.
