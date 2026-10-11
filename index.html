@@ -150,6 +150,7 @@
         <label>Starting weight (kg) <input type="number" step="0.1" id="start-weight" inputmode="decimal"></label>
         <label>Currency <input id="currency" placeholder="e.g. TND, €, $" maxlength="5"></label>
       </div>
+      <div class="sync-box" id="sync-box"></div>
       <div class="tiny-actions">
         <button id="export">Export backup</button>
         <label class="btn-like">Import backup<input type="file" id="import" accept="application/json" hidden></label>
@@ -170,6 +171,9 @@
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="sync.js"></script>
 </body>
 </html>

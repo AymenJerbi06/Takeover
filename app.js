@@ -56,6 +56,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 function freshState() {
   return {
     version: 1,
+    updatedAt: 0, // last local change (ms); cloud sync uses it to pick the newer copy
+    syncUser: null, // Supabase user this device last synced with
     startDate: todayKey(),
     startWeight: null,
     currency: '',
@@ -75,9 +77,11 @@ function load() {
   return freshState();
 }
 let state = load();
-function save() {
+function save(touch = true) {
+  if (touch) state.updatedAt = Date.now();
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
   catch (e) { toast('Could not save — storage is blocked in this browser'); }
+  if (touch) window.TakeoverSync?.schedule();
 }
 function day(k = todayKey()) {
   if (!state.days[k]) {
@@ -498,8 +502,19 @@ function applyUrlParams() {
   if (got.length) { save(); setTimeout(() => toast(`Synced: ${got.join(', ')}`), 300); }
 }
 
+// Hooks for sync.js
+window.Takeover = {
+  get state() { return state; },
+  set state(v) { state = { ...freshState(), ...v }; },
+  save, render, toast,
+};
+
 applyUrlParams();
-save();
+save(false);
 render();
 setInterval(tick, 1000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { state = load(); render(); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  state = load(); render();
+  window.TakeoverSync?.pull();
+});

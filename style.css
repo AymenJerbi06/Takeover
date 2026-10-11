@@ -180,3 +180,10 @@ summary { cursor: pointer; font-weight: 600; font-size: 14px; }
   main { grid-template-columns: 1fr; }
   .timeline li { grid-template-columns: 78px 1fr auto; }
 }
+
+.sync-box { margin-top: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; font-size: 14px; }
+.sync-box form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.sync-box form .tiny-actions { grid-column: 1 / -1; margin-top: 0; }
+.sync-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; }
+.sync-dot.ok { background: var(--accent); } .sync-dot.err { background: var(--bad); } .sync-dot.busy { background: var(--warn); }
+@media (max-width: 400px) { .sync-box form { grid-template-columns: 1fr; } }
