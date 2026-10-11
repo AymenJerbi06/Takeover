@@ -3,13 +3,15 @@
    the copy with the newer `updatedAt` wins. Without keys in config.js this does nothing. */
 (() => {
   const T = window.Takeover;
-  const cfg = window.TAKEOVER_CONFIG || {};
+  // config.js wins when filled in; otherwise use the keys Vercel serves from its env vars (api/config.js).
+  const local = window.TAKEOVER_CONFIG || {}, env = window.TAKEOVER_ENV || {};
+  const cfg = local.supabaseUrl && local.supabaseAnonKey ? local : env;
   const box = document.getElementById('sync-box');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const time = () => new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
   if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) {
-    box.innerHTML = '<b>Cloud sync</b> <span class="muted">— off. Data stays on this device. Add your Supabase keys in <code>config.js</code> to sync across devices.</span>';
+    box.innerHTML = '<b>Cloud sync</b> <span class="muted">— off. Data stays on this device. Link Supabase in Vercel (or add the keys to <code>config.js</code>) to sync across devices.</span>';
     return;
   }
   if (!window.supabase?.createClient) {

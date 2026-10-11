@@ -150,7 +150,7 @@ async function loadState() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const headers = { apikey: key };
   if (key.startsWith('eyJ')) headers.Authorization = `Bearer ${key}`; // legacy JWT keys
-  const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/takeover_state?select=data&order=updated_at.desc&limit=1`, { headers });
+  const r = await fetch(`${process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/takeover_state?select=data&order=updated_at.desc&limit=1`, { headers });
   if (!r.ok) throw new Error(`Supabase ${r.status}: ${await r.text()}`);
   const rows = await r.json();
   return rows[0]?.data || null;

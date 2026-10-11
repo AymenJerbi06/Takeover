@@ -45,7 +45,9 @@ Without it, data lives only in the browser on one device. With it, you sign in a
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. **SQL Editor → New query**, paste the contents of [`supabase.sql`](supabase.sql), **Run**.
-3. **Project Settings → API**: copy the **Project URL** and the **anon public** key into [`config.js`](config.js). Commit and push; Vercel redeploys.
+3. Give the app your keys, either way works:
+   - **Easiest:** link Supabase to the project in Vercel (Integrations / Storage), or add `SUPABASE_URL` and `SUPABASE_ANON_KEY` under Vercel → Settings → Environment Variables, then redeploy. `api/config.js` passes the public values to the page. Check by opening `https://<your-app>.vercel.app/api/config`: it should show your Supabase URL.
+   - Or copy the **Project URL** and **anon public** key from **Project Settings → API** into [`config.js`](config.js) and push.
 4. **Authentication → URL Configuration**: set **Site URL** to your Vercel URL.
 5. Optional: **Authentication → Sign In / Providers → Email**, turn off **Confirm email** if you don't want to click a confirmation link.
 6. Open the app → **Settings & data → Cloud sync** → **Create account**, then **Sign in**. Do this on every device with the same account.
