@@ -102,7 +102,7 @@ function render(a) {
   const td = 'padding:8px 10px;border-bottom:1px solid #eee;font-size:14px;';
   const bar = v => v == null ? '' : `<div style="background:#eee;border-radius:4px;height:6px;width:64px;display:inline-block;vertical-align:middle"><div style="background:${color(v)};height:6px;border-radius:4px;width:${Math.round(Math.min(v, 1) * 64)}px"></div></div>`;
 
-  const html = `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#15171c">
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#f4f5f7;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#15171c">
 <div style="max-width:600px;margin:0 auto;padding:20px 16px">
   <div style="font-size:13px;color:#6b7280">Takeover · ${esc(range)}</div>
   <h1 style="margin:4px 0 2px;font-size:22px">Day ${a.challengeDay} of ${GOALS.days} — ${pct(a.avg)} average</h1>

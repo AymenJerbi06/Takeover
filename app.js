@@ -293,7 +293,7 @@ function renderTimeline() {
   $('timeline').innerHTML = plan.map(b => {
     const cls = b === cur ? 'now' : (b.e <= t ? 'past' : '');
     const done = linkDone(b.link, d, k);
-    return `<li class="${cls}"><span class="t">${esc(b.from)}–${esc(b.to)}</span><span>${esc(b.title)}</span><span class="ok">${done ? '✓' : ''}</span></li>`;
+    return `<li class="${cls}"><span class="t">${esc(b.from)}<span class="to">–${esc(b.to)}</span></span><span>${esc(b.title)}</span><span class="ok">${done ? '✓' : ''}</span></li>`;
   }).join('');
 }
 

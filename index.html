@@ -3,8 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f1115">
+  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-title" content="Takeover">
   <title>Takeover · 40 Days</title>
   <link rel="stylesheet" href="style.css">
@@ -57,7 +64,7 @@
       <div class="metric">
         <div class="metric-head"><span>Calories <span class="muted">(max 1,400)</span></span><b id="kcal-total"></b></div>
         <div class="bar"><i id="kcal-bar"></i></div>
-        <form id="food-form" class="inline-form">
+        <form id="food-form" class="inline-form wrap">
           <input name="name" placeholder="Food (e.g. 2 eggs)" autocomplete="off">
           <input name="kcal" type="number" inputmode="numeric" placeholder="kcal" min="0" required>
           <button>Add</button>
@@ -80,7 +87,7 @@
         <button class="toggle" id="gym-btn"></button>
       </div>
 
-      <div class="split">
+      <div class="split body-split">
         <div class="metric">
           <div class="metric-head"><span>Sleep <span class="muted">(7h+)</span></span></div>
           <form id="sleep-form" class="inline-form">
@@ -107,7 +114,7 @@
       </form>
     </section>
 
-    <section class="card">
+    <section class="card plan">
       <h2>Today's plan <button class="link right" id="edit-plan">edit</button></h2>
       <ol class="timeline" id="timeline"></ol>
       <div id="plan-editor" hidden>
@@ -120,7 +127,7 @@
     <section class="card">
       <h2>Exams</h2>
       <ul class="list" id="exam-list"></ul>
-      <form id="exam-form" class="inline-form">
+      <form id="exam-form" class="inline-form wrap">
         <input name="name" placeholder="Course / exam" required autocomplete="off">
         <input name="date" type="date" required>
         <button>Add</button>

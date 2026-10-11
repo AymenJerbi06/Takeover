@@ -187,3 +187,58 @@ summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .sync-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; }
 .sync-dot.ok { background: var(--accent); } .sync-dot.err { background: var(--bad); } .sync-dot.busy { background: var(--warn); }
 @media (max-width: 400px) { .sync-box form { grid-template-columns: 1fr; } }
+
+/* ---------- Mobile & tablet ---------- */
+/* Notch / rounded corners in landscape */
+.top, main { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+/* No double-tap zoom delay (fast tasbih taps), no grey flash */
+button, .btn-like, summary, a { touch-action: manipulation; }
+/* iOS zooms into any field under 16px */
+input, textarea, select { font-size: 16px; }
+.chips { display: grid; grid-template-columns: repeat(5, 1fr); }
+.chip { min-width: 0; padding-left: 2px; padding-right: 2px; }
+.spark:empty { display: none; }
+.grid40 { max-width: 720px; }
+
+@media (pointer: coarse) {
+  button, .btn-like, input { min-height: 44px; }
+  .stepper button, .focus .ctrls button { min-width: 44px; }
+  .x { min-width: 44px; min-height: 44px; }
+  button.link { min-height: 44px; padding: 4px 10px; }
+  .list li { padding: 4px 0; }
+  .list li .grow button.link { min-height: 44px; }
+  summary { padding: 10px 0; }
+  .btn-like { display: inline-flex; align-items: center; }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .top { padding-bottom: 4px; }
+  h1 { font-size: 22px; }
+  .pill { min-width: 56px; padding: 6px 8px; }
+  .card { padding: 14px; border-radius: 14px; }
+  .focus.running { margin: 0 -14px; padding: 10px 14px; }
+  .now .title { font-size: 20px; }
+  /* Long name field on its own row, short field + button below */
+  .inline-form.wrap { flex-wrap: wrap; }
+  .inline-form.wrap > input:first-child { flex: 1 0 100%; }
+  .inline-form.wrap > input:not(:first-child) { flex: 1; }
+  .body-split { grid-template-columns: 1fr; gap: 0; }
+  .timeline li { grid-template-columns: 52px 1fr auto; }
+  .timeline li .t { line-height: 1.25; }
+  .timeline li .to { display: block; }
+}
+@media (max-width: 360px) {
+  .top-stats { width: 100%; }
+  .pill { flex: 1; }
+  .chip { font-size: 12px; }
+  .focus .ctrls button { min-width: 40px; padding: 6px 4px; }
+}
+
+/* Tablets: two even columns; the long plan spans both so it doesn't leave a hole beside it */
+@media (min-width: 700px) and (max-width: 1099px) {
+  main { grid-template-columns: 1fr 1fr; }
+  .card.plan { grid-column: 1 / -1; }
+  .card.plan .timeline { columns: 2; column-gap: 24px; }
+  .card.plan .timeline li { break-inside: avoid; }
+}
