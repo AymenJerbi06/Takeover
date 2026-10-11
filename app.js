@@ -262,28 +262,148 @@ function renderBody() {
 }
 function setIfIdle(input, v) { if (document.activeElement !== input) input.value = v; }
 
+const C = window.TakeoverCharts;
+const shortDate = k => parseKey(k).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+const compact = n => (n >= 1000 ? `${r1(n / 1000)}K` : String(Math.round(n)));
+const r1 = n => Math.round(n * 10) / 10;
+const avg = a => a.reduce((s, v) => s + v, 0) / (a.length || 1);
+
+function areas(k) {
+  const d = state.days[k];
+  if (!d) return { deen: 0, body: 0, work: 0 };
+  const kcal = kcalOf(d);
+  const focus = FOCUS.reduce((s, f) => s + focusMins(d, f.id, k), 0);
+  return {
+    deen: avg([d.prayers.filter(Boolean).length / 5, Math.min(d.quran / GOALS.quran, 1), Math.min(d.tasbih / GOALS.tasbih, 1), d.call ? 1 : 0]),
+    body: avg([Math.min(d.steps / GOALS.steps, 1), kcal > 0 && kcal <= GOALS.kcal ? 1 : 0, d.sleep != null ? Math.min(d.sleep / GOALS.sleep, 1) : 0]),
+    work: Math.min(focus / FOCUS.reduce((s, f) => s + f.goal, 0), 1),
+  };
+}
+
+function renderGlance() {
+  const k = todayKey(), d = day(k), a = areas(k);
+  const list = [
+    { label: 'Deen', value: a.deen, cls: 's1', sub: `${d.prayers.filter(Boolean).length}/5 prayers · ${d.quran}/${GOALS.quran} pages · ${d.tasbih} tasbih${d.call ? ' · called' : ''}` },
+    { label: 'Body', value: a.body, cls: 's2', sub: `${compact(d.steps)} steps · ${num(kcalOf(d))} kcal · ${d.sleep ?? '–'}h sleep` },
+    { label: 'Work', value: a.work, cls: 's3', sub: `${fmtMin(FOCUS.reduce((s, f) => s + focusMins(d, f.id, k), 0))} of ${fmtMin(FOCUS.reduce((s, f) => s + f.goal, 0))} focus` },
+  ];
+  $('rings').innerHTML = C.rings(list);
+  $('hero-score').textContent = pct(score(k));
+  $('ring-legend').innerHTML = list.map(g => `<li><i class="sw ${g.cls}"></i><div><b>${g.label} <span class="val">${pct(g.value)}</span></b><span>${esc(g.sub)}</span></div></li>`).join('');
+
+  const kcal = kcalOf(d), focus = FOCUS.reduce((s, f) => s + focusMins(d, f.id, k), 0), focusGoal = FOCUS.reduce((s, f) => s + f.goal, 0);
+  const over = kcal > GOALS.kcal;
+  const tiles = [
+    { label: 'Prayers', v: d.prayers.filter(Boolean).length / 5, c: `${d.prayers.filter(Boolean).length}/5`, sub: 'today', cls: 's1' },
+    { label: 'Quran', v: d.quran / GOALS.quran, c: `${d.quran}/${GOALS.quran}`, sub: 'pages', cls: 's1' },
+    { label: 'Tasbih', v: d.tasbih / GOALS.tasbih, c: String(d.tasbih), sub: `of ${GOALS.tasbih}`, cls: 's1' },
+    { label: 'Steps', v: d.steps / GOALS.steps, c: compact(d.steps), sub: `of ${compact(GOALS.steps)}`, cls: 's2' },
+    { label: 'Calories', v: kcal / GOALS.kcal, c: num(kcal), sub: over ? `▲ ${num(kcal - GOALS.kcal)} over` : `${num(GOALS.kcal - kcal)} left`, cls: over ? 'crit' : 's2', warn: over },
+    { label: 'Sleep', v: (d.sleep || 0) / GOALS.sleep, c: d.sleep != null ? `${d.sleep}h` : '–', sub: `of ${GOALS.sleep}h`, cls: 's2' },
+    { label: 'Focus', v: focus / focusGoal, c: `${r1(focus / 60)}h`, sub: `of ${focusGoal / 60}h`, cls: 's3' },
+    { label: 'Gym', v: gymThisWeek() / GOALS.gymPerWeek, c: `${gymThisWeek()}/${GOALS.gymPerWeek}`, sub: 'this week', cls: 's3' },
+  ];
+  $('gauges').innerHTML = tiles.map(t => {
+    const done = !t.warn && t.v >= 1;
+    return `<div class="gauge-tile" data-tip="${esc(`${t.label}: ${t.c} ${t.sub}`)}">${C.gauge({ value: t.v, center: t.c, cls: t.cls })}
+      <div class="g-label">${done ? '<span class="ok-mark">✓</span> ' : ''}${t.label}</div><div class="g-sub ${t.warn ? 'warn' : ''}">${esc(t.sub)}</div></div>`;
+  }).join('');
+}
+
+let trendRange = (() => { try { return localStorage.getItem('takeover.range') || '14'; } catch { return '14'; } })();
+function rangeKeys() {
+  const k = todayKey();
+  if (trendRange === 'all') {
+    const n = Math.max(1, Math.min(diffDays(state.startDate, k) + 1, GOALS.days));
+    return Array.from({ length: n }, (_, i) => addDays(state.startDate, i));
+  }
+  const n = Number(trendRange);
+  return Array.from({ length: n }, (_, i) => addDays(k, i - n + 1));
+}
+function axisLabels(keys) {
+  const n = keys.length;
+  return keys.map((k, i) => {
+    const d = parseKey(k);
+    if (n <= 7) return d.toLocaleDateString(undefined, { weekday: 'short' });
+    const step = n <= 14 ? 2 : 5;
+    return (n - 1 - i) % step === 0 ? String(d.getDate()) : '';
+  });
+}
+
+function renderTrends() {
+  document.querySelectorAll('[data-range]').forEach(b => b.classList.toggle('on', b.dataset.range === trendRange));
+  const keys = rangeKeys(), labels = axisLabels(keys);
+  const D = keys.map(k => state.days[k]);
+  const mins = (d, k, id) => (d ? focusMins(d, id, k) : 0);
+
+  const scores = keys.map(k => score(k) * 100);
+  const logged = keys.filter(k => state.days[k]);
+  const stepsArr = D.map(d => d?.steps || 0);
+  const focusTotal = keys.reduce((s, k, i) => s + FOCUS.reduce((t, f) => t + mins(D[i], k, f.id), 0), 0);
+  const kcalDays = D.filter(d => d && kcalOf(d) > 0);
+  $('trend-stats').innerHTML = [
+    ['Avg score', logged.length ? `${Math.round(avg(logged.map(k => score(k) * 100)))}%` : '–'],
+    ['Days at 80%+', `${scores.filter(s => s >= 80).length}`],
+    ['Avg steps', logged.length ? compact(avg(logged.map(k => state.days[k].steps))) : '–'],
+    ['Focus total', fmtMin(focusTotal)],
+    ['Under 1,400 kcal', `${kcalDays.filter(d => kcalOf(d) <= GOALS.kcal).length}/${kcalDays.length || 0} days`],
+  ].map(([l, v]) => `<div class="stat"><span>${l}</span><b>${v}</b></div>`).join('');
+
+  $('c-score').innerHTML = C.columns({
+    labels, series: [{ cls: 's1', vals: scores }], goal: 80, goalLabel: '80%', fmtAxis: v => `${Math.round(v)}%`, fixedTop: 100,
+    tips: keys.map((k, i) => `${shortDate(k)}\nScore ${Math.round(scores[i])}%`),
+  });
+
+  const fcls = ['s1', 's2', 's3', 's4'];
+  $('focus-legend').innerHTML = FOCUS.map((f, j) => `<span><i class="sw ${fcls[j]}"></i>${esc(f.label)} <b>${fmtMin(keys.reduce((s, k, i) => s + mins(D[i], k, f.id), 0))}</b></span>`).join('');
+  $('c-focus').innerHTML = C.columns({
+    labels, goal: 8, goalLabel: '8h', fmtAxis: v => `${r1(v)}h`,
+    series: FOCUS.map((f, j) => ({ cls: fcls[j], vals: keys.map((k, i) => mins(D[i], k, f.id) / 60) })),
+    tips: keys.map((k, i) => `${shortDate(k)}\n${FOCUS.map(f => `${f.label}: ${fmtMin(mins(D[i], k, f.id))}`).join('\n')}\nTotal: ${fmtMin(FOCUS.reduce((s, f) => s + mins(D[i], k, f.id), 0))}`),
+  });
+
+  $('c-steps').innerHTML = C.columns({
+    labels, series: [{ cls: 's2', vals: stepsArr }], goal: GOALS.steps, goalLabel: '20K', fmtAxis: compact,
+    tips: keys.map((k, i) => `${shortDate(k)}\n${num(stepsArr[i])} steps (${pct(stepsArr[i] / GOALS.steps)})`),
+  });
+
+  const kcalArr = D.map(d => (d ? kcalOf(d) : 0));
+  $('c-kcal').innerHTML = C.columns({
+    labels, series: [{ cls: 's2', vals: kcalArr }], goal: GOALS.kcal, goalLabel: '1,400', fmtAxis: compact, overGoalCrit: true,
+    tips: keys.map((k, i) => `${shortDate(k)}\n${num(kcalArr[i])} kcal${kcalArr[i] > GOALS.kcal ? `\n▲ ${num(kcalArr[i] - GOALS.kcal)} over the limit` : kcalArr[i] ? `\n${num(GOALS.kcal - kcalArr[i])} under` : ''}`),
+  });
+
+  const sleepArr = D.map(d => d?.sleep || 0);
+  $('c-sleep').innerHTML = C.columns({
+    labels, series: [{ cls: 's2', vals: sleepArr }], goal: GOALS.sleep, goalLabel: '7h', fmtAxis: v => `${r1(v)}h`, minTop: 8,
+    tips: keys.map((k, i) => `${shortDate(k)}\n${sleepArr[i] ? `${sleepArr[i]}h sleep` : 'not logged'}`),
+  });
+
+  const pk = keys.slice(-14), pD = pk.map(k => state.days[k]);
+  $('prayer-range').textContent = `· last ${pk.length} days`;
+  $('c-prayers').innerHTML = C.dotMatrix({
+    rows: PRAYERS, cols: axisLabels(pk), grid: PRAYERS.map((_, r) => pD.map(d => !!d?.prayers[r])),
+    tips: pk.map((k, i) => `${shortDate(k)}\n${PRAYERS.map((p, r) => `${pD[i]?.prayers[r] ? '✓' : '·'} ${p}`).join('\n')}`),
+  });
+}
+
 function renderWeight() {
   const w = [...state.weights].sort((a, b) => a.date.localeCompare(b.date));
   const start = state.startWeight ?? w[0]?.kg;
   const cur = w.at(-1)?.kg;
-  const svg = $('weight-chart');
   if (start == null) {
     $('weight-summary').textContent = '— log your weight to start';
-    svg.innerHTML = '';
+    $('weight-chart').innerHTML = '';
     return;
   }
   const goal = start - GOALS.weightLoss;
   const lost = cur != null ? start - cur : 0;
-  $('weight-summary').textContent = `${cur ?? start} kg now · ${lost >= 0 ? '−' : '+'}${Math.abs(lost).toFixed(1)} kg · goal ${goal.toFixed(1)} kg`;
-  const pts = w.length ? w : [{ date: todayKey(), kg: start }];
-  const vals = pts.map(p => p.kg).concat(start, goal);
-  const lo = Math.min(...vals) - 0.5, hi = Math.max(...vals) + 0.5;
-  const y = v => 72 - ((v - lo) / (hi - lo)) * 64;
-  const x = i => (pts.length === 1 ? 150 : 8 + (i / (pts.length - 1)) * 284);
-  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`).join('');
-  svg.innerHTML = `<line x1="0" x2="300" y1="${y(goal)}" y2="${y(goal)}"></line>
-    <text x="4" y="${y(goal) - 3}">goal ${goal.toFixed(1)}</text>
-    <path d="${path}"></path>${pts.length === 1 ? `<circle cx="150" cy="${y(pts[0].kg)}" r="3" fill="currentColor"></circle>` : ''}`;
+  $('weight-summary').textContent = `${cur ?? start} kg now · ${lost >= 0 ? '−' : '+'}${Math.abs(lost).toFixed(1)} kg · ${Math.max((cur ?? start) - goal, 0).toFixed(1)} kg to go`;
+  const short = k => parseKey(k).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  $('weight-chart').innerHTML = C.line({
+    pts: w.map(p => ({ x: diffDays(w[0].date, p.date), v: p.kg, label: `${p.kg} kg`, date: short(p.date), tip: `${shortDate(p.date)}\n${p.kg} kg` })),
+    goal, goalLabel: `goal ${goal.toFixed(0)}`, fmtAxis: v => `${Math.round(v)}`,
+  });
 }
 
 function renderTimeline() {
@@ -343,7 +463,7 @@ function renderSettings() {
 
 function render() {
   renderHeader(); renderNow(); renderDeen(); renderFocus(); renderBody();
-  renderWeight(); renderTimeline(); renderExams(); renderMoney(); renderGrid(); renderSettings();
+  renderGlance(); renderWeight(); renderTimeline(); renderTrends(); renderExams(); renderMoney(); renderGrid(); renderSettings();
 }
 
 /* Lightweight per-second refresh: only the live numbers. */
@@ -351,7 +471,7 @@ let lastMinute = -1, lastDay = todayKey();
 function tick() {
   const now = new Date();
   if (todayKey() !== lastDay) { lastDay = todayKey(); render(); return; }
-  if (now.getMinutes() !== lastMinute) { lastMinute = now.getMinutes(); renderHeader(); renderNow(); renderTimeline(); return; }
+  if (now.getMinutes() !== lastMinute) { lastMinute = now.getMinutes(); renderHeader(); renderNow(); renderTimeline(); renderGlance(); return; }
   const r = state.running;
   if (r) {
     const rc = $('run-clock'); if (rc) rc.textContent = fmtClock((Date.now() - r.start) / 1000);
@@ -371,6 +491,11 @@ document.addEventListener('click', e => {
   const d = day();
   const ds = b.dataset;
   if (ds.start) return startTimer(ds.start);
+  if (ds.range) {
+    trendRange = ds.range;
+    try { localStorage.setItem('takeover.range', trendRange); } catch { /* per-device preference only */ }
+    return renderTrends();
+  }
   if (ds.prayer != null) { d.prayers[ds.prayer] = !d.prayers[ds.prayer]; return commit(); }
   if (ds.adj) { d.mins[ds.adj] = Math.max(0, (d.mins[ds.adj] || 0) + Number(ds.v)); return commit(); }
   if (ds.delfood != null) { d.food.splice(ds.delfood, 1); return commit(); }
@@ -400,7 +525,7 @@ document.addEventListener('click', e => {
     case 'tasbih-btn':
       d.tasbih++;
       if (navigator.vibrate) navigator.vibrate(d.tasbih % 33 === 0 ? 60 : 10);
-      save(); renderDeen(); renderHeader();
+      save(); renderDeen(); renderHeader(); renderGlance();
       if (d.tasbih === GOALS.tasbih) toast('100 tasbihat — SubhanAllah 🤍');
       return;
     case 'tasbih-undo': d.tasbih = Math.max(0, d.tasbih - 1); return commit();
@@ -490,6 +615,7 @@ window.Takeover = {
   save, render, toast,
 };
 
+C.initTooltip();
 applyUrlParams();
 save(false);
 render();
