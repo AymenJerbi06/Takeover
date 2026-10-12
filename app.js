@@ -182,35 +182,36 @@ function renderNow() {
   let left = '';
   if (cur) {
     const remain = (cur.e - t + 1440) % 1440;
-    left = `<div class="label">Scheduled now · ${esc(cur.from)}–${esc(cur.to)}</div>
+    left = `<div class="label">NOW · ${esc(cur.from)}–${esc(cur.to)}</div>
       <div class="title">${esc(cur.title)}</div>
-      <div class="meta">${fmtMin(remain)} left in this block${next && next !== cur ? ` · next: ${esc(next.from)} ${esc(next.title)}` : ''}</div>`;
+      <div class="meta">${fmtMin(remain)} left${next && next !== cur ? ` · Next ${esc(next.from)} ${esc(next.title)}` : ''}</div>`;
   } else {
-    left = `<div class="label">Free time</div><div class="title">Nothing scheduled</div>
-      <div class="meta">${next ? `Next: ${esc(next.from)} ${esc(next.title)}` : 'Add blocks in Today’s plan'}</div>`;
+    left = `<div class="label">FREE</div><div class="title">Open time</div>
+      <div class="meta">${next ? `Next ${esc(next.from)} · ${esc(next.title)}` : 'Edit plan to add a block'}</div>`;
   }
   const curFocus = cur && FOCUS.find(f => f.id === cur.link);
   let actions = '';
-  if (curFocus && r?.id !== curFocus.id) actions += `<button class="primary" data-start="${curFocus.id}">▶ Start ${esc(curFocus.label)}</button>`;
-  if (cur?.link === 'quran' && d.quran < GOALS.quran) actions += `<button data-quick="quran">+1 Quran page</button>`;
-  if (cur?.link === 'call' && !d.call) actions += `<button data-quick="call">✓ Called parents</button>`;
-  if (cur?.link === 'gym' && !d.gym) actions += `<button data-quick="gym">✓ Gym done</button>`;
+  if (curFocus && r?.id !== curFocus.id) actions += `<button class="primary" data-start="${curFocus.id}" aria-label="Start ${esc(curFocus.label)} timer">▶ Start</button>`;
+  if (cur?.link === 'quran' && d.quran < GOALS.quran) actions += `<button data-quick="quran">+ Quran</button>`;
+  if (cur?.link === 'call' && !d.call) actions += `<button data-quick="call">✓ Call</button>`;
+  if (cur?.link === 'gym' && !d.gym) actions += `<button data-quick="gym">✓ Gym</button>`;
   if (cur?.link === 'pray') {
     const i = d.prayers.findIndex(p => !p);
-    if (i >= 0) actions += `<button data-quick="pray" data-i="${i}">✓ Prayed ${PRAYERS[i]}</button>`;
+    if (i >= 0) actions += `<button data-quick="pray" data-i="${i}">✓ ${PRAYERS[i]}</button>`;
   }
 
   const right = runF
-    ? `<div class="label">Currently doing</div><div class="title">${esc(runF.label)}</div>
+    ? `<div class="label">FOCUS TIMER</div><div class="title">${esc(runF.label)}</div>
        <div class="running" id="run-clock">${fmtClock((Date.now() - r.start) / 1000)}</div>
-       <div class="actions"><button data-start="${runF.id}">■ Stop</button></div>`
-    : `<div class="label">Currently doing</div><div class="title muted">No timer running</div>
-       <div class="meta">Start one when you sit down to work — it keeps you honest.</div>`;
+       <div class="actions"><button data-start="${runF.id}" aria-label="Stop ${esc(runF.label)} timer">■ Stop</button></div>`
+    : `<div class="label">FOCUS TIMER</div><div class="title muted">No timer</div>`;
 
-  const remaining = (parts(k) || []).filter(([, v]) => v < 1).map(([n]) => `<li>${esc(n)}</li>`).join('');
+  const remainingItems = (parts(k) || []).filter(([, v]) => v < 1).map(([n]) => n);
+  const remaining = remainingItems.slice(0, 4).map(n => `<li>${esc(n)}</li>`).join('');
+  const more = remainingItems.length > 4 ? `<li class="left-more">+${remainingItems.length - 4}</li>` : '';
   $('now-card').innerHTML = `<div class="now-grid"><div>${left}${actions ? `<div class="actions">${actions}</div>` : ''}</div><div>${right}</div></div>
-    <div class="row-label">${remaining ? 'Still to do today' : 'Everything done today. Alhamdulillah 🎉'}</div>
-    ${remaining ? `<ul class="left-list">${remaining}</ul>` : ''}`;
+    <div class="row-label">${remainingItems.length ? `${remainingItems.length} TO GO` : '✓ All done · Alhamdulillah'}</div>
+    ${remainingItems.length ? `<ul class="left-list">${remaining}${more}</ul>` : ''}`;
 }
 
 function renderDeen() {
@@ -218,7 +219,7 @@ function renderDeen() {
   $('prayers').innerHTML = PRAYERS.map((p, i) => `<button class="chip ${d.prayers[i] ? 'on' : ''}" data-prayer="${i}">${d.prayers[i] ? '✓ ' : ''}${p}</button>`).join('');
   $('quran-val').textContent = d.quran;
   const call = $('call-btn');
-  call.textContent = d.call ? '✓ Called today' : 'Not yet';
+  call.textContent = d.call ? '✓ Called' : '○ Call';
   call.classList.toggle('on', d.call);
   $('tasbih-val').textContent = d.tasbih;
   $('tasbih-label').textContent = `/ ${GOALS.tasbih}`;
@@ -232,7 +233,7 @@ function renderFocus() {
     const on = state.running?.id === f.id;
     return `<div class="focus ${on ? 'running' : ''}">
       <div><div class="name">${esc(f.label)}</div><div class="time" data-ftime="${f.id}">${fmtMin(m)} / ${fmtMin(f.goal)}</div></div>
-      <div class="ctrls"><button data-adj="${f.id}" data-v="-15" aria-label="minus 15 minutes">−15</button><button data-adj="${f.id}" data-v="15" aria-label="plus 15 minutes">+15</button><button class="play" data-start="${f.id}">${on ? '■' : '▶'}</button></div>
+      <div class="ctrls"><button data-adj="${f.id}" data-v="-15" aria-label="Subtract 15 minutes from ${esc(f.label)}">−15</button><button data-adj="${f.id}" data-v="15" aria-label="Add 15 minutes to ${esc(f.label)}">+15</button><button class="play" data-start="${f.id}" aria-label="${on ? 'Stop' : 'Start'} ${esc(f.label)} timer">${on ? '■' : '▶'}</button></div>
       <div class="bar"><i data-fbar="${f.id}" style="width:${pct(Math.min(m / f.goal, 1))}"></i></div>
     </div>`;
   }).join('');
@@ -243,7 +244,7 @@ function renderBody() {
   const kcal = kcalOf(d);
   $('kcal-total').textContent = `${num(kcal)} · ${kcal <= GOALS.kcal ? `${num(GOALS.kcal - kcal)} left` : `${num(kcal - GOALS.kcal)} over`}`;
   const kb = $('kcal-bar'); kb.style.width = pct(Math.min(kcal / GOALS.kcal, 1)); kb.classList.toggle('over', kcal > GOALS.kcal);
-  $('food-list').innerHTML = d.food.map((f, i) => `<li><span>${esc(f.name || 'Food')}</span><span>${num(f.kcal)} <button class="x" data-delfood="${i}" aria-label="remove">✕</button></span></li>`).join('');
+  $('food-list').innerHTML = d.food.map((f, i) => `<li><span>${esc(f.name || 'Food')}</span><span>${num(f.kcal)} <button class="x" data-delfood="${i}" aria-label="Remove ${esc(f.name || 'food')}">✕</button></span></li>`).join('');
 
   $('steps-total').textContent = `${num(d.steps)} · ${pct(Math.min(d.steps / GOALS.steps, 1))}`;
   $('steps-bar').style.width = pct(Math.min(d.steps / GOALS.steps, 1));
@@ -255,7 +256,7 @@ function renderBody() {
   }).join('');
   const g = gymThisWeek();
   $('gym-week').textContent = `${g}/${GOALS.gymPerWeek} this week`;
-  const gb = $('gym-btn'); gb.textContent = d.gym ? '✓ Trained today' : 'Mark gym session done'; gb.classList.toggle('on', d.gym);
+  const gb = $('gym-btn'); gb.textContent = d.gym ? '✓ Done' : '+ Log session'; gb.setAttribute('aria-label', d.gym ? 'Gym session complete' : 'Log gym session'); gb.classList.toggle('on', d.gym);
 
   setIfIdle($('sleep-form').sleep, d.sleep ?? '');
   setIfIdle($('screen-form').screen, d.screen ?? '');
@@ -312,6 +313,12 @@ function renderGlance() {
 }
 
 let trendRange = (() => { try { return localStorage.getItem('takeover.range') || '14'; } catch { return '14'; } })();
+let trendPeriod = (() => {
+  try {
+    const value = localStorage.getItem('takeover.period');
+    return ['day', 'week', 'month'].includes(value) ? value : 'day';
+  } catch { return 'day'; }
+})();
 function rangeKeys() {
   const k = todayKey();
   if (trendRange === 'all') {
@@ -331,8 +338,132 @@ function axisLabels(keys) {
   });
 }
 
+function hasProgress(d) {
+  return !!d && (
+    d.prayers?.some(Boolean) || d.quran > 0 || d.tasbih > 0 || d.food?.length > 0 || d.steps > 0 || d.gym || d.call ||
+    d.sleep != null || d.screen != null || Object.values(d.mins || {}).some(v => v > 0)
+  );
+}
+
+function progressPeriodCount(mode) {
+  const today = todayKey();
+  const loggedKeys = Object.keys(state.days || {}).filter(k => k <= today && hasProgress(state.days[k])).sort();
+  const historyStart = loggedKeys[0] || (state.startDate <= today ? state.startDate : today);
+  if (mode === 'day') return Math.max(1, Math.min(14, diffDays(historyStart, today) + 1));
+  if (mode === 'week') return Math.max(1, Math.min(12, Math.floor(diffDays(weekStart(historyStart), weekStart(today)) / 7) + 1));
+  const a = parseKey(historyStart), b = parseKey(today);
+  return Math.max(1, Math.min(12, (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() + 1));
+}
+
+function progressPeriods(mode, count, offset = 0) {
+  const today = todayKey();
+  return Array.from({ length: count }, (_, i) => {
+    const age = count - i - 1 + offset;
+    let start, end;
+    if (mode === 'day') {
+      start = addDays(today, -age); end = start;
+    } else if (mode === 'week') {
+      start = addDays(weekStart(today), -age * 7); end = addDays(start, 6);
+    } else {
+      const first = parseKey(`${today.slice(0, 7)}-01`);
+      first.setMonth(first.getMonth() - age);
+      start = keyOf(first);
+      const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+      end = keyOf(last);
+    }
+    if (end > today) end = today;
+    const keys = [];
+    for (let k = start; k <= end; k = addDays(k, 1)) keys.push(k);
+    const loggedKeys = keys.filter(k => hasProgress(state.days[k]));
+    const scores = loggedKeys.map(k => score(k) * 100);
+    const focusMinutes = loggedKeys.reduce((sum, k) => sum + FOCUS.reduce((n, f) => n + focusMins(state.days[k], f.id, k), 0), 0);
+    return {
+      start, end, loggedKeys, scores,
+      average: scores.length ? avg(scores) : null,
+      focusMinutes,
+      goalDays: scores.filter(value => value >= 80).length,
+    };
+  });
+}
+
+function isoWeek(k) {
+  const d = parseKey(k);
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+function periodAxisLabel(mode, period) {
+  const d = parseKey(period.start);
+  if (mode === 'day') return String(d.getDate());
+  if (mode === 'week') return `W${isoWeek(period.start)}`;
+  return d.toLocaleDateString(undefined, { month: 'short' });
+}
+
+function periodTitle(mode, period) {
+  if (mode === 'day') return shortDate(period.start);
+  if (mode === 'week') return `Week of ${parseKey(period.start).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
+  return parseKey(period.start).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+
+function renderPeriodSummary() {
+  document.querySelectorAll('[data-period]').forEach(b => {
+    const active = b.dataset.period === trendPeriod;
+    b.classList.toggle('on', active);
+    b.setAttribute('aria-pressed', String(active));
+  });
+  const count = progressPeriodCount(trendPeriod);
+  const periods = progressPeriods(trendPeriod, count);
+  const previous = progressPeriods(trendPeriod, count, count);
+  const currentDays = periods.flatMap(p => p.loggedKeys.map((k, i) => ({ key: k, score: p.scores[i] })));
+  const previousDays = previous.flatMap(p => p.loggedKeys.map((k, i) => ({ key: k, score: p.scores[i] })));
+  const averageScore = currentDays.length ? avg(currentDays.map(d => d.score)) : null;
+  const previousAverage = previousDays.length ? avg(previousDays.map(d => d.score)) : null;
+  const goalDays = currentDays.filter(d => d.score >= 80).length;
+  const totalFocus = periods.reduce((sum, p) => sum + p.focusMinutes, 0);
+  const periodLabel = trendPeriod === 'day' ? 'days' : `${trendPeriod}s`;
+  const windowLabel = `last ${count} ${periodLabel}`;
+  const stats = [
+    ['Average score', averageScore == null ? '—' : `${Math.round(averageScore)}%`, windowLabel],
+    ['Days at 80%+', `${goalDays}/${currentDays.length}`, 'recorded days'],
+    ['Active periods', `${periods.filter(p => p.loggedKeys.length).length}/${count}`, periodLabel],
+    ['Focus time', fmtMin(totalFocus), windowLabel],
+  ];
+  $('period-summary').innerHTML = stats.map(([label, value, sub]) => `<div class="period-stat"><span>${label}</span><b>${value}</b><small>${sub}</small></div>`).join('');
+
+  const noun = trendPeriod === 'day' ? 'daily score' : trendPeriod === 'week' ? 'weekly average' : 'monthly average';
+  $('period-chart-title').textContent = `${noun[0].toUpperCase()}${noun.slice(1)}`;
+  const labels = periods.map(p => periodAxisLabel(trendPeriod, p));
+  const tips = periods.map(p => {
+    const scoreText = p.average == null ? 'No activity logged' : `Average score ${Math.round(p.average)}% · ${p.loggedKeys.length} active day${p.loggedKeys.length === 1 ? '' : 's'}`;
+    return `${periodTitle(trendPeriod, p)}\n${scoreText}\nFocus ${fmtMin(p.focusMinutes)}`;
+  });
+  $('period-chart').innerHTML = C.columns({
+    labels, tips, series: [{ cls: 's3', vals: periods.map(p => p.average || 0) }],
+    goal: 80, goalLabel: '80%', fmtAxis: v => `${Math.round(v)}%`, fixedTop: 100,
+  });
+
+  let insight;
+  if (!currentDays.length) {
+    insight = ['✦', 'Your story starts here', `Log a day to see your ${trendPeriod} trend.`];
+  } else if (previousAverage == null) {
+    insight = ['✦', 'Building your baseline', 'Keep logging to unlock a period comparison.'];
+  } else {
+    const change = Math.round(averageScore - previousAverage);
+    const direction = change > 1 ? '↗' : change < -1 ? '↘' : '→';
+    const title = change > 1 ? `Up ${change} points` : change < -1 ? `Down ${Math.abs(change)} points` : 'Holding steady';
+    insight = [direction, title, `Compared with the previous ${count} ${periodLabel}.`];
+  }
+  $('period-insight').innerHTML = `<span class="insight-symbol" aria-hidden="true">${insight[0]}</span><div><small>THE TREND</small><b>${insight[1]}</b><span>${insight[2]}</span></div>`;
+}
+
 function renderTrends() {
-  document.querySelectorAll('[data-range]').forEach(b => b.classList.toggle('on', b.dataset.range === trendRange));
+  renderPeriodSummary();
+  document.querySelectorAll('[data-range]').forEach(b => {
+    const active = b.dataset.range === trendRange;
+    b.classList.toggle('on', active);
+    b.setAttribute('aria-pressed', String(active));
+  });
   const keys = rangeKeys(), labels = axisLabels(keys);
   const D = keys.map(k => state.days[k]);
   const mins = (d, k, id) => (d ? focusMins(d, id, k) : 0);
@@ -393,7 +524,7 @@ function renderWeight() {
   const start = state.startWeight ?? w[0]?.kg;
   const cur = w.at(-1)?.kg;
   if (start == null) {
-    $('weight-summary').textContent = '— log your weight to start';
+    $('weight-summary').textContent = '— add first log';
     $('weight-chart').innerHTML = '';
     return;
   }
@@ -425,7 +556,7 @@ function renderExams() {
     const cls = e.left < 0 ? '' : e.left <= 3 ? 'soon' : e.left <= 7 ? 'near' : '';
     const label = e.left < 0 ? 'done' : e.left === 0 ? 'TODAY' : e.left === 1 ? 'tomorrow' : `in ${e.left} days`;
     return `<li><span class="grow">${esc(e.name)} <span class="muted small">${parseKey(e.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</span></span><span class="badge ${cls}">${label}</span><button class="x" data-delexam="${e.i}" aria-label="remove">✕</button></li>`;
-  }).join('') : '<li class="muted">Add your three midterms so you can see the countdown.</li>';
+  }).join('') : '<li class="muted">Add exams for countdowns.</li>';
 }
 
 function renderMoney() {
@@ -438,7 +569,7 @@ function renderMoney() {
     return `<li class="${left === 0 ? 'paid' : ''}">
       <span class="grow"><button class="link" data-rename="${i}" style="padding:0;color:inherit;text-decoration:none">${esc(d.name)}</button> <span class="muted small">${d.paid ? `paid ${num(d.paid)} of ${num(d.amount)}` : ''}</span></span>
       <span class="badge">${num(left)}${c}</span>
-      ${left ? `<button data-pay="${i}">Got paid</button>` : ''}
+      ${left ? `<button data-pay="${i}" aria-label="Record payment from ${esc(d.name)}">✓ Paid</button>` : ''}
       <button class="x" data-deldebt="${i}" aria-label="remove">✕</button></li>`;
   }).join('');
 }
@@ -497,13 +628,13 @@ function renderCalendar() {
   const chN = diffDays(state.startDate, calSel) + 1;
   $('cal-day').innerHTML = `<div class="cal-day-head"><b>${esc(parseKey(calSel).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</b>
     <span class="muted small">${[calSel === k ? 'Today' : calSel > k ? inDays(diffDays(k, calSel)) : '', chN >= 1 && chN <= GOALS.days ? `Challenge day ${chN}` : '', sd && calSel <= k ? `Score ${pct(score(calSel))}` : ''].filter(Boolean).join(' · ')}</span></div>
-    <ul class="list">${items.length ? items.map(e => `<li><i class="dot-key ${e.kind === 'exam' ? 's2' : 's1'}"></i><span class="grow">${e.time ? `<span class="muted mono">${esc(e.time)}</span> ` : ''}${esc(e.title)}${e.kind === 'exam' ? ' <span class="badge">exam</span>' : ''}</span><button class="x" data-del-item="${e.kind}:${e.i}" aria-label="Remove">✕</button></li>`).join('') : '<li class="muted small">Nothing planned for this day.</li>'}</ul>`;
+    <ul class="list">${items.length ? items.map(e => `<li><i class="dot-key ${e.kind === 'exam' ? 's2' : 's1'}"></i><span class="grow">${e.time ? `<span class="muted mono">${esc(e.time)}</span> ` : ''}${esc(e.title)}${e.kind === 'exam' ? ' <span class="badge">exam</span>' : ''}</span><button class="x" data-del-item="${e.kind}:${e.i}" aria-label="Remove">✕</button></li>`).join('') : '<li class="muted small">No events</li>'}</ul>`;
 
   const up = upcomingItems();
   $('upcoming').innerHTML = up.length ? up.map(e => {
     const n = diffDays(k, e.date);
     return `<li><i class="dot-key ${e.kind === 'exam' ? 's2' : 's1'}"></i><button class="link up-item grow" data-day="${e.date}">${esc(e.title)} <span class="muted small">${esc(parseKey(e.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }))}${e.time ? ` · ${esc(e.time)}` : ''}</span></button><span class="badge ${n <= 3 ? 'soon' : n <= 7 ? 'near' : ''}">${inDays(n)}</span></li>`;
-  }).join('') : '<li class="muted small">No upcoming events. Tap a day to add one.</li>';
+  }).join('') : '<li class="muted small">No upcoming events</li>';
 }
 
 function renderSettings() {
@@ -559,6 +690,11 @@ document.addEventListener('click', e => {
   if (ds.range) {
     trendRange = ds.range;
     try { localStorage.setItem('takeover.range', trendRange); } catch { /* per-device preference only */ }
+    return renderTrends();
+  }
+  if (ds.period) {
+    trendPeriod = ds.period;
+    try { localStorage.setItem('takeover.period', trendPeriod); } catch { /* per-device preference only */ }
     return renderTrends();
   }
   if (ds.prayer != null) { d.prayers[ds.prayer] = !d.prayers[ds.prayer]; return commit(); }
@@ -693,6 +829,32 @@ applyUrlParams();
 save(false);
 render();
 setInterval(tick, 1000);
+
+/* Keep the compact section dock in sync with the section on screen. */
+const quickLinks = [...document.querySelectorAll('.quick-nav a')];
+function activateQuickLink(hash) {
+  quickLinks.forEach(link => {
+    const active = link.hash === hash;
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  });
+}
+activateQuickLink(location.hash || '#overview');
+const observedSections = new Map();
+if ('IntersectionObserver' in window) {
+  const sectionObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => observedSections.set(entry.target, entry.isIntersecting));
+    const visible = [...observedSections].filter(([, shown]) => shown).map(([section]) => section)
+      .sort((a, b) => Math.abs(a.getBoundingClientRect().top - innerHeight * .23) - Math.abs(b.getBoundingClientRect().top - innerHeight * .23));
+    if (visible[0]) activateQuickLink(`#${visible[0].id}`);
+  }, { rootMargin: '-18% 0px -72% 0px', threshold: 0 });
+  quickLinks.forEach(link => {
+    const section = document.querySelector(link.hash);
+    if (section) sectionObserver.observe(section);
+  });
+}
+window.addEventListener('hashchange', () => activateQuickLink(location.hash || '#overview'));
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   state = load(); render();

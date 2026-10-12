@@ -1,10 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f4ed">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -18,41 +17,54 @@
 </head>
 <body>
   <header class="top">
-    <div>
-      <h1>Takeover</h1>
-      <div class="sub"><span id="today-date"></span> · <span id="clock" class="mono"></span></div>
+    <div class="brand-lockup">
+      <span class="brand-icon" aria-hidden="true">✳</span>
+      <div class="brand-copy">
+        <div class="eyebrow">40 DAY RESET</div>
+        <h1>Takeover</h1>
+        <div class="sub"><span id="today-date"></span> <span class="date-divider" aria-hidden="true">·</span> <span id="clock" class="mono"></span></div>
+      </div>
     </div>
     <div class="top-stats">
       <div class="pill"><b id="challenge-day"></b><span>day</span></div>
       <div class="pill"><b id="streak"></b><span>streak</span></div>
-      <div class="pill score"><b id="today-score"></b><span>today</span></div>
+      <div class="pill score"><b id="today-score"></b><span>score</span></div>
     </div>
   </header>
+
+  <nav class="quick-nav" aria-label="Quick navigation">
+    <a href="#overview"><span aria-hidden="true">◉</span><span>Today</span></a>
+    <a href="#deen"><span aria-hidden="true">☾</span><span>Deen</span></a>
+    <a href="#focus"><span aria-hidden="true">▶</span><span>Focus</span></a>
+    <a href="#body"><span aria-hidden="true">✳</span><span>Body</span></a>
+    <a href="#plan"><span aria-hidden="true">◷</span><span>Plan</span></a>
+    <a href="#calendar"><span aria-hidden="true">▦</span><span>Calendar</span></a>
+  </nav>
 
   <main>
     <section class="card now" id="now-card"></section>
 
-    <section class="card wide glance">
-      <h2>Today at a glance</h2>
+    <section class="card glance" id="overview">
+      <h2><span class="section-mark" aria-hidden="true">◉</span>Today</h2>
       <div class="glance-grid">
         <div class="rings-wrap" id="rings"></div>
         <div class="glance-side">
-          <div class="hero"><b id="hero-score">0%</b><span>of today's goals done</span></div>
+          <div class="hero"><b id="hero-score">0%</b><span>done</span></div>
           <ul class="ring-legend" id="ring-legend"></ul>
         </div>
       </div>
       <div class="gauges" id="gauges"></div>
     </section>
 
-    <section class="card">
-      <h2>Deen</h2>
-      <div class="row-label">Five prayers</div>
+    <section class="card" id="deen">
+      <h2><span class="section-mark" aria-hidden="true">☾</span>Deen</h2>
+      <div class="row-label">Prayers</div>
       <div class="chips" id="prayers"></div>
       <div class="split">
         <div>
           <div class="row-label">Quran pages <span class="muted">/ 3</span></div>
           <div class="stepper" data-field="quran">
-            <button data-step="-1" aria-label="minus">−</button><b id="quran-val"></b><button data-step="1" aria-label="plus">+</button>
+            <button data-step="-1" aria-label="Remove one Quran page">−</button><b id="quran-val"></b><button data-step="1" aria-label="Add one Quran page">+</button>
           </div>
         </div>
         <div>
@@ -61,91 +73,114 @@
         </div>
       </div>
       <div class="row-label">Tasbih <span class="muted" id="tasbih-label"></span></div>
-      <button class="tasbih" id="tasbih-btn"><span id="tasbih-val">0</span><small>tap to count</small></button>
+      <button class="tasbih" id="tasbih-btn" aria-label="Add one tasbih"><span id="tasbih-val">0</span><small>tap +1</small></button>
       <div class="tiny-actions"><button id="tasbih-undo" class="link">undo</button><button id="tasbih-33" class="link">+33</button></div>
     </section>
 
-    <section class="card">
-      <h2>Focus work</h2>
-      <p class="muted small">Tap ▶ when you start. Only one timer runs at a time — that's what you're "currently doing".</p>
+    <section class="card" id="focus">
+      <h2><span class="section-mark" aria-hidden="true">▶</span>Focus</h2>
+      <p class="focus-hint"><span aria-hidden="true">ⓘ</span> One timer at a time</p>
       <div id="focus-list"></div>
     </section>
 
-    <section class="card">
-      <h2>Body</h2>
+    <section class="card" id="body">
+      <h2><span class="section-mark" aria-hidden="true">✳</span>Body</h2>
       <div class="metric">
-        <div class="metric-head"><span>Calories <span class="muted">(max 1,400)</span></span><b id="kcal-total"></b></div>
+        <div class="metric-head"><span>Calories <span class="target">≤ 1.4k</span></span><b id="kcal-total"></b></div>
         <div class="bar"><i id="kcal-bar"></i></div>
         <form id="food-form" class="inline-form wrap">
-          <input name="name" placeholder="Food (e.g. 2 eggs)" autocomplete="off">
-          <input name="kcal" type="number" inputmode="numeric" placeholder="kcal" min="0" required>
+          <input name="name" placeholder="Food" aria-label="Food name" autocomplete="off">
+          <input name="kcal" type="number" inputmode="numeric" placeholder="kcal" aria-label="Calories" min="0" required>
           <button>Add</button>
         </form>
         <ul class="food-list" id="food-list"></ul>
       </div>
 
       <div class="metric">
-        <div class="metric-head"><span>Steps <span class="muted">(20,000)</span></span><b id="steps-total"></b></div>
+        <div class="metric-head"><span>Steps <span class="target">20k</span></span><b id="steps-total"></b></div>
         <div class="bar"><i id="steps-bar"></i></div>
         <form id="steps-form" class="inline-form">
-          <input name="steps" type="number" inputmode="numeric" placeholder="Steps from Fitness app" min="0">
+          <input name="steps" type="number" inputmode="numeric" placeholder="Steps" aria-label="Steps" min="0">
           <button>Save</button>
         </form>
       </div>
 
       <div class="metric">
-        <div class="metric-head"><span>Gym <span class="muted">(3× per week)</span></span><b id="gym-week"></b></div>
+        <div class="metric-head"><span>Gym <span class="target">3× / wk</span></span><b id="gym-week"></b></div>
         <div class="week-dots" id="gym-dots"></div>
         <button class="toggle" id="gym-btn"></button>
       </div>
 
       <div class="split body-split">
         <div class="metric">
-          <div class="metric-head"><span>Sleep <span class="muted">(7h+)</span></span></div>
+          <div class="metric-head"><span>Sleep <span class="target">7h+</span></span></div>
           <form id="sleep-form" class="inline-form">
-            <input name="sleep" type="number" inputmode="decimal" step="0.25" min="0" max="16" placeholder="hours">
+            <input name="sleep" type="number" inputmode="decimal" step="0.25" min="0" max="16" placeholder="h" aria-label="Sleep in hours">
             <button>Save</button>
           </form>
         </div>
         <div class="metric">
           <div class="metric-head"><span>Screen time</span></div>
           <form id="screen-form" class="inline-form">
-            <input name="screen" type="number" inputmode="numeric" min="0" placeholder="minutes">
+            <input name="screen" type="number" inputmode="numeric" min="0" placeholder="min" aria-label="Screen time in minutes">
             <button>Save</button>
           </form>
         </div>
       </div>
     </section>
 
-    <section class="card">
-      <h2>Weight <span class="muted small" id="weight-summary"></span></h2>
+    <section class="card" id="weight">
+      <h2><span class="section-mark" aria-hidden="true">↘</span>Weight <span class="muted small" id="weight-summary"></span></h2>
       <div id="weight-chart"></div>
       <form id="weight-form" class="inline-form">
-        <input name="kg" type="number" inputmode="decimal" step="0.1" min="20" placeholder="Today's weight (kg)">
+        <input name="kg" type="number" inputmode="decimal" step="0.1" min="20" placeholder="kg" aria-label="Weight in kilograms">
         <button>Log</button>
       </form>
     </section>
 
-    <section class="card plan">
-      <h2>Today's plan <button class="link right" id="edit-plan">edit</button></h2>
+    <section class="card plan" id="plan">
+      <h2><span class="section-mark" aria-hidden="true">◷</span>Plan <button class="link right" id="edit-plan" aria-label="Edit plan">✎</button></h2>
       <ol class="timeline" id="timeline"></ol>
       <div id="plan-editor" hidden>
-        <p class="muted small">One block per line: <code>HH:MM-HH:MM | Title | link</code>. Link is optional: <code>study</code>, <code>drop</code>, <code>fullstack</code>, <code>video</code>, <code>gym</code>, <code>quran</code>, <code>call</code>, <code>pray</code>.</p>
+        <p class="muted small">One block per line · <code>06:00-07:00 | Study | study</code></p>
+        <details class="plan-help"><summary>Link keys</summary><p class="muted small"><code>study</code> · <code>drop</code> · <code>fullstack</code> · <code>video</code> · <code>gym</code> · <code>quran</code> · <code>call</code> · <code>pray</code></p></details>
         <textarea id="plan-text" rows="16" spellcheck="false"></textarea>
         <div class="tiny-actions"><button id="plan-save">Save plan</button><button id="plan-reset" class="link">reset to default</button></div>
       </div>
     </section>
 
-    <section class="card wide trends">
-      <h2>Trends
-        <span class="seg right" role="group" aria-label="Range">
-          <button data-range="7">7 days</button><button data-range="14">14 days</button><button data-range="all">Challenge</button>
-        </span>
-      </h2>
+    <section class="card wide trends" id="trends">
+      <h2><span class="section-mark" aria-hidden="true">↗</span>Progress</h2>
+      <div class="period-board">
+        <div class="period-head">
+          <div><div class="period-kicker">YOUR RHYTHM</div><h3>Progress over time</h3></div>
+          <div class="seg period-switch" role="group" aria-label="Group progress by period">
+            <button data-period="day" aria-pressed="false">Days</button>
+            <button data-period="week" aria-pressed="false">Weeks</button>
+            <button data-period="month" aria-pressed="false">Months</button>
+          </div>
+        </div>
+        <div class="period-summary" id="period-summary"></div>
+        <div class="period-main">
+          <div class="period-plot">
+            <div class="period-plot-head"><b id="period-chart-title">Daily score</b><span>80% goal</span></div>
+            <div id="period-chart"></div>
+          </div>
+          <div class="period-insight" id="period-insight" aria-live="polite"></div>
+        </div>
+      </div>
+      <div class="trend-detail-head">
+        <div><div class="period-kicker">ZOOM IN</div><h3>Daily details</h3></div>
+        <div class="seg" role="group" aria-label="Daily chart range">
+          <button data-range="7" aria-pressed="false">7d</button>
+          <button data-range="14" aria-pressed="false">14d</button>
+          <button data-range="all" aria-pressed="false">All</button>
+        </div>
+      </div>
       <div class="stats" id="trend-stats"></div>
       <div class="charts">
-        <figure><figcaption>Daily score <span class="muted">· goal 80%</span></figcaption><div id="c-score"></div></figure>
-        <figure><figcaption>Focus hours <span class="muted">· goal 8h</span></figcaption><div class="legend-row" id="focus-legend"></div><div id="c-focus"></div></figure>
+        <figure><figcaption>Score <span class="muted">· goal 80%</span></figcaption><div id="c-score"></div></figure>
+        <figure><figcaption>Focus <span class="muted">· goal 8h</span></figcaption><div class="legend-row" id="focus-legend"></div><div id="c-focus"></div></figure>
         <figure><figcaption>Steps <span class="muted">· goal 20K</span></figcaption><div id="c-steps"></div></figure>
         <figure><figcaption>Calories <span class="muted">· max 1,400</span></figcaption><div id="c-kcal"></div></figure>
         <figure><figcaption>Sleep <span class="muted">· goal 7h</span></figcaption><div id="c-sleep"></div></figure>
@@ -153,28 +188,28 @@
       </div>
     </section>
 
-    <section class="card">
-      <h2>Exams</h2>
+    <section class="card" id="exams">
+      <h2><span class="section-mark" aria-hidden="true">✦</span>Exams</h2>
       <ul class="list" id="exam-list"></ul>
       <form id="exam-form" class="inline-form wrap">
-        <input name="name" placeholder="Course / exam" required autocomplete="off">
+        <input name="name" placeholder="Exam" aria-label="Exam name" required autocomplete="off">
         <input name="date" type="date" required>
         <button>Add</button>
       </form>
     </section>
 
-    <section class="card">
-      <h2>Money owed to you <span class="muted small" id="money-summary"></span></h2>
+    <section class="card" id="debts">
+      <h2><span class="section-mark" aria-hidden="true">$</span>Owed <span class="muted small" id="money-summary"></span></h2>
       <ul class="list" id="debt-list"></ul>
       <form id="debt-form" class="inline-form">
-        <input name="name" placeholder="Name" required autocomplete="off">
-        <input name="amount" type="number" inputmode="decimal" min="0" placeholder="Amount" required>
+        <input name="name" placeholder="Name" aria-label="Name" required autocomplete="off">
+        <input name="amount" type="number" inputmode="decimal" min="0" placeholder="Amount" aria-label="Amount" required>
         <button>Add</button>
       </form>
     </section>
 
-    <section class="card wide calendar">
-      <h2>Calendar <span class="muted small" id="cal-progress"></span></h2>
+    <section class="card wide calendar" id="calendar">
+      <h2><span class="section-mark" aria-hidden="true">▦</span>Calendar <span class="muted small" id="cal-progress"></span></h2>
       <div class="cal-layout">
         <div>
           <div class="cal-nav">
@@ -192,7 +227,7 @@
         <div class="cal-side">
           <div id="cal-day"></div>
           <form id="event-form" class="event-form">
-            <input name="title" placeholder="Add event (e.g. Dentist, Group study)" required autocomplete="off">
+            <input name="title" placeholder="Event title" aria-label="Event title" required autocomplete="off">
             <div class="inline-form">
               <input name="time" type="time" aria-label="Time (optional)">
               <select name="type" aria-label="Type"><option value="event">Event</option><option value="exam">Exam</option></select>
@@ -205,8 +240,8 @@
       </div>
     </section>
 
-    <section class="card wide">
-      <h2>Settings &amp; data</h2>
+    <section class="card wide" id="settings">
+      <h2><span class="section-mark" aria-hidden="true">⚙</span>Settings</h2>
       <div class="settings">
         <label>Challenge start <input type="date" id="start-date"></label>
         <label>Starting weight (kg) <input type="number" step="0.1" id="start-weight" inputmode="decimal"></label>
@@ -218,7 +253,7 @@
         <label class="btn-like">Import backup<input type="file" id="import" accept="application/json" hidden></label>
       </div>
       <details>
-        <summary>Sync steps &amp; sleep from your iPhone automatically</summary>
+        <summary>iPhone sync guide</summary>
         <p class="small">Apple Health has no web API, so a website can't read it directly. An iOS Shortcut can push the numbers here instead:</p>
         <ol class="small">
           <li>Shortcuts app → <b>+</b> → add <b>Find Health Samples</b>: Type <i>Steps</i>, Start Date <i>is today</i>.</li>
