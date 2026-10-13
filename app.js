@@ -74,7 +74,7 @@ function load() {
 }
 let state = load();
 function save(touch = true) {
-  if (touch) state.updatedAt = Date.now();
+  if (touch) state.updatedAt = Math.max(Date.now(), (state.updatedAt || 0) + 1);
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
   catch (e) { toast('Could not save — storage is blocked in this browser'); }
   if (touch) window.TakeoverSync?.schedule();
@@ -961,6 +961,15 @@ if (location.hash && !location.hash.startsWith('#view-')) {
 $('trend-details').addEventListener('toggle', event => {
   if (event.currentTarget.open) renderTrends();
 });
+$('sync-indicator').addEventListener('click', event => {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  history.pushState(null, '', '#settings');
+  activateView('more');
+  $('settings').scrollIntoView({ block: 'start', behavior: 'instant' });
+  $('settings-title').setAttribute('tabindex', '-1');
+  $('settings-title').focus({ preventScroll: true });
+});
 window.addEventListener('hashchange', () => {
   activateView(viewFromHash(), { focus: true });
   applyDailyHash();
@@ -968,5 +977,4 @@ window.addEventListener('hashchange', () => {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   state = load(); render();
-  window.TakeoverSync?.pull();
 });

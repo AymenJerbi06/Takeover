@@ -16,6 +16,12 @@ body { background: var(--canvas); }
 .eyebrow { font-size: 9px; letter-spacing: .12em; }
 h1 { font-size: 38px; font-weight: 750; }
 .sub { flex-wrap: wrap; }
+.sync-indicator { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--muted); font-size: 11px; text-decoration: none; }
+.sync-indicator .app-icon { width: 15px; height: 15px; }
+.sync-indicator[data-status="ok"] { color: var(--mint-ink); }
+.sync-indicator[data-status="busy"] { color: var(--blue-ink); }
+.sync-indicator[data-status="err"] { color: var(--amber-ink); }
+.sync-indicator:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 .sidebar { padding-top: 36px; border-right: 0; background: var(--canvas); }
 .brand { margin-bottom: 40px; }
 .brand-icon, .note-mark { border-radius: 50%; }
