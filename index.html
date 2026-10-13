@@ -17,7 +17,7 @@
   <title>Takeover · 40 Days</title>
   <link rel="preload" href="assets/fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="style.css?v=20261013-color">
-  <link rel="stylesheet" href="experience.css?v=20261013-color">
+  <link rel="stylesheet" href="experience.css?v=20261013-sync">
 </head>
 <body>
   <a class="skip-link" href="#view-today" data-view-target="today">Skip to content</a>
@@ -49,6 +49,7 @@
           <div class="eyebrow">40 DAY RESET</div>
           <h1 id="page-title" tabindex="-1">Today</h1>
           <div class="sub"><span id="today-date"></span><span class="date-divider" aria-hidden="true">·</span><span id="clock" class="mono"></span></div>
+          <a class="sync-indicator" id="sync-indicator" href="#settings" title="Open cloud sync settings"><span data-icon="sync" aria-hidden="true"></span><span data-sync-label>This device only</span></a>
         </div>
         <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to light mode">
           <span data-theme-icon aria-hidden="true"></span><span data-theme-label>Light mode</span>
@@ -351,13 +352,13 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="config.js"></script>
+  <script src="config.js?v=20261013-sync"></script>
   <script src="api/config"></script>
   <aside class="session-dock" id="session-dock" aria-label="Active focus session" hidden></aside>
   <script src="icons.js?v=20261013-color"></script>
   <script src="metrics.js?v=20261013-reset"></script>
   <script src="charts.js"></script>
-  <script src="app.js?v=20261013-color"></script>
-  <script src="sync.js?v=20261013-reset"></script>
+  <script src="app.js?v=20261013-sync"></script>
+  <script src="sync.js?v=20261013-sync"></script>
 </body>
 </html>

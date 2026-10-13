@@ -65,7 +65,11 @@ Without it, data lives only in the browser on one device. With it, you sign in a
 
 The anon key is designed to be public; Row Level Security in `supabase.sql` makes sure only your account can read or write your row. Never put the `service_role` key in `config.js`.
 
-When a device signs in for the first time and the cloud already has data, the cloud copy is used (it asks first if that device already has its own data). After that, the most recent change wins.
+The header shows **This device only** until cloud sync is configured, then **Sign in to sync**, **Saving**, or **Synced**. Both devices must use the same account. An open, visible dashboard checks for updates every 10 seconds and also when it regains focus or reconnects. Failed requests retry; local progress stays in the browser. Incoming updates wait while you are editing a form.
+
+When a device signs in for the first time and the cloud already has data, the cloud copy is used (it asks first if that device already has its own data). Export backups from both devices before connecting existing local saves, and connect the device with the progress you want to keep first. After that, the most recent whole-dashboard change wins; edits on separate devices are not merged field by field. Requests are serialized and writes check the row revision to avoid overwriting an intervening upload without first reading it.
+
+If the app says **Saved on this device only**, check that both `SUPABASE_URL` and a public `SUPABASE_ANON_KEY` / `SUPABASE_PUBLISHABLE_KEY` are configured, then redeploy. The plain localhost preview cannot execute Vercel's `/api/config`; use the deployed site, or fill the public values in `config.js` for local development.
 
 ## Progress email every 3 days (Resend)
 
