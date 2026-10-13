@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="color-scheme" content="light">
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5ee">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#090a0d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -17,40 +17,21 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="skip-link" href="#overview">Skip to today</a>
+  <a class="skip-link" href="#view-today" data-view-target="today">Skip to content</a>
   <div class="app-shell">
     <aside class="sidebar" aria-label="Dashboard navigation">
-      <a class="brand" href="#overview" aria-label="Takeover home">
+      <a class="brand" href="#view-today" data-view-target="today" aria-label="Takeover home">
         <span class="brand-icon" aria-hidden="true">✳</span>
         <span><b>Takeover</b><small>YOUR DAILY RESET</small></span>
       </a>
 
       <div class="nav-caption">YOUR SPACE</div>
-      <nav class="quick-nav" aria-label="Dashboard sections">
-        <a href="#overview"><span class="nav-icon" aria-hidden="true">◉</span><span>Today</span></a>
-        <a href="#deen"><span class="nav-icon" aria-hidden="true">☾</span><span>Deen</span></a>
-        <a href="#focus"><span class="nav-icon" aria-hidden="true">▶</span><span>Focus</span></a>
-        <a href="#body"><span class="nav-icon" aria-hidden="true">✳</span><span>Body</span></a>
-        <a href="#weight"><span class="nav-icon" aria-hidden="true">↘</span><span>Weight</span></a>
-        <a href="#plan"><span class="nav-icon" aria-hidden="true">◷</span><span>Plan</span></a>
-        <a href="#trends"><span class="nav-icon" aria-hidden="true">↗</span><span>Progress</span></a>
-        <a href="#calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Calendar</span></a>
-        <a href="#exams"><span class="nav-icon" aria-hidden="true">✦</span><span>Exams</span></a>
-        <a href="#debts"><span class="nav-icon" aria-hidden="true">$</span><span>Owed</span></a>
-        <a href="#settings"><span class="nav-icon" aria-hidden="true">⚙</span><span>Settings</span></a>
-
-        <details class="mobile-more">
-          <summary aria-label="More sections"><span class="nav-icon" aria-hidden="true">···</span><span>More</span></summary>
-          <div class="more-menu" aria-label="More dashboard sections">
-            <a href="#deen"><span aria-hidden="true">☾</span>Deen</a>
-            <a href="#body"><span aria-hidden="true">✳</span>Body</a>
-            <a href="#weight"><span aria-hidden="true">↘</span>Weight</a>
-            <a href="#calendar"><span aria-hidden="true">▦</span>Calendar</a>
-            <a href="#exams"><span aria-hidden="true">✦</span>Exams</a>
-            <a href="#debts"><span aria-hidden="true">$</span>Owed</a>
-            <a href="#settings"><span aria-hidden="true">⚙</span>Settings</a>
-          </div>
-        </details>
+      <nav class="quick-nav" aria-label="Main navigation">
+        <a href="#view-today" data-view-target="today"><span class="nav-icon" aria-hidden="true">◉</span><span>Today</span></a>
+        <a href="#view-focus" data-view-target="focus"><span class="nav-icon" aria-hidden="true">▶</span><span>Focus</span></a>
+        <a href="#view-progress" data-view-target="progress"><span class="nav-icon" aria-hidden="true">↗</span><span>Progress</span></a>
+        <a href="#view-planner" data-view-target="planner"><span class="nav-icon" aria-hidden="true">▦</span><span>Plan</span></a>
+        <a href="#view-more" data-view-target="more"><span class="nav-icon" aria-hidden="true">···</span><span>More</span></a>
       </nav>
 
       <div class="sidebar-note">
@@ -62,8 +43,8 @@
     <div class="workspace">
       <header class="top">
         <div class="page-heading">
-          <div class="eyebrow">40 DAY RESET <span aria-hidden="true">·</span> TODAY</div>
-          <h1>Takeover</h1>
+          <div class="eyebrow">40 DAY RESET</div>
+          <h1 id="page-title" tabindex="-1">Today</h1>
           <div class="sub"><span id="today-date"></span><span class="date-divider" aria-hidden="true">·</span><span id="clock" class="mono"></span></div>
         </div>
         <div class="top-stats" aria-label="Today's stats">
@@ -74,8 +55,8 @@
       </header>
 
       <main id="main-content">
+        <section class="view-panel" id="view-today" data-view="today" aria-label="Today" tabindex="-1">
         <section class="card now" id="now-card" aria-label="Current plan and focus timer"></section>
-
         <section class="card glance" id="overview" aria-labelledby="overview-title">
           <div class="section-heading">
             <div><div class="section-kicker">A QUICK CHECK-IN</div><h2 id="overview-title"><span class="section-mark" aria-hidden="true">◉</span>Today at a glance</h2></div>
@@ -97,7 +78,6 @@
             <div class="gauges" id="gauges"></div>
           </div>
         </section>
-
         <section class="card" id="deen" aria-labelledby="deen-title">
           <div class="section-heading">
             <div><div class="section-kicker">SPIRIT</div><h2 id="deen-title"><span class="section-mark deen-mark" aria-hidden="true">☾</span>Deen</h2></div>
@@ -121,15 +101,6 @@
           <button class="tasbih" id="tasbih-btn" aria-label="Add one tasbih"><span id="tasbih-val">0</span><small>tap to count <span aria-hidden="true">＋</span></small></button>
           <div class="tiny-actions"><button id="tasbih-undo" class="link">↶ Undo</button><button id="tasbih-33" class="link">＋33</button></div>
         </section>
-
-        <section class="card" id="focus" aria-labelledby="focus-title">
-          <div class="section-heading">
-            <div><div class="section-kicker">DEEP WORK</div><h2 id="focus-title"><span class="section-mark focus-mark" aria-hidden="true">▶</span>Focus</h2></div>
-            <span class="heading-note"><span class="live-dot" aria-hidden="true"></span>One timer at a time</span>
-          </div>
-          <div id="focus-list"></div>
-        </section>
-
         <section class="card" id="body" aria-labelledby="body-title">
           <div class="section-heading">
             <div><div class="section-kicker">ENERGY</div><h2 id="body-title"><span class="section-mark body-mark" aria-hidden="true">✳</span>Body</h2></div>
@@ -179,25 +150,25 @@
             </div>
           </div>
         </section>
-
-        <section class="card weight-card" id="weight" aria-labelledby="weight-title">
-          <div class="section-heading">
-            <div><div class="section-kicker">YOUR TREND</div><h2 id="weight-title"><span class="section-mark weight-mark" aria-hidden="true">↘</span>Weight <span class="muted small" id="weight-summary"></span></h2></div>
-            <span class="heading-note">Progress, not perfection</span>
-          </div>
-          <div id="weight-chart"></div>
-          <form id="weight-form" class="inline-form">
-            <input name="kg" type="number" inputmode="decimal" step="0.1" min="20" placeholder="Weight in kg" aria-label="Weight in kilograms">
-            <button class="action-button">＋ Log</button>
-          </form>
         </section>
 
+        <section class="view-panel" id="view-focus" data-view="focus" aria-label="Focus" tabindex="-1" hidden>
+        <section class="card" id="focus" aria-labelledby="focus-title">
+          <div class="section-heading">
+            <div><div class="section-kicker">DEEP WORK</div><h2 id="focus-title"><span class="section-mark focus-mark" aria-hidden="true">▶</span>Focus</h2></div>
+            <span class="heading-note"><span class="live-dot" aria-hidden="true"></span>One timer at a time</span>
+          </div>
+          <div id="focus-list"></div>
+        </section>
         <section class="card plan" id="plan" aria-labelledby="plan-title">
           <div class="section-heading">
             <div><div class="section-kicker">MAKE SPACE FOR WHAT MATTERS</div><h2 id="plan-title"><span class="section-mark plan-mark" aria-hidden="true">◷</span>Today's plan</h2></div>
             <button class="link edit-plan" id="edit-plan" aria-label="Edit plan">✎ Edit</button>
           </div>
+        <details class="timeline-details" id="timeline-details">
+          <summary class="timeline-summary"><span class="summary-icon" aria-hidden="true">◷</span><span>Full day</span><span id="timeline-count" class="muted small"></span><span class="summary-action" aria-hidden="true">＋</span></summary>
           <ol class="timeline" id="timeline"></ol>
+        </details>
           <div id="plan-editor" hidden>
             <p class="muted small">One block per line <span aria-hidden="true">·</span> <code>06:00-07:00 | Study | study</code></p>
             <details class="plan-help"><summary>Link keys</summary><p class="muted small"><code>study</code> · <code>drop</code> · <code>fullstack</code> · <code>video</code> · <code>gym</code> · <code>quran</code> · <code>call</code> · <code>pray</code></p></details>
@@ -205,7 +176,9 @@
             <div class="tiny-actions"><button id="plan-save" class="action-button">Save plan</button><button id="plan-reset" class="link">Reset to default</button></div>
           </div>
         </section>
+        </section>
 
+        <section class="view-panel" id="view-progress" data-view="progress" aria-label="Progress" tabindex="-1" hidden>
         <section class="card wide trends" id="trends" aria-labelledby="trends-title">
           <div class="section-heading trends-heading">
             <div><div class="section-kicker">LOOK HOW FAR YOU'VE COME</div><h2 id="trends-title"><span class="section-mark trends-mark" aria-hidden="true">↗</span>Progress</h2></div>
@@ -226,6 +199,9 @@
               <div class="period-insight" id="period-insight" aria-live="polite"></div>
             </div>
           </div>
+          <details class="trend-details" id="trend-details">
+          <summary class="trend-details-summary"><span class="summary-icon" aria-hidden="true">▤</span><span>Daily charts</span><span class="summary-action" aria-hidden="true">＋</span></summary>
+          <div class="trend-details-content">
           <div class="trend-detail-head">
             <div><div class="period-kicker">THE DETAILS</div><h3>Daily signals</h3></div>
             <div class="seg" role="group" aria-label="Daily chart range">
@@ -243,34 +219,23 @@
             <figure><figcaption><span class="chart-icon" aria-hidden="true">☾</span>Sleep <span class="muted">· goal 7h</span></figcaption><div id="c-sleep"></div></figure>
             <figure><figcaption><span class="chart-icon" aria-hidden="true">☾</span>Prayers <span class="muted" id="prayer-range"></span></figcaption><div id="c-prayers"></div></figure>
           </div>
-        </section>
-
-        <section class="card" id="exams" aria-labelledby="exams-title">
-          <div class="section-heading">
-            <div><div class="section-kicker">ON YOUR HORIZON</div><h2 id="exams-title"><span class="section-mark exam-mark" aria-hidden="true">✦</span>Exams</h2></div>
-            <span class="heading-note">Stay one step ahead</span>
           </div>
-          <ul class="list" id="exam-list"></ul>
-          <form id="exam-form" class="inline-form wrap">
-            <input name="name" placeholder="Exam name" aria-label="Exam name" required autocomplete="off">
-            <input name="date" type="date" aria-label="Exam date" required>
-            <button class="action-button">＋ Add</button>
+          </details>
+        </section>
+        <section class="card weight-card" id="weight" aria-labelledby="weight-title">
+          <div class="section-heading">
+            <div><div class="section-kicker">YOUR TREND</div><h2 id="weight-title"><span class="section-mark weight-mark" aria-hidden="true">↘</span>Weight <span class="muted small" id="weight-summary"></span></h2></div>
+            <span class="heading-note">Progress, not perfection</span>
+          </div>
+          <div id="weight-chart"></div>
+          <form id="weight-form" class="inline-form">
+            <input name="kg" type="number" inputmode="decimal" step="0.1" min="20" placeholder="Weight in kg" aria-label="Weight in kilograms">
+            <button class="action-button">＋ Log</button>
           </form>
         </section>
-
-        <section class="card" id="debts" aria-labelledby="debts-title">
-          <div class="section-heading">
-            <div><div class="section-kicker">MONEY IN</div><h2 id="debts-title"><span class="section-mark money-mark" aria-hidden="true">$</span>Owed <span class="muted small" id="money-summary"></span></h2></div>
-            <span class="heading-note">Keep it moving</span>
-          </div>
-          <ul class="list debt-list" id="debt-list"></ul>
-          <form id="debt-form" class="inline-form">
-            <input name="name" placeholder="Name" aria-label="Name" required autocomplete="off">
-            <input name="amount" type="number" inputmode="decimal" min="0" placeholder="Amount" aria-label="Amount" required>
-            <button class="action-button">＋ Add</button>
-          </form>
         </section>
 
+        <section class="view-panel" id="view-planner" data-view="planner" aria-label="Plan" tabindex="-1" hidden>
         <section class="card wide calendar" id="calendar" aria-labelledby="calendar-title">
           <div class="section-heading">
             <div><div class="section-kicker">YOUR DAYS, IN VIEW</div><h2 id="calendar-title"><span class="section-mark calendar-mark" aria-hidden="true">▦</span>Calendar <span class="muted small" id="cal-progress"></span></h2></div>
@@ -305,7 +270,33 @@
             </div>
           </div>
         </section>
+        <section class="card" id="exams" aria-labelledby="exams-title">
+          <div class="section-heading">
+            <div><div class="section-kicker">ON YOUR HORIZON</div><h2 id="exams-title"><span class="section-mark exam-mark" aria-hidden="true">✦</span>Exams</h2></div>
+            <span class="heading-note">Stay one step ahead</span>
+          </div>
+          <ul class="list" id="exam-list"></ul>
+          <form id="exam-form" class="inline-form wrap">
+            <input name="name" placeholder="Exam name" aria-label="Exam name" required autocomplete="off">
+            <input name="date" type="date" aria-label="Exam date" required>
+            <button class="action-button">＋ Add</button>
+          </form>
+        </section>
+        </section>
 
+        <section class="view-panel" id="view-more" data-view="more" aria-label="More" tabindex="-1" hidden>
+        <section class="card" id="debts" aria-labelledby="debts-title">
+          <div class="section-heading">
+            <div><div class="section-kicker">MONEY IN</div><h2 id="debts-title"><span class="section-mark money-mark" aria-hidden="true">$</span>Owed <span class="muted small" id="money-summary"></span></h2></div>
+            <span class="heading-note">Keep it moving</span>
+          </div>
+          <ul class="list debt-list" id="debt-list"></ul>
+          <form id="debt-form" class="inline-form">
+            <input name="name" placeholder="Name" aria-label="Name" required autocomplete="off">
+            <input name="amount" type="number" inputmode="decimal" min="0" placeholder="Amount" aria-label="Amount" required>
+            <button class="action-button">＋ Add</button>
+          </form>
+        </section>
         <section class="card wide settings-card" id="settings" aria-labelledby="settings-title">
           <div class="section-heading">
             <div><div class="section-kicker">MAKE IT YOURS</div><h2 id="settings-title"><span class="section-mark settings-mark" aria-hidden="true">⚙</span>Settings & data</h2></div>
@@ -336,8 +327,10 @@
             </div>
           </details>
         </section>
-      </main>
-      <footer class="page-footer"><span class="footer-star" aria-hidden="true">✳</span> Built for the next version of you.</footer>
+        </section>
+
+</main>
+      <footer class="page-footer"><span class="footer-star" aria-hidden="true">✓</span> End of this view · one day at a time.</footer>
     </div>
   </div>
 

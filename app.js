@@ -541,6 +541,7 @@ function renderWeight() {
 function renderTimeline() {
   const k = todayKey(), d = day(k);
   const plan = parsePlan(state.plan);
+  $('timeline-count').textContent = `${plan.length} blocks`;
   const t = nowMin(), cur = blockAt(plan, t);
   $('timeline').innerHTML = plan.map(b => {
     const cls = b === cur ? 'now' : (b.e <= t ? 'past' : '');
@@ -733,7 +734,7 @@ document.addEventListener('click', e => {
     case 'tasbih-33': d.tasbih += 33; return commit();
     case 'edit-plan': {
       const ed = $('plan-editor'); ed.hidden = !ed.hidden;
-      if (!ed.hidden) $('plan-text').value = state.plan;
+      if (!ed.hidden) { $('plan-text').value = state.plan; $('timeline-details').open = true; }
       b.textContent = ed.hidden ? '✎ Edit' : '× Close';
       return;
     }
@@ -830,37 +831,66 @@ save(false);
 render();
 setInterval(tick, 1000);
 
-/* Keep the compact section dock in sync with the section on screen. */
-const quickLinks = [...document.querySelectorAll('.quick-nav a')];
-function activateQuickLink(hash) {
-  quickLinks.forEach(link => {
-    const active = link.hash === hash;
+/* Five focused views replace the old page-long section dock. */
+const viewNames = {
+  today: 'Today', focus: 'Focus', progress: 'Progress', planner: 'Plan', more: 'More',
+};
+const legacyViews = {
+  overview: 'today', 'now-card': 'today', deen: 'today', body: 'today',
+  focus: 'focus', plan: 'focus', trends: 'progress', weight: 'progress',
+  calendar: 'planner', exams: 'planner', debts: 'more', settings: 'more',
+};
+const viewLinks = [...document.querySelectorAll('[data-view-target]')];
+const viewPanels = [...document.querySelectorAll('.view-panel')];
+const pageTitle = $('page-title');
+
+function viewFromHash() {
+  const hash = location.hash.slice(1);
+  if (hash.startsWith('view-') && viewNames[hash.slice(5)]) return hash.slice(5);
+  return legacyViews[hash] || 'today';
+}
+
+function activateView(name, { focus = false, skip = false } = {}) {
+  const view = viewNames[name] ? name : 'today';
+  viewPanels.forEach(panel => { panel.hidden = panel.dataset.view !== view; });
+  viewLinks.forEach(link => {
+    const active = link.dataset.viewTarget === view;
     link.classList.toggle('active', active);
-    if (active) link.setAttribute('aria-current', 'location');
+    if (active) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
-  const more = document.querySelector('.mobile-more');
-  const moreHashes = [...more.querySelectorAll('a')].map(link => link.hash);
-  more.classList.toggle('active', moreHashes.includes(hash));
+  pageTitle.textContent = viewNames[view];
+  document.title = `${viewNames[view]} · Takeover`;
+
+  // SVG charts need a measured panel width before they can be drawn.
+  if (view === 'progress') { renderTrends(); renderWeight(); }
+  if (focus) {
+    if (skip) document.getElementById(`view-${view}`).focus();
+    else {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      pageTitle.focus({ preventScroll: true });
+    }
+  }
 }
-activateQuickLink(location.hash || '#overview');
-quickLinks.forEach(link => link.addEventListener('click', () => {
-  document.querySelector('.mobile-more').open = false;
-}));
-const observedSections = new Map();
-if ('IntersectionObserver' in window) {
-  const sectionObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => observedSections.set(entry.target, entry.isIntersecting));
-    const visible = [...observedSections].filter(([, shown]) => shown).map(([section]) => section)
-      .sort((a, b) => Math.abs(a.getBoundingClientRect().top - innerHeight * .23) - Math.abs(b.getBoundingClientRect().top - innerHeight * .23));
-    if (visible[0]) activateQuickLink(`#${visible[0].id}`);
-  }, { rootMargin: '-18% 0px -72% 0px', threshold: 0 });
-  quickLinks.forEach(link => {
-    const section = document.querySelector(link.hash);
-    if (section) sectionObserver.observe(section);
-  });
+
+document.addEventListener('click', event => {
+  const link = event.target.closest('a[data-view-target]');
+  if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  const view = link.dataset.viewTarget;
+  const hash = `#view-${view}`;
+  if (location.hash !== hash) history.pushState(null, '', hash);
+  activateView(view, { focus: true, skip: link.classList.contains('skip-link') });
+});
+
+activateView(viewFromHash());
+if (location.hash && !location.hash.startsWith('#view-')) {
+  history.replaceState(null, '', `${location.pathname}${location.search}#view-${viewFromHash()}`);
 }
-window.addEventListener('hashchange', () => activateQuickLink(location.hash || '#overview'));
+$('trend-details').addEventListener('toggle', event => {
+  if (event.currentTarget.open) renderTrends();
+});
+window.addEventListener('hashchange', () => activateView(viewFromHash(), { focus: true }));
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   state = load(); render();
