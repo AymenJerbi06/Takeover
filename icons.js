@@ -3,6 +3,10 @@
 /* A single, optically balanced SVG family for every app surface. */
 window.TakeoverIcons = (() => {
   const paths = Object.freeze({
+    sun: '<circle class="icon-wash" cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    moon: '<path class="icon-wash" d="M20.5 14A8.7 8.7 0 0 1 10 3.5 8.8 8.8 0 1 0 20.5 14Z"/><path d="M20.5 14A8.7 8.7 0 0 1 10 3.5 8.8 8.8 0 1 0 20.5 14Z"/>',
+    code: '<path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+    video: '<rect class="icon-wash" x="3" y="4" width="18" height="16" rx="4"/><rect x="3" y="4" width="18" height="16" rx="4"/><path d="m10 8 6 4-6 4Z"/>',
     brand: '<path fill="currentColor" stroke="none" d="M5 4h16l-2 4h-5v12h-4V8H3z"/>',
     today: '<circle class="icon-wash" cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 1 1-9 9M12 7a5 5 0 1 1-5 5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
     focus: '<circle class="icon-wash" cx="12" cy="14" r="7.5"/><circle cx="12" cy="14" r="7.5"/><path d="M9 2h6M12 2v4M18 7l1.5-1.5M12 10v4l2.5 1.5"/>',
