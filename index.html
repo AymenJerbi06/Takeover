@@ -14,6 +14,7 @@
   <link rel="icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-title" content="Takeover">
   <title>Takeover · 40 Days</title>
+  <link rel="preload" href="assets/fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,21 +22,21 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Dashboard navigation">
       <a class="brand" href="#view-today" data-view-target="today" aria-label="Takeover home">
-        <span class="brand-icon" aria-hidden="true">✳</span>
+        <span class="brand-icon" data-icon="brand" aria-hidden="true"></span>
         <span><b>Takeover</b><small>YOUR DAILY RESET</small></span>
       </a>
 
       <div class="nav-caption">YOUR SPACE</div>
       <nav class="quick-nav" aria-label="Main navigation">
-        <a href="#view-today" data-view-target="today"><span class="nav-icon" aria-hidden="true">◉</span><span>Today</span></a>
-        <a href="#view-focus" data-view-target="focus"><span class="nav-icon" aria-hidden="true">▶</span><span>Focus</span></a>
-        <a href="#view-progress" data-view-target="progress"><span class="nav-icon" aria-hidden="true">↗</span><span>Progress</span></a>
-        <a href="#view-planner" data-view-target="planner"><span class="nav-icon" aria-hidden="true">▦</span><span>Plan</span></a>
-        <a href="#view-more" data-view-target="more"><span class="nav-icon" aria-hidden="true">···</span><span>More</span></a>
+        <a href="#view-today" data-view-target="today"><span class="nav-icon" data-icon="today" aria-hidden="true"></span><span>Today</span></a>
+        <a href="#view-focus" data-view-target="focus"><span class="nav-icon" data-icon="focus" aria-hidden="true"></span><span>Focus</span></a>
+        <a href="#view-progress" data-view-target="progress"><span class="nav-icon" data-icon="progress" aria-hidden="true"></span><span>Progress</span></a>
+        <a href="#view-planner" data-view-target="planner"><span class="nav-icon" data-icon="calendar" aria-hidden="true"></span><span>Plan</span></a>
+        <a href="#view-more" data-view-target="more"><span class="nav-icon" data-icon="more" aria-hidden="true"></span><span>More</span></a>
       </nav>
 
       <div class="sidebar-note">
-        <span class="note-mark" aria-hidden="true">✦</span>
+        <span class="note-mark" data-icon="spark" aria-hidden="true"></span>
         <div><b>One day at a time</b><span>Your reset, your rhythm.</span></div>
       </div>
     </aside>
@@ -48,9 +49,9 @@
           <div class="sub"><span id="today-date"></span><span class="date-divider" aria-hidden="true">·</span><span id="clock" class="mono"></span></div>
         </div>
         <div class="top-stats" aria-label="Today's stats">
-          <div class="top-stat"><span class="stat-symbol" aria-hidden="true">◷</span><div><b id="challenge-day"></b><span>challenge</span></div></div>
-          <div class="top-stat"><span class="stat-symbol" aria-hidden="true">↗</span><div><b id="streak"></b><span>day streak</span></div></div>
-          <div class="top-stat score-stat"><span class="stat-symbol" aria-hidden="true">✦</span><div><b id="today-score"></b><span>today</span></div></div>
+          <div class="top-stat"><span class="stat-symbol" data-icon="calendar" aria-hidden="true"></span><div><b id="challenge-day"></b><span>challenge</span></div></div>
+          <div class="top-stat"><span class="stat-symbol" data-icon="streak" aria-hidden="true"></span><div><b id="streak"></b><span>day streak</span></div></div>
+          <div class="top-stat score-stat"><span class="stat-symbol" data-icon="today" aria-hidden="true"></span><div><b id="today-score"></b><span>today</span></div></div>
         </div>
       </header>
 
@@ -59,8 +60,8 @@
         <section class="card now" id="now-card" aria-label="Current plan and focus timer"></section>
         <section class="card glance" id="overview" aria-labelledby="overview-title">
           <div class="section-heading">
-            <div><div class="section-kicker">A QUICK CHECK-IN</div><h2 id="overview-title"><span class="section-mark" aria-hidden="true">◉</span>Today at a glance</h2></div>
-            <span class="heading-note">Small wins add up <span aria-hidden="true">✦</span></span>
+            <div><div class="section-kicker">A QUICK CHECK-IN</div><h2 id="overview-title"><span class="section-mark" data-icon="today" aria-hidden="true"></span>Today at a glance</h2></div>
+            <span class="heading-note">Small wins add up <span data-icon="spark" aria-hidden="true"></span></span>
           </div>
           <div class="glance-grid">
             <div class="score-panel">
@@ -80,7 +81,7 @@
         </section>
         <section class="card" id="deen" aria-labelledby="deen-title">
           <div class="section-heading">
-            <div><div class="section-kicker">SPIRIT</div><h2 id="deen-title"><span class="section-mark deen-mark" aria-hidden="true">☾</span>Deen</h2></div>
+            <div><div class="section-kicker">SPIRIT</div><h2 id="deen-title"><span class="section-mark deen-mark" data-icon="spirit" aria-hidden="true"></span>Deen</h2></div>
             <span class="heading-note">A little, consistently</span>
           </div>
           <div class="row-label">Prayers</div>
@@ -89,7 +90,7 @@
             <div class="control-block">
               <div class="row-label">Quran <span class="muted">· 3 pages</span></div>
               <div class="stepper" data-field="quran">
-                <button data-step="-1" aria-label="Remove one Quran page">−</button><b id="quran-val"></b><button data-step="1" aria-label="Add one Quran page">+</button>
+                <button data-step="-1" aria-label="Remove one Quran page"><span data-icon="minus" aria-hidden="true"></span></button><b id="quran-val"></b><button data-step="1" aria-label="Add one Quran page"><span data-icon="plus" aria-hidden="true"></span></button>
               </div>
             </div>
             <div class="control-block">
@@ -98,12 +99,12 @@
             </div>
           </div>
           <div class="row-label tasbih-label">Tasbih <span class="muted" id="tasbih-label"></span></div>
-          <button class="tasbih" id="tasbih-btn" aria-label="Add one tasbih"><span id="tasbih-val">0</span><small>tap to count <span aria-hidden="true">＋</span></small></button>
-          <div class="tiny-actions"><button id="tasbih-undo" class="link">↶ Undo</button><button id="tasbih-33" class="link">＋33</button></div>
+          <button class="tasbih" id="tasbih-btn" aria-label="Add one tasbih"><span id="tasbih-val">0</span><small>tap to count <span data-icon="plus" aria-hidden="true"></span></small></button>
+          <div class="tiny-actions"><button id="tasbih-undo" class="link"><span data-icon="undo" aria-hidden="true"></span>Undo</button><button id="tasbih-33" class="link" aria-label="Add 33 tasbih"><span data-icon="plus" aria-hidden="true"></span>33</button></div>
         </section>
         <section class="card" id="body" aria-labelledby="body-title">
           <div class="section-heading">
-            <div><div class="section-kicker">ENERGY</div><h2 id="body-title"><span class="section-mark body-mark" aria-hidden="true">✳</span>Body</h2></div>
+            <div><div class="section-kicker">ENERGY</div><h2 id="body-title"><span class="section-mark body-mark" data-icon="body" aria-hidden="true"></span>Body</h2></div>
             <span class="heading-note">Move · rest · refuel</span>
           </div>
 
@@ -113,7 +114,7 @@
             <form id="food-form" class="inline-form wrap">
               <input name="name" placeholder="Add a food" aria-label="Food name" autocomplete="off">
               <input name="kcal" type="number" inputmode="numeric" placeholder="kcal" aria-label="Calories" min="0" required>
-              <button class="action-button">＋ Add</button>
+              <button class="action-button"><span data-icon="plus" aria-hidden="true"></span>Add</button>
             </form>
             <ul class="food-list" id="food-list"></ul>
           </div>
@@ -155,18 +156,18 @@
         <section class="view-panel" id="view-focus" data-view="focus" aria-label="Focus" tabindex="-1" hidden>
         <section class="card" id="focus" aria-labelledby="focus-title">
           <div class="section-heading">
-            <div><div class="section-kicker">DEEP WORK</div><h2 id="focus-title"><span class="section-mark focus-mark" aria-hidden="true">▶</span>Focus</h2></div>
+            <div><div class="section-kicker">DEEP WORK</div><h2 id="focus-title"><span class="section-mark focus-mark" data-icon="focus" aria-hidden="true"></span>Focus</h2></div>
             <span class="heading-note"><span class="live-dot" aria-hidden="true"></span>One timer at a time</span>
           </div>
           <div id="focus-list"></div>
         </section>
         <section class="card plan" id="plan" aria-labelledby="plan-title">
           <div class="section-heading">
-            <div><div class="section-kicker">MAKE SPACE FOR WHAT MATTERS</div><h2 id="plan-title"><span class="section-mark plan-mark" aria-hidden="true">◷</span>Today's plan</h2></div>
-            <button class="link edit-plan" id="edit-plan" aria-label="Edit plan">✎ Edit</button>
+            <div><div class="section-kicker">MAKE SPACE FOR WHAT MATTERS</div><h2 id="plan-title"><span class="section-mark plan-mark" data-icon="plan" aria-hidden="true"></span>Today's plan</h2></div>
+            <button class="link edit-plan" id="edit-plan" aria-label="Edit plan"><span data-icon="edit" aria-hidden="true"></span>Edit</button>
           </div>
         <details class="timeline-details" id="timeline-details">
-          <summary class="timeline-summary"><span class="summary-icon" aria-hidden="true">◷</span><span>Full day</span><span id="timeline-count" class="muted small"></span><span class="summary-action" aria-hidden="true">＋</span></summary>
+          <summary class="timeline-summary"><span class="summary-icon" data-icon="plan" aria-hidden="true"></span><span>Full day</span><span id="timeline-count" class="muted small"></span><span class="summary-action" data-icon="chevronDown" aria-hidden="true"></span></summary>
           <ol class="timeline" id="timeline"></ol>
         </details>
           <div id="plan-editor" hidden>
@@ -181,7 +182,7 @@
         <section class="view-panel" id="view-progress" data-view="progress" aria-label="Progress" tabindex="-1" hidden>
         <section class="card wide trends" id="trends" aria-labelledby="trends-title">
           <div class="section-heading trends-heading">
-            <div><div class="section-kicker">LOOK HOW FAR YOU'VE COME</div><h2 id="trends-title"><span class="section-mark trends-mark" aria-hidden="true">↗</span>Progress</h2></div>
+            <div><div class="section-kicker">LOOK HOW FAR YOU'VE COME</div><h2 id="trends-title"><span class="section-mark trends-mark" data-icon="progress" aria-hidden="true"></span>Progress</h2></div>
             <div class="seg period-switch" role="group" aria-label="Group progress by period">
               <button data-period="day" aria-pressed="false">Days</button>
               <button data-period="week" aria-pressed="false">Weeks</button>
@@ -200,7 +201,7 @@
             </div>
           </div>
           <details class="trend-details" id="trend-details">
-          <summary class="trend-details-summary"><span class="summary-icon" aria-hidden="true">▤</span><span>Daily charts</span><span class="summary-action" aria-hidden="true">＋</span></summary>
+          <summary class="trend-details-summary"><span class="summary-icon" data-icon="progress" aria-hidden="true"></span><span>Daily charts</span><span class="summary-action" data-icon="chevronDown" aria-hidden="true"></span></summary>
           <div class="trend-details-content">
           <div class="trend-detail-head">
             <div><div class="period-kicker">THE DETAILS</div><h3>Daily signals</h3></div>
@@ -212,25 +213,25 @@
           </div>
           <div class="stats" id="trend-stats"></div>
           <div class="charts">
-            <figure><figcaption><span class="chart-icon" aria-hidden="true">✦</span>Score <span class="muted">· goal 80%</span></figcaption><div id="c-score"></div></figure>
-            <figure><figcaption><span class="chart-icon" aria-hidden="true">▶</span>Focus <span class="muted">· goal 8h</span></figcaption><div class="legend-row" id="focus-legend"></div><div id="c-focus"></div></figure>
-            <figure><figcaption><span class="chart-icon" aria-hidden="true">↗</span>Steps <span class="muted">· goal 20K</span></figcaption><div id="c-steps"></div></figure>
-            <figure><figcaption><span class="chart-icon" aria-hidden="true">◌</span>Calories <span class="muted">· max 1,400</span></figcaption><div id="c-kcal"></div></figure>
-            <figure><figcaption><span class="chart-icon" aria-hidden="true">☾</span>Sleep <span class="muted">· goal 7h</span></figcaption><div id="c-sleep"></div></figure>
-            <figure><figcaption><span class="chart-icon" aria-hidden="true">☾</span>Prayers <span class="muted" id="prayer-range"></span></figcaption><div id="c-prayers"></div></figure>
+            <figure><figcaption><span class="chart-icon" data-icon="today" aria-hidden="true"></span>Score <span class="muted">· goal 80%</span></figcaption><div id="c-score"></div></figure>
+            <figure><figcaption><span class="chart-icon" data-icon="focus" aria-hidden="true"></span>Focus <span class="muted">· goal 8h</span></figcaption><div class="legend-row" id="focus-legend"></div><div id="c-focus"></div></figure>
+            <figure><figcaption><span class="chart-icon" data-icon="steps" aria-hidden="true"></span>Steps <span class="muted">· goal 20K</span></figcaption><div id="c-steps"></div></figure>
+            <figure><figcaption><span class="chart-icon" data-icon="food" aria-hidden="true"></span>Calories <span class="muted">· max 1,400</span></figcaption><div id="c-kcal"></div></figure>
+            <figure><figcaption><span class="chart-icon" data-icon="sleep" aria-hidden="true"></span>Sleep <span class="muted">· goal 7h</span></figcaption><div id="c-sleep"></div></figure>
+            <figure><figcaption><span class="chart-icon" data-icon="spirit" aria-hidden="true"></span>Prayers <span class="muted" id="prayer-range"></span></figcaption><div id="c-prayers"></div></figure>
           </div>
           </div>
           </details>
         </section>
         <section class="card weight-card" id="weight" aria-labelledby="weight-title">
           <div class="section-heading">
-            <div><div class="section-kicker">YOUR TREND</div><h2 id="weight-title"><span class="section-mark weight-mark" aria-hidden="true">↘</span>Weight <span class="muted small" id="weight-summary"></span></h2></div>
+            <div><div class="section-kicker">YOUR TREND</div><h2 id="weight-title"><span class="section-mark weight-mark" data-icon="weight" aria-hidden="true"></span>Weight <span class="muted small" id="weight-summary"></span></h2></div>
             <span class="heading-note">Progress, not perfection</span>
           </div>
           <div id="weight-chart"></div>
           <form id="weight-form" class="inline-form">
             <input name="kg" type="number" inputmode="decimal" step="0.1" min="20" placeholder="Weight in kg" aria-label="Weight in kilograms">
-            <button class="action-button">＋ Log</button>
+            <button class="action-button"><span data-icon="plus" aria-hidden="true"></span>Log</button>
           </form>
         </section>
         </section>
@@ -238,15 +239,15 @@
         <section class="view-panel" id="view-planner" data-view="planner" aria-label="Plan" tabindex="-1" hidden>
         <section class="card wide calendar" id="calendar" aria-labelledby="calendar-title">
           <div class="section-heading">
-            <div><div class="section-kicker">YOUR DAYS, IN VIEW</div><h2 id="calendar-title"><span class="section-mark calendar-mark" aria-hidden="true">▦</span>Calendar <span class="muted small" id="cal-progress"></span></h2></div>
+            <div><div class="section-kicker">YOUR DAYS, IN VIEW</div><h2 id="calendar-title"><span class="section-mark calendar-mark" data-icon="calendar" aria-hidden="true"></span>Calendar <span class="muted small" id="cal-progress"></span></h2></div>
             <span class="heading-note">Tap a day to see the details</span>
           </div>
           <div class="cal-layout">
             <div class="calendar-board">
               <div class="cal-nav">
-                <button data-cal="-1" aria-label="Previous month">‹</button>
+                <button data-cal="-1" aria-label="Previous month"><span data-icon="chevronLeft" aria-hidden="true"></span></button>
                 <b id="cal-title"></b>
-                <button data-cal="1" aria-label="Next month">›</button>
+                <button data-cal="1" aria-label="Next month"><span data-icon="chevronRight" aria-hidden="true"></span></button>
                 <button data-cal="today" class="cal-today">Today</button>
               </div>
               <div class="cal-grid" id="cal-grid" role="grid"></div>
@@ -262,7 +263,7 @@
                 <div class="inline-form">
                   <input name="time" type="time" aria-label="Time (optional)">
                   <select name="type" aria-label="Type"><option value="event">Event</option><option value="exam">Exam</option></select>
-                  <button class="action-button">＋ Add</button>
+                  <button class="action-button"><span data-icon="plus" aria-hidden="true"></span>Add</button>
                 </div>
               </form>
               <h3 class="row-label upcoming-title">Upcoming</h3>
@@ -272,14 +273,14 @@
         </section>
         <section class="card" id="exams" aria-labelledby="exams-title">
           <div class="section-heading">
-            <div><div class="section-kicker">ON YOUR HORIZON</div><h2 id="exams-title"><span class="section-mark exam-mark" aria-hidden="true">✦</span>Exams</h2></div>
+            <div><div class="section-kicker">ON YOUR HORIZON</div><h2 id="exams-title"><span class="section-mark exam-mark" data-icon="exams" aria-hidden="true"></span>Exams</h2></div>
             <span class="heading-note">Stay one step ahead</span>
           </div>
           <ul class="list" id="exam-list"></ul>
           <form id="exam-form" class="inline-form wrap">
             <input name="name" placeholder="Exam name" aria-label="Exam name" required autocomplete="off">
             <input name="date" type="date" aria-label="Exam date" required>
-            <button class="action-button">＋ Add</button>
+            <button class="action-button"><span data-icon="plus" aria-hidden="true"></span>Add</button>
           </form>
         </section>
         </section>
@@ -287,19 +288,19 @@
         <section class="view-panel" id="view-more" data-view="more" aria-label="More" tabindex="-1" hidden>
         <section class="card" id="debts" aria-labelledby="debts-title">
           <div class="section-heading">
-            <div><div class="section-kicker">MONEY IN</div><h2 id="debts-title"><span class="section-mark money-mark" aria-hidden="true">$</span>Owed <span class="muted small" id="money-summary"></span></h2></div>
+            <div><div class="section-kicker">MONEY IN</div><h2 id="debts-title"><span class="section-mark money-mark" data-icon="wallet" aria-hidden="true"></span>Owed <span class="muted small" id="money-summary"></span></h2></div>
             <span class="heading-note">Keep it moving</span>
           </div>
           <ul class="list debt-list" id="debt-list"></ul>
           <form id="debt-form" class="inline-form">
             <input name="name" placeholder="Name" aria-label="Name" required autocomplete="off">
             <input name="amount" type="number" inputmode="decimal" min="0" placeholder="Amount" aria-label="Amount" required>
-            <button class="action-button">＋ Add</button>
+            <button class="action-button"><span data-icon="plus" aria-hidden="true"></span>Add</button>
           </form>
         </section>
         <section class="card wide settings-card" id="settings" aria-labelledby="settings-title">
           <div class="section-heading">
-            <div><div class="section-kicker">MAKE IT YOURS</div><h2 id="settings-title"><span class="section-mark settings-mark" aria-hidden="true">⚙</span>Settings & data</h2></div>
+            <div><div class="section-kicker">MAKE IT YOURS</div><h2 id="settings-title"><span class="section-mark settings-mark" data-icon="settings" aria-hidden="true"></span>Settings & data</h2></div>
             <span class="heading-note">Your dashboard, your rules</span>
           </div>
           <div class="settings">
@@ -309,11 +310,11 @@
           </div>
           <div class="sync-box" id="sync-box"></div>
           <div class="tiny-actions data-actions">
-            <button id="export">↓ Export backup</button>
-            <label class="btn-like">↑ Import backup<input type="file" id="import" accept="application/json" hidden></label>
+            <button id="export"><span data-icon="download" aria-hidden="true"></span>Export backup</button>
+            <label class="btn-like"><span data-icon="upload" aria-hidden="true"></span>Import backup<input type="file" id="import" accept="application/json" hidden></label>
           </div>
           <details class="sync-guide">
-            <summary><span class="guide-icon" aria-hidden="true">⌁</span>iPhone sync guide</summary>
+            <summary><span class="guide-icon" data-icon="sync" aria-hidden="true"></span>iPhone sync guide</summary>
             <div class="guide-content">
               <p class="small">Apple Health does not connect to websites directly. An iOS Shortcut can send your daily numbers here:</p>
               <ol class="small">
@@ -330,7 +331,7 @@
         </section>
 
 </main>
-      <footer class="page-footer"><span class="footer-star" aria-hidden="true">✓</span> End of this view · one day at a time.</footer>
+      <footer class="page-footer"><span class="footer-star" data-icon="check" aria-hidden="true"></span> End of this view · one day at a time.</footer>
     </div>
   </div>
 
@@ -338,6 +339,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="api/config"></script>
+  <script src="icons.js"></script>
   <script src="metrics.js"></script>
   <script src="charts.js"></script>
   <script src="app.js"></script>

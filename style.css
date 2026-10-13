@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Manrope";
+  src: url("assets/fonts/Manrope-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   --canvas: #0c0d10;
@@ -52,7 +60,9 @@ body {
     radial-gradient(ellipse at 78% -4%, rgba(217, 237, 157, .24), transparent 32rem),
     var(--canvas);
   color: var(--text);
-  font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font: 450 15px/1.6 "Manrope", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  letter-spacing: -.012em;
 }
 button, input, textarea, select { font: inherit; }
 button, a, summary, .btn-like { touch-action: manipulation; }
@@ -60,8 +70,8 @@ button, .btn-like { user-select: none; -webkit-user-select: none; }
 .mono, .stepper b, .tasbih span, .top-stat b, .stat b, .badge, .metric-head b { font-variant-numeric: tabular-nums; }
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { color: var(--text); }
-h1 { margin-bottom: 0; font-size: 30px; line-height: 1.08; letter-spacing: -.045em; font-weight: 700; }
-h2 { margin: 0; display: flex; align-items: center; gap: 11px; font-size: 21px; line-height: 1.2; letter-spacing: -.035em; font-weight: 650; }
+h1 { margin-bottom: 0; font-size: 34px; line-height: 1.12; letter-spacing: -.045em; font-weight: 750; }
+h2 { margin: 0; display: flex; align-items: center; gap: 11px; font-size: 22px; line-height: 1.25; letter-spacing: -.035em; font-weight: 700; }
 h3 { margin: 0; }
 .muted { color: var(--muted); font-weight: 450; }
 .small { font-size: 13px; }
@@ -519,6 +529,41 @@ button.up-item { min-width: 0; padding: 3px 0; overflow: hidden; color: var(--te
 .guide-content li { padding: 3px 0; }
 .guide-content code { overflow-wrap: anywhere; }
 
+/* One type family, with readable labels and a quieter display hierarchy. */
+.brand b { font-size: 19px; font-weight: 750; letter-spacing: -.045em; }
+.brand small { font-size: 10px; font-weight: 650; letter-spacing: .1em; }
+.nav-caption, .section-kicker, .period-kicker, .eyebrow,
+.now .label, .now .row-label, .mini-heading, .period-insight small {
+  font-size: 10px; font-weight: 700; line-height: 1.5; letter-spacing: .1em;
+}
+.quick-nav a { font-size: 14px; font-weight: 600; }
+.sidebar-note b { font-size: 12px; }
+.sidebar-note div span, .top-stat div span { font-size: 11px; line-height: 1.3; }
+.now .title { font-size: 28px; font-weight: 650; letter-spacing: -.04em; }
+.now .running { font-size: 32px; font-weight: 650; letter-spacing: -.04em; }
+.hero b { font-weight: 650; letter-spacing: -.065em; }
+.hero span, .score-caption { font-size: 12px; }
+.ring-legend b { font-size: 14px; font-weight: 650; }
+.ring-legend span:not(.val), .g-label { font-size: 11px; }
+.g-sub { font-size: 10px; }
+button, .btn-like { font-size: 13px; font-weight: 650; letter-spacing: -.015em; }
+button.link, .row-label, .chip, .tasbih small { font-size: 12px; }
+.focus .name { font-size: 14px; font-weight: 650; }
+.focus .time { font-size: 12px; }
+.focus .ctrls button { font-size: 11px; }
+.metric-head { font-size: 13px; font-weight: 650; }
+.metric-head b, .food-list, .week-dots span, .timeline li { font-size: 12px; }
+.target { font-size: 10px; font-weight: 650; letter-spacing: .015em; }
+.timeline li .t, .seg button, .goal-note, .period-stat > span, .period-stat small,
+.period-insight div span, .stat span, .charts figcaption .muted, .legend-row,
+.legend, .badge, .cal-wd, .cal-day-head .muted, .cal-nav .cal-today { font-size: 11px; }
+.period-head h3, .trend-detail-head h3 { font-size: 18px; font-weight: 650; }
+.period-stat b { font-size: 21px; font-weight: 650; }
+.period-insight b { font-size: 14px; font-weight: 650; }
+.charts figcaption, .chart-empty, .list li, .upcoming-title, .settings label,
+.sync-box .muted, .sync-guide summary { font-size: 12px; }
+.stat b { font-size: 18px; font-weight: 650; }
+
 /* Hover is reserved for devices with a real pointer */
 @media (hover: hover) and (pointer: fine) {
   .quick-nav a:hover { background: #f0f3e9; color: var(--accent-dark); }
@@ -541,10 +586,10 @@ button.up-item { min-width: 0; padding: 3px 0; overflow: hidden; color: var(--te
   }
   .brand { margin: 0; }
   .brand-icon { width: 34px; height: 34px; border-radius: 12px; font-size: 17px; }
-  .brand b { font-size: 14px; }
+  .brand b { font-size: 16px; }
   .brand small, .nav-caption, .sidebar-note { display: none; }
   .quick-nav { display: flex; flex-direction: row; align-items: center; justify-content: flex-end; gap: 4px; overflow: visible; }
-  .quick-nav a { flex: 1 1 auto; justify-content: center; min-height: 42px; padding: 8px 10px; gap: 7px; font-size: 11px; white-space: nowrap; }
+  .quick-nav a { flex: 1 1 auto; justify-content: center; min-height: 42px; padding: 8px 10px; gap: 7px; font-size: 12px; white-space: nowrap; }
   .quick-nav a .nav-icon { font-size: 14px; }
   .top { padding: 25px 30px 18px; }
   main { padding: 0 30px 42px; }
@@ -575,19 +620,19 @@ button.up-item { min-width: 0; padding: 3px 0; overflow: hidden; color: var(--te
   .quick-nav { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 2px; overflow: visible; }
   .quick-nav > a {
     display: flex; flex-direction: column; justify-content: center; gap: 3px; min-width: 0; min-height: 56px; padding: 5px 2px;
-    border-radius: 14px; font-size: 9px;
+    border-radius: 14px; font-size: 10.5px;
   }
   .quick-nav a .nav-icon { width: auto; height: auto; font-size: 17px; line-height: 1.1; }
   .quick-nav a.active, .quick-nav a[aria-current="page"] { background: #edf3e6; }
   .top { padding: calc(19px + env(safe-area-inset-top)) 17px 16px; align-items: flex-start; gap: 14px; }
-  h1 { font-size: 27px; }
-  .eyebrow { font-size: 9px; }
-  .sub { margin-top: 6px; font-size: 11px; }
+  h1 { font-size: 29px; }
+  .eyebrow { font-size: 10px; }
+  .sub { margin-top: 6px; font-size: 12px; }
   .top-stats { gap: 6px; }
   .top-stat { min-width: 0; gap: 7px; padding: 7px 8px; border-radius: 13px; }
   .stat-symbol { width: 26px; height: 26px; border-radius: 9px; font-size: 12px; }
-  .top-stat b { font-size: 12px; }
-  .top-stat div span { font-size: 8px; }
+  .top-stat b { font-size: 13px; }
+  .top-stat div span { font-size: 10px; }
   main { grid-template-columns: minmax(0,1fr); gap: 13px; padding: 0 14px 27px; }
   .card, .card.wide, .card.now, #overview, #plan, #trends, #calendar, #settings,
   #deen, #focus, #body, #weight, #exams, #debts { grid-column: 1 / -1; }
@@ -595,38 +640,38 @@ button.up-item { min-width: 0; padding: 3px 0; overflow: hidden; color: var(--te
   .card.now { padding: 0; border-radius: 22px; }
   .section-heading { align-items: flex-start; gap: 9px; margin-bottom: 17px; }
   .section-heading .heading-note { display: none; }
-  h2 { gap: 8px; font-size: 19px; }
+  h2 { gap: 8px; font-size: 20px; }
   .section-mark { width: 31px; height: 31px; border-radius: 11px; font-size: 14px; }
-  .section-kicker { font-size: 8px; }
-  .heading-note { max-width: 130px; padding-top: 4px; font-size: 9px; }
+  .section-kicker { font-size: 10px; }
+  .heading-note { max-width: 130px; padding-top: 4px; font-size: 11px; }
   .now-grid { grid-template-columns: minmax(0,1fr); gap: 12px; padding: 22px 21px 16px; }
   .now-grid > div + div { padding: 14px 15px; border-radius: 15px; }
-  .now .title { font-size: 22px; }
-  .now .running { font-size: 25px; }
+  .now .title { font-size: 24px; }
+  .now .running { font-size: 28px; }
   .now .row-label { margin: 0 21px 7px; }
   .now .left-list { gap: 5px; margin: 0 21px 16px; }
-  .now .left-list li { padding: 4px 8px; font-size: 9px; }
+  .now .left-list li { padding: 4px 8px; font-size: 11px; }
   .glance-grid { grid-template-columns: minmax(0,1fr); gap: 13px; }
   .score-panel { grid-template-columns: minmax(0,1fr) auto; min-height: 136px; padding: 14px 17px; border-radius: 17px; }
   .hero b { font-size: 56px; }
   .rings { width: 115px; height: 115px; }
-  .score-caption { font-size: 10px; }
+  .score-caption { font-size: 11px; }
   .glance-side { padding: 4px 2px 0; }
   .ring-legend { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
   .ring-legend li { gap: 6px; }
   .ring-legend .sw { width: 7px; height: 7px; margin-top: 4px; }
-  .ring-legend b { font-size: 10px; }
+  .ring-legend b { font-size: 11px; }
   .ring-legend .val { float: none; margin-left: 3px; }
-  .ring-legend span:not(.val) { font-size: 9px; line-height: 1.4; }
+  .ring-legend span:not(.val) { font-size: 10px; line-height: 1.5; }
   .gauge-board { margin-top: 17px; padding-top: 15px; }
   .gauges { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
   .gauge-tile { padding: 8px 3px; border-radius: 13px; }
   .gauge { width: 51px; height: 51px; }
-  .g-label { font-size: 9px; }
-  .g-sub { font-size: 8px; }
+  .g-label { font-size: 11px; }
+  .g-sub { font-size: 10px; }
   .deen-split { gap: 8px; }
   .chips { gap: 5px; }
-  .chip { min-height: 44px; font-size: 10px; }
+  .chip { min-height: 44px; font-size: 11px; }
   .focus { gap: 8px; }
   .focus .ctrls button { min-width: 39px; }
   .metric { padding: 12px; border-radius: 15px; }
@@ -637,14 +682,14 @@ button.up-item { min-width: 0; padding: 3px 0; overflow: hidden; color: var(--te
   .body-split .metric-head { flex-wrap: wrap; }
   .timeline { grid-template-columns: minmax(0,1fr); }
   .timeline li { grid-template-columns: 79px minmax(0,1fr) 18px; gap: 9px; min-height: 44px; padding: 7px 8px; }
-  .timeline li .t { font-size: 9px; }
+  .timeline li .t { font-size: 10px; }
   .period-board { padding: 15px; border-radius: 17px; }
   .trends-heading { align-items: center; flex-wrap: wrap; }
   .trends-heading .seg { width: 100%; }
   .trends-heading .seg button { flex: 1; }
   .period-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .period-stat { padding: 9px; }
-  .period-stat b { font-size: 17px; }
+  .period-stat b { font-size: 19px; }
   .period-main { grid-template-columns: minmax(0,1fr); gap: 9px; }
   .period-plot { padding: 5px; }
   .period-insight { padding: 11px; }
@@ -662,7 +707,7 @@ button.up-item { min-width: 0; padding: 3px 0; overflow: hidden; color: var(--te
   .cal-cell .dots i { width: 4px; height: 4px; }
   .cal-side { padding-top: 13px; border-top: 1px solid var(--line); }
   .settings { grid-template-columns: minmax(0,1fr); gap: 10px; }
-  .settings label { font-size: 10px; }
+  .settings label { font-size: 12px; }
   .field-unit { top: 29px; }
   .sync-box form { grid-template-columns: minmax(0,1fr); }
   .sync-box form .tiny-actions { grid-column: auto; }
@@ -678,10 +723,10 @@ button.up-item { min-width: 0; padding: 3px 0; overflow: hidden; color: var(--te
   .rings { width: 100px; height: 100px; }
   .hero b { font-size: 48px; }
   .ring-legend { gap: 5px; }
-  .ring-legend b { font-size: 9px; }
+  .ring-legend b { font-size: 11px; }
   .focus .ctrls { gap: 2px; }
   .focus .ctrls button { min-width: 34px; padding: 5px; }
-  .debt-list li > button:not(.x) { padding: 5px 6px; font-size: 9px; }
+  .debt-list li > button:not(.x) { padding: 5px 6px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
@@ -832,4 +877,46 @@ code { background: #292a30; color: #d3e9ac; }
     box-shadow: 0 12px 34px rgba(0, 0, 0, .55);
   }
   .quick-nav a.active, .quick-nav a[aria-current="page"] { background: #2d2939; }
+}
+
+/* Crisp vector icons, sized by their role rather than by the surrounding font. */
+.app-icon { display: inline-block; flex: none; width: 20px; height: 20px; vertical-align: middle; }
+.app-icon .icon-wash { fill: currentColor; stroke: none; opacity: .13; }
+[data-icon] { display: inline-flex; flex: none; align-items: center; justify-content: center; }
+.nav-icon, .quick-nav a .nav-icon { width: 24px; height: 24px; }
+.nav-icon .app-icon { width: 23px; height: 23px; }
+.quick-nav a[aria-current="page"] .icon-wash { opacity: .28; }
+.brand-icon .app-icon { width: 25px; height: 25px; }
+.section-mark { width: 36px; height: 36px; border: 1px solid rgba(255, 255, 255, .065); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04); }
+.section-mark .app-icon { width: 22px; height: 22px; }
+.stat-symbol .app-icon, .note-mark .app-icon, .summary-icon .app-icon, .insight-symbol .app-icon { width: 19px; height: 19px; }
+button .app-icon, .btn-like .app-icon, .guide-icon .app-icon { width: 16px; height: 16px; }
+.heading-note .app-icon, .footer-star .app-icon { width: 14px; height: 14px; }
+.chart-icon { vertical-align: -3px; }
+.chart-icon .app-icon { width: 16px; height: 16px; }
+.summary-action { border: 0; background: transparent; }
+.summary-action .app-icon { width: 18px; height: 18px; }
+.trend-details[open] .summary-action, .timeline-details[open] .summary-action { transform: rotate(180deg); }
+.focus .ctrls .adjust { gap: 2px; min-width: 36px; min-height: 40px; padding: 6px; }
+.focus .ctrls .adjust .app-icon { width: 12px; height: 12px; }
+.focus .ctrls .play { width: 44px; min-width: 44px; height: 44px; padding: 10px; border-radius: 50%; }
+.focus .ctrls .play .app-icon { width: 20px; height: 20px; }
+.chip { gap: 3px; }
+.chip .app-icon { width: 11px; height: 11px; stroke-width: 2; }
+.stepper .app-icon { width: 18px; height: 18px; }
+.tasbih small { display: inline-flex; align-items: center; gap: 5px; }
+.tasbih small [data-icon] { font-size: inherit; line-height: inherit; }
+.tasbih small .app-icon { width: 13px; height: 13px; }
+.ok-mark .app-icon { width: 11px; height: 11px; stroke-width: 2; }
+.timeline .ok .app-icon { width: 16px; height: 16px; }
+.now .row-label .app-icon { width: 13px; height: 13px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (pointer: coarse) {
+  .focus .ctrls .adjust { min-width: 44px; min-height: 44px; }
+}
+@media (max-width: 700px) {
+  .quick-nav > a { gap: 4px; }
+  .section-mark { width: 34px; height: 34px; }
+  .section-mark .app-icon { width: 21px; height: 21px; }
+  .stat-symbol .app-icon { width: 16px; height: 16px; }
 }
