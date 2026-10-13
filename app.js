@@ -1,5 +1,7 @@
 'use strict';
 
+const icon = window.TakeoverIcons.svg;
+
 /* ---------- Goals ---------- */
 const { GOALS, FOCUS, PRAYERS, kcalOf, dayParts, dayScore } = window.TakeoverMetrics;
 // The "day" rolls over at 4am, so a late night still counts toward the day you were living.
@@ -191,35 +193,36 @@ function renderNow() {
   }
   const curFocus = cur && FOCUS.find(f => f.id === cur.link);
   let actions = '';
-  if (curFocus && r?.id !== curFocus.id) actions += `<button class="primary" data-start="${curFocus.id}" aria-label="Start ${esc(curFocus.label)} timer">▶ Start</button>`;
-  if (cur?.link === 'quran' && d.quran < GOALS.quran) actions += `<button data-quick="quran">+ Quran</button>`;
-  if (cur?.link === 'call' && !d.call) actions += `<button data-quick="call">✓ Call</button>`;
-  if (cur?.link === 'gym' && !d.gym) actions += `<button data-quick="gym">✓ Gym</button>`;
+  if (curFocus && r?.id !== curFocus.id) actions += `<button class="primary" data-start="${curFocus.id}" aria-label="Start ${esc(curFocus.label)} timer">${icon('play')} Start</button>`;
+  if (cur?.link === 'quran' && d.quran < GOALS.quran) actions += `<button data-quick="quran">${icon('plus')} Quran</button>`;
+  if (cur?.link === 'call' && !d.call) actions += `<button data-quick="call">${icon('phone')} Call</button>`;
+  if (cur?.link === 'gym' && !d.gym) actions += `<button data-quick="gym">${icon('check')} Gym</button>`;
   if (cur?.link === 'pray') {
     const i = d.prayers.findIndex(p => !p);
-    if (i >= 0) actions += `<button data-quick="pray" data-i="${i}">✓ ${PRAYERS[i]}</button>`;
+    if (i >= 0) actions += `<button data-quick="pray" data-i="${i}">${icon('check')} ${PRAYERS[i]}</button>`;
   }
 
   const right = runF
     ? `<div class="label">FOCUS TIMER</div><div class="title">${esc(runF.label)}</div>
        <div class="running" id="run-clock">${fmtClock((Date.now() - r.start) / 1000)}</div>
-       <div class="actions"><button data-start="${runF.id}" aria-label="Stop ${esc(runF.label)} timer">■ Stop</button></div>`
+       <div class="actions"><button data-start="${runF.id}" aria-label="Stop ${esc(runF.label)} timer">${icon('stop')} Stop</button></div>`
     : `<div class="label">FOCUS TIMER</div><div class="title muted">No timer</div>`;
 
   const remainingItems = (parts(k) || []).filter(([, v]) => v < 1).map(([n]) => n);
   const remaining = remainingItems.slice(0, 4).map(n => `<li>${esc(n)}</li>`).join('');
   const more = remainingItems.length > 4 ? `<li class="left-more">+${remainingItems.length - 4}</li>` : '';
   $('now-card').innerHTML = `<div class="now-grid"><div>${left}${actions ? `<div class="actions">${actions}</div>` : ''}</div><div>${right}</div></div>
-    <div class="row-label">${remainingItems.length ? `${remainingItems.length} TO GO` : '✓ All done · Alhamdulillah'}</div>
+    <div class="row-label">${remainingItems.length ? `${remainingItems.length} TO GO` : `${icon('check')} All done · Alhamdulillah`}</div>
     ${remainingItems.length ? `<ul class="left-list">${remaining}${more}</ul>` : ''}`;
 }
 
 function renderDeen() {
   const d = day();
-  $('prayers').innerHTML = PRAYERS.map((p, i) => `<button class="chip ${d.prayers[i] ? 'on' : ''}" data-prayer="${i}">${d.prayers[i] ? '✓ ' : ''}${p}</button>`).join('');
+  $('prayers').innerHTML = PRAYERS.map((p, i) => `<button class="chip ${d.prayers[i] ? 'on' : ''}" data-prayer="${i}" aria-pressed="${d.prayers[i]}">${d.prayers[i] ? icon('check') : ''}${p}</button>`).join('');
   $('quran-val').textContent = d.quran;
   const call = $('call-btn');
-  call.textContent = d.call ? '✓ Called' : '○ Call';
+  call.innerHTML = `${icon(d.call ? 'check' : 'phone')} ${d.call ? 'Called' : 'Call'}`;
+  call.setAttribute('aria-pressed', String(d.call));
   call.classList.toggle('on', d.call);
   $('tasbih-val').textContent = d.tasbih;
   $('tasbih-label').textContent = `/ ${GOALS.tasbih}`;
@@ -233,7 +236,7 @@ function renderFocus() {
     const on = state.running?.id === f.id;
     return `<div class="focus ${on ? 'running' : ''}">
       <div><div class="name">${esc(f.label)}</div><div class="time" data-ftime="${f.id}">${fmtMin(m)} / ${fmtMin(f.goal)}</div></div>
-      <div class="ctrls"><button data-adj="${f.id}" data-v="-15" aria-label="Subtract 15 minutes from ${esc(f.label)}">−15</button><button data-adj="${f.id}" data-v="15" aria-label="Add 15 minutes to ${esc(f.label)}">+15</button><button class="play" data-start="${f.id}" aria-label="${on ? 'Stop' : 'Start'} ${esc(f.label)} timer">${on ? '■' : '▶'}</button></div>
+      <div class="ctrls"><button class="adjust" data-adj="${f.id}" data-v="-15" aria-label="Subtract 15 minutes from ${esc(f.label)}">${icon('minus')}<span>15</span></button><button class="adjust" data-adj="${f.id}" data-v="15" aria-label="Add 15 minutes to ${esc(f.label)}">${icon('plus')}<span>15</span></button><button class="play" data-start="${f.id}" aria-label="${on ? 'Stop' : 'Start'} ${esc(f.label)} timer" aria-pressed="${on}">${icon(on ? 'stop' : 'play')}</button></div>
       <div class="bar"><i data-fbar="${f.id}" style="width:${pct(Math.min(m / f.goal, 1))}"></i></div>
     </div>`;
   }).join('');
@@ -244,7 +247,7 @@ function renderBody() {
   const kcal = kcalOf(d);
   $('kcal-total').textContent = `${num(kcal)} · ${kcal <= GOALS.kcal ? `${num(GOALS.kcal - kcal)} left` : `${num(kcal - GOALS.kcal)} over`}`;
   const kb = $('kcal-bar'); kb.style.width = pct(Math.min(kcal / GOALS.kcal, 1)); kb.classList.toggle('over', kcal > GOALS.kcal);
-  $('food-list').innerHTML = d.food.map((f, i) => `<li><span>${esc(f.name || 'Food')}</span><span>${num(f.kcal)} <button class="x" data-delfood="${i}" aria-label="Remove ${esc(f.name || 'food')}">✕</button></span></li>`).join('');
+  $('food-list').innerHTML = d.food.map((f, i) => `<li><span>${esc(f.name || 'Food')}</span><span>${num(f.kcal)} <button class="x" data-delfood="${i}" aria-label="Remove ${esc(f.name || 'food')}">${icon('close')}</button></span></li>`).join('');
 
   $('steps-total').textContent = `${num(d.steps)} · ${pct(Math.min(d.steps / GOALS.steps, 1))}`;
   $('steps-bar').style.width = pct(Math.min(d.steps / GOALS.steps, 1));
@@ -256,7 +259,7 @@ function renderBody() {
   }).join('');
   const g = gymThisWeek();
   $('gym-week').textContent = `${g}/${GOALS.gymPerWeek} this week`;
-  const gb = $('gym-btn'); gb.textContent = d.gym ? '✓ Done' : '+ Log session'; gb.setAttribute('aria-label', d.gym ? 'Gym session complete' : 'Log gym session'); gb.classList.toggle('on', d.gym);
+  const gb = $('gym-btn'); gb.innerHTML = `${icon(d.gym ? 'check' : 'plus')} ${d.gym ? 'Done' : 'Log session'}`; gb.setAttribute('aria-label', d.gym ? 'Gym session complete' : 'Log gym session'); gb.setAttribute('aria-pressed', String(d.gym)); gb.classList.toggle('on', d.gym);
 
   setIfIdle($('sleep-form').sleep, d.sleep ?? '');
   setIfIdle($('screen-form').screen, d.screen ?? '');
@@ -308,7 +311,7 @@ function renderGlance() {
   $('gauges').innerHTML = tiles.map(t => {
     const done = !t.warn && t.v >= 1;
     return `<div class="gauge-tile" data-tip="${esc(`${t.label}: ${t.c} ${t.sub}`)}">${C.gauge({ value: t.v, center: t.c, cls: t.cls })}
-      <div class="g-label">${done ? '<span class="ok-mark">✓</span> ' : ''}${t.label}</div><div class="g-sub ${t.warn ? 'warn' : ''}">${esc(t.sub)}</div></div>`;
+      <div class="g-label">${done ? `<span class="ok-mark">${icon('check')}</span> ` : ''}${t.label}</div><div class="g-sub ${t.warn ? 'warn' : ''}">${esc(t.sub)}</div></div>`;
   }).join('');
 }
 
@@ -445,16 +448,16 @@ function renderPeriodSummary() {
 
   let insight;
   if (!currentDays.length) {
-    insight = ['✦', 'Your story starts here', `Log a day to see your ${trendPeriod} trend.`];
+    insight = ['spark', 'Your story starts here', `Log a day to see your ${trendPeriod} trend.`];
   } else if (previousAverage == null) {
-    insight = ['✦', 'Building your baseline', 'Keep logging to unlock a period comparison.'];
+    insight = ['spark', 'Building your baseline', 'Keep logging to unlock a period comparison.'];
   } else {
     const change = Math.round(averageScore - previousAverage);
-    const direction = change > 1 ? '↗' : change < -1 ? '↘' : '→';
+    const direction = change > 1 ? 'arrowUp' : change < -1 ? 'arrowDown' : 'arrowRight';
     const title = change > 1 ? `Up ${change} points` : change < -1 ? `Down ${Math.abs(change)} points` : 'Holding steady';
     insight = [direction, title, `Compared with the previous ${count} ${periodLabel}.`];
   }
-  $('period-insight').innerHTML = `<span class="insight-symbol" aria-hidden="true">${insight[0]}</span><div><small>THE TREND</small><b>${insight[1]}</b><span>${insight[2]}</span></div>`;
+  $('period-insight').innerHTML = `<span class="insight-symbol" aria-hidden="true">${icon(insight[0])}</span><div><small>THE TREND</small><b>${insight[1]}</b><span>${insight[2]}</span></div>`;
 }
 
 function renderTrends() {
@@ -546,7 +549,7 @@ function renderTimeline() {
   $('timeline').innerHTML = plan.map(b => {
     const cls = b === cur ? 'now' : (b.e <= t ? 'past' : '');
     const done = linkDone(b.link, d, k);
-    return `<li class="${cls}"><span class="t">${esc(b.from)}<span class="to">–${esc(b.to)}</span></span><span>${esc(b.title)}</span><span class="ok">${done ? '✓' : ''}</span></li>`;
+    return `<li class="${cls}"><span class="t">${esc(b.from)}<span class="to">–${esc(b.to)}</span></span><span>${esc(b.title)}</span><span class="ok">${done ? `${icon('check')}<span class="sr-only">Complete</span>` : ''}</span></li>`;
   }).join('');
 }
 
@@ -556,7 +559,7 @@ function renderExams() {
   $('exam-list').innerHTML = list.length ? list.map(e => {
     const cls = e.left < 0 ? '' : e.left <= 3 ? 'soon' : e.left <= 7 ? 'near' : '';
     const label = e.left < 0 ? 'done' : e.left === 0 ? 'TODAY' : e.left === 1 ? 'tomorrow' : `in ${e.left} days`;
-    return `<li><span class="grow">${esc(e.name)} <span class="muted small">${parseKey(e.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</span></span><span class="badge ${cls}">${label}</span><button class="x" data-delexam="${e.i}" aria-label="remove">✕</button></li>`;
+    return `<li><span class="grow">${esc(e.name)} <span class="muted small">${parseKey(e.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</span></span><span class="badge ${cls}">${label}</span><button class="x" data-delexam="${e.i}" aria-label="Remove ${esc(e.name)}">${icon('close')}</button></li>`;
   }).join('') : '<li class="muted">Add exams for countdowns.</li>';
 }
 
@@ -570,8 +573,8 @@ function renderMoney() {
     return `<li class="${left === 0 ? 'paid' : ''}">
       <span class="grow"><button class="link" data-rename="${i}" style="padding:0;color:inherit;text-decoration:none">${esc(d.name)}</button> <span class="muted small">${d.paid ? `paid ${num(d.paid)} of ${num(d.amount)}` : ''}</span></span>
       <span class="badge">${num(left)}${c}</span>
-      ${left ? `<button data-pay="${i}" aria-label="Record payment from ${esc(d.name)}">✓ Paid</button>` : ''}
-      <button class="x" data-deldebt="${i}" aria-label="remove">✕</button></li>`;
+      ${left ? `<button data-pay="${i}" aria-label="Record payment from ${esc(d.name)}">${icon('check')} Paid</button>` : ''}
+      <button class="x" data-deldebt="${i}" aria-label="Remove ${esc(d.name)}">${icon('close')}</button></li>`;
   }).join('');
 }
 
@@ -629,7 +632,7 @@ function renderCalendar() {
   const chN = diffDays(state.startDate, calSel) + 1;
   $('cal-day').innerHTML = `<div class="cal-day-head"><b>${esc(parseKey(calSel).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</b>
     <span class="muted small">${[calSel === k ? 'Today' : calSel > k ? inDays(diffDays(k, calSel)) : '', chN >= 1 && chN <= GOALS.days ? `Challenge day ${chN}` : '', sd && calSel <= k ? `Score ${pct(score(calSel))}` : ''].filter(Boolean).join(' · ')}</span></div>
-    <ul class="list">${items.length ? items.map(e => `<li><i class="dot-key ${e.kind === 'exam' ? 's2' : 's1'}"></i><span class="grow">${e.time ? `<span class="muted mono">${esc(e.time)}</span> ` : ''}${esc(e.title)}${e.kind === 'exam' ? ' <span class="badge">exam</span>' : ''}</span><button class="x" data-del-item="${e.kind}:${e.i}" aria-label="Remove">✕</button></li>`).join('') : '<li class="muted small">No events</li>'}</ul>`;
+    <ul class="list">${items.length ? items.map(e => `<li><i class="dot-key ${e.kind === 'exam' ? 's2' : 's1'}"></i><span class="grow">${e.time ? `<span class="muted mono">${esc(e.time)}</span> ` : ''}${esc(e.title)}${e.kind === 'exam' ? ' <span class="badge">exam</span>' : ''}</span><button class="x" data-del-item="${e.kind}:${e.i}" aria-label="Remove ${esc(e.title)}">${icon('close')}</button></li>`).join('') : '<li class="muted small">No events</li>'}</ul>`;
 
   const up = upcomingItems();
   $('upcoming').innerHTML = up.length ? up.map(e => {
@@ -735,14 +738,15 @@ document.addEventListener('click', e => {
     case 'edit-plan': {
       const ed = $('plan-editor'); ed.hidden = !ed.hidden;
       if (!ed.hidden) { $('plan-text').value = state.plan; $('timeline-details').open = true; }
-      b.textContent = ed.hidden ? '✎ Edit' : '× Close';
+      b.innerHTML = `${icon(ed.hidden ? 'edit' : 'close')} ${ed.hidden ? 'Edit' : 'Close'}`;
+      b.setAttribute('aria-label', ed.hidden ? 'Edit plan' : 'Close plan editor');
       return;
     }
     case 'plan-save': {
       const text = $('plan-text').value;
       const n = parsePlan(text).length;
       if (!n) return toast('No valid lines — use HH:MM-HH:MM | Title | link');
-      state.plan = text; $('plan-editor').hidden = true; $('edit-plan').textContent = '✎ Edit';
+      state.plan = text; $('plan-editor').hidden = true; $('edit-plan').innerHTML = `${icon('edit')} Edit`; $('edit-plan').setAttribute('aria-label', 'Edit plan');
       return commit(`Plan saved (${n} blocks)`);
     }
     case 'plan-reset': $('plan-text').value = DEFAULT_PLAN; return;
