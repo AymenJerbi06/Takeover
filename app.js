@@ -734,14 +734,14 @@ document.addEventListener('click', e => {
     case 'edit-plan': {
       const ed = $('plan-editor'); ed.hidden = !ed.hidden;
       if (!ed.hidden) $('plan-text').value = state.plan;
-      b.textContent = ed.hidden ? 'edit' : 'close';
+      b.textContent = ed.hidden ? '✎ Edit' : '× Close';
       return;
     }
     case 'plan-save': {
       const text = $('plan-text').value;
       const n = parsePlan(text).length;
       if (!n) return toast('No valid lines — use HH:MM-HH:MM | Title | link');
-      state.plan = text; $('plan-editor').hidden = true; $('edit-plan').textContent = 'edit';
+      state.plan = text; $('plan-editor').hidden = true; $('edit-plan').textContent = '✎ Edit';
       return commit(`Plan saved (${n} blocks)`);
     }
     case 'plan-reset': $('plan-text').value = DEFAULT_PLAN; return;
@@ -839,8 +839,14 @@ function activateQuickLink(hash) {
     if (active) link.setAttribute('aria-current', 'location');
     else link.removeAttribute('aria-current');
   });
+  const more = document.querySelector('.mobile-more');
+  const moreHashes = [...more.querySelectorAll('a')].map(link => link.hash);
+  more.classList.toggle('active', moreHashes.includes(hash));
 }
 activateQuickLink(location.hash || '#overview');
+quickLinks.forEach(link => link.addEventListener('click', () => {
+  document.querySelector('.mobile-more').open = false;
+}));
 const observedSections = new Map();
 if ('IntersectionObserver' in window) {
   const sectionObserver = new IntersectionObserver(entries => {
