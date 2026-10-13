@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#0e0f13">
-  <script src="theme.js?v=20261013-ux"></script>
+  <script src="theme.js?v=20261013-color"></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,8 +16,8 @@
   <meta name="apple-mobile-web-app-title" content="Takeover">
   <title>Takeover · 40 Days</title>
   <link rel="preload" href="assets/fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="style.css?v=20261013-ux">
-  <link rel="stylesheet" href="experience.css?v=20261013-ux">
+  <link rel="stylesheet" href="style.css?v=20261013-color">
+  <link rel="stylesheet" href="experience.css?v=20261013-color">
 </head>
 <body>
   <a class="skip-link" href="#view-today" data-view-target="today">Skip to content</a>
@@ -121,7 +121,7 @@
             <div><div class="section-kicker">ENERGY</div><h2 id="body-title"><span class="section-mark body-mark" data-icon="body" aria-hidden="true"></span>Body</h2></div>
           </div>
 
-          <div class="metric">
+          <div class="metric metric-food">
             <div class="metric-head"><span>Calories <span class="target">MAX 1.4K</span></span><b id="kcal-total"></b></div>
             <div class="bar"><i id="kcal-bar"></i></div>
             <form id="food-form" class="inline-form wrap">
@@ -132,7 +132,7 @@
             <ul class="food-list" id="food-list"></ul>
           </div>
 
-          <div class="metric">
+          <div class="metric metric-steps">
             <div class="metric-head"><span>Steps <span class="target">20K</span></span><b id="steps-total"></b></div>
             <div class="bar"><i id="steps-bar"></i></div>
             <form id="steps-form" class="inline-form">
@@ -148,14 +148,14 @@
           </div>
 
           <div class="split body-split">
-            <div class="metric">
+            <div class="metric metric-sleep">
               <div class="metric-head"><span>Sleep <span class="target">7H+</span></span></div>
               <form id="sleep-form" class="inline-form">
                 <input name="sleep" type="number" inputmode="decimal" step="0.25" min="0" max="16" placeholder="Hours" aria-label="Sleep in hours">
                 <button>Save</button>
               </form>
             </div>
-            <div class="metric">
+            <div class="metric metric-screen">
               <div class="metric-head"><span>Screen time</span></div>
               <form id="screen-form" class="inline-form">
                 <input name="screen" type="number" inputmode="numeric" min="0" placeholder="Minutes" aria-label="Screen time in minutes">
@@ -354,10 +354,10 @@
   <script src="config.js"></script>
   <script src="api/config"></script>
   <aside class="session-dock" id="session-dock" aria-label="Active focus session" hidden></aside>
-  <script src="icons.js?v=20261013-ux"></script>
+  <script src="icons.js?v=20261013-color"></script>
   <script src="metrics.js?v=20261013-reset"></script>
   <script src="charts.js"></script>
-  <script src="app.js?v=20261013-ux"></script>
+  <script src="app.js?v=20261013-color"></script>
   <script src="sync.js?v=20261013-reset"></script>
 </body>
 </html>
