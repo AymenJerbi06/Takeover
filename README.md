@@ -2,7 +2,7 @@
 
 A personal daily tracker: what to do today, what's done, and what you're doing right now.
 
-Open `index.html` in any browser (no build step, no server). Everything is saved in the browser on that device; use **Export backup** in Settings to keep a copy.
+Open `index.html` in any browser for local tracking (no build step). Host the app over HTTPS for accounts and sync. Progress is saved in the browser; use **Profile → Preferences → Export backup** to keep a copy.
 
 ## What it tracks
 
@@ -31,8 +31,9 @@ The schedule in **Focus → Your schedule** is editable (`HH:MM-HH:MM | Title | 
 
 - **Today:** a short overview of your current block and progress. Open **Check in** to log Deen and Body goals; expand **All daily goals** for the full breakdown.
 - **Focus:** start a session or expand **Log time** to adjust minutes. A floating timer stays available while you visit other views; **Finish** saves the session.
-- **Progress:** review days, weeks, or months, with detailed charts available on demand.
-- **Plan:** calendar, events, and exams. **More:** money, settings, backups, and sync.
+- **Progress:** review days, weeks, or months, with detailed charts and a friends leaderboard.
+- **Plan:** calendar, events, and exams.
+- **Profile:** sign in, edit your name and photo, manage security and sync, or connect with friends. **Preferences** holds challenge settings, backups, and money tracking.
 
 Use the sun or moon button in the header to switch between dark and light mode. The choice is remembered on this browser. On phones and tablets, navigation floats at the bottom of the screen.
 
@@ -46,7 +47,7 @@ Websites can't read Apple Health directly, but an iOS Shortcut can send the numb
 
 `https://<your-pages-url>/?steps=12345&sleep=7.5&screen=180`
 
-Shortcut: **Find Health Samples** (Steps, today) → **Calculate Statistics** (Sum) → **URL** (`…?steps=` + result) → **Open URLs**. Run it from an evening automation. The full steps are under *Settings & data* in the app.
+Shortcut: **Find Health Samples** (Steps, today) → **Calculate Statistics** (Sum) → **URL** (`…?steps=` + result) → **Open URLs**. Run it from an evening automation. The full steps are under **Profile → Preferences** in the app.
 
 Screen time (iOS Screen Time / Flora) isn't exposed to apps or Shortcuts, so it's entered by hand.
 
@@ -55,13 +56,13 @@ Screen time (iOS Screen Time / Flora) isn't exposed to apps or Shortcuts, so it'
 Without it, data lives only in the browser on one device. With it, you sign in and the dashboard is saved to your Supabase database and shared across your devices.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **SQL Editor → New query**, paste the contents of [`supabase.sql`](supabase.sql), **Run**.
+2. **SQL Editor → New query**, run [`supabase.sql`](supabase.sql), then [`supabase-social.sql`](supabase-social.sql) for profiles, friends, and shared scores. The second migration leaves existing dashboard progress intact.
 3. Give the app your keys, either way works:
    - **Easiest:** link Supabase to the project in Vercel (Integrations / Storage), or add `SUPABASE_URL` and `SUPABASE_ANON_KEY` under Vercel → Settings → Environment Variables, then redeploy. `api/config.js` passes the public values to the page. Check by opening `https://<your-app>.vercel.app/api/config`: it should show your Supabase URL.
    - Or copy the **Project URL** and **anon public** key from **Project Settings → API** into [`config.js`](config.js) and push.
-4. **Authentication → URL Configuration**: set **Site URL** to your Vercel URL.
-5. Optional: **Authentication → Sign In / Providers → Email**, turn off **Confirm email** if you don't want to click a confirmation link.
-6. Open the app → **Settings & data → Cloud sync** → **Create account**, then **Sign in**. Do this on every device with the same account.
+4. **Authentication → URL Configuration**: set **Site URL** to your deployed URL. Allow the app's root URL and these callback URLs: `/?account=confirm`, `/?account=email`, and `/?account=recovery` on that same origin. Include a subpath if you host under one.
+5. **Authentication → Sign In / Providers**: keep **Confirm email** enabled. Under **Email**, keep **Secure email change** enabled so both old and new inboxes must confirm a change, and enable **Secure password change**. The app also asks for the current password before a security change.
+6. Open **Profile → Account → Create account**, confirm the email, then sign in on every device with the same account. Existing users can use the dedicated sign-in form or request a password reset.
 
 The anon key is designed to be public; Row Level Security in `supabase.sql` makes sure only your account can read or write your row. Never put the `service_role` key in `config.js`.
 
@@ -70,6 +71,16 @@ The header shows **This device only** until cloud sync is configured, then **Sig
 When a device signs in for the first time and the cloud already has data, the cloud copy is used (it asks first if that device already has its own data). Export backups from both devices before connecting existing local saves, and connect the device with the progress you want to keep first. After that, the most recent whole-dashboard change wins; edits on separate devices are not merged field by field. Requests are serialized and writes check the row revision to avoid overwriting an intervening upload without first reading it.
 
 If the app says **Saved on this device only**, check that both `SUPABASE_URL` and a public `SUPABASE_ANON_KEY` / `SUPABASE_PUBLISHABLE_KEY` are configured, then redeploy. The plain localhost preview cannot execute Vercel's `/api/config`; use the deployed site, or fill the public values in `config.js` for local development.
+
+## Profiles and friends
+
+**Profile → Account** lets you change your display name, upload or remove a profile photo, change your email, and change or reset your password. Photos are cropped locally to a small JPEG before saving. Account identity is stored separately from the dashboard backup.
+
+**Profile → Friends** provides a private invitation code. Requests must be accepted before shared scores become visible. Friends see names and profile photos; email addresses, individual goals, and personal logs stay private. Score sharing starts off. Turning it off removes that account's shared score history without removing its private dashboard.
+
+**Progress → Leaderboard** shows today, the current week, or the current month. Scores are self-reported overall completion, averaged across elapsed days since each challenge started; unlogged days count as zero. The app publishes at most the latest 367 days and only after the underlying dashboard has synced. The database checks the dashboard revision to reject uploads from stale device copies.
+
+The social migration uses row-level security for owned profiles and scoped database functions for friendships and scores. A friend code grants the ability to request a connection, not to read progress.
 
 ## Progress email every 3 days (Resend)
 

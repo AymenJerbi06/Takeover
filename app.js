@@ -78,6 +78,7 @@ function save(touch = true) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
   catch (e) { toast('Could not save — storage is blocked in this browser'); }
   if (touch) window.TakeoverSync?.schedule();
+  if (touch) window.dispatchEvent(new CustomEvent('takeover:state-saved'));
 }
 function day(k = todayKey()) {
   if (!state.days[k]) {
@@ -849,14 +850,15 @@ $('import').addEventListener('change', async e => {
 /* ---------- iOS Shortcut sync: ?steps=12345&sleep=7.5&screen=180 ---------- */
 function applyUrlParams() {
   const p = new URLSearchParams(location.search);
-  if (![...p.keys()].length) return;
+  if (!['steps', 'sleep', 'screen'].some(name => p.has(name))) return;
   const k = /^\d{4}-\d{2}-\d{2}$/.test(p.get('date') || '') ? p.get('date') : todayKey();
   const d = day(k), got = [];
   const n = name => { const v = Number(p.get(name)); return p.has(name) && Number.isFinite(v) && v >= 0 ? v : null; };
   if (n('steps') != null) { d.steps = Math.round(n('steps')); got.push(`${num(d.steps)} steps`); }
   if (n('sleep') != null) { d.sleep = Math.round(n('sleep') * 4) / 4; got.push(`${d.sleep}h sleep`); }
   if (n('screen') != null) { d.screen = Math.round(n('screen')); got.push(`${d.screen}m screen`); }
-  history.replaceState(null, '', location.pathname);
+  ['steps', 'sleep', 'screen', 'date'].forEach(name => p.delete(name));
+  history.replaceState(null, '', `${location.pathname}${p.size ? '?' + p.toString() : ''}${location.hash}`);
   if (got.length) { save(); setTimeout(() => toast(`Synced: ${got.join(', ')}`), 300); }
 }
 
@@ -875,12 +877,12 @@ setInterval(tick, 1000);
 
 /* Five focused views replace the old page-long section dock. */
 const viewNames = {
-  today: 'Today', focus: 'Focus', progress: 'Progress', planner: 'Plan', more: 'More',
+  today: 'Today', focus: 'Focus', progress: 'Progress', planner: 'Plan', more: 'Money', profile: 'Profile',
 };
 const legacyViews = {
   overview: 'today', 'now-card': 'today', deen: 'today', body: 'today',
   focus: 'focus', plan: 'focus', trends: 'progress', weight: 'progress',
-  calendar: 'planner', exams: 'planner', debts: 'more', settings: 'more',
+  calendar: 'planner', exams: 'planner', debts: 'more', settings: 'profile',
 };
 const viewLinks = [...document.querySelectorAll('[data-view-target]')];
 const viewPanels = [...document.querySelectorAll('.view-panel')];
@@ -930,6 +932,7 @@ function activateView(name, { focus = false, skip = false } = {}) {
     else link.removeAttribute('aria-current');
   });
   pageTitle.textContent = viewNames[view];
+  document.body.dataset.view = view;
   document.title = `${viewNames[view]} · Takeover`;
 
   // SVG charts need a measured panel width before they can be drawn.
@@ -955,7 +958,7 @@ document.addEventListener('click', event => {
 
 activateView(viewFromHash());
 applyDailyHash();
-if (location.hash && !location.hash.startsWith('#view-')) {
+if (location.hash && !location.hash.startsWith('#view-') && !/(access_token|refresh_token|error|type)=/.test(location.hash)) {
   history.replaceState(null, '', `${location.pathname}${location.search}#view-${viewFromHash()}`);
 }
 $('trend-details').addEventListener('toggle', event => {
@@ -964,11 +967,8 @@ $('trend-details').addEventListener('toggle', event => {
 $('sync-indicator').addEventListener('click', event => {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   event.preventDefault();
-  history.pushState(null, '', '#settings');
-  activateView('more');
-  $('settings').scrollIntoView({ block: 'start', behavior: 'instant' });
-  $('settings-title').setAttribute('tabindex', '-1');
-  $('settings-title').focus({ preventScroll: true });
+  window.Takeover.navigate('profile');
+  selectDestination('profile', 'account');
 });
 window.addEventListener('hashchange', () => {
   activateView(viewFromHash(), { focus: true });
@@ -977,4 +977,37 @@ window.addEventListener('hashchange', () => {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   state = load(); render();
+});
+
+window.Takeover.navigate = view => {
+  history.pushState(null, '', `#view-${view}`);
+  activateView(view, { focus: true });
+};
+function selectDestination(group, name, focus = false) {
+  document.querySelectorAll(`[data-${group}-tab]`).forEach(tab => {
+    const selected = tab.dataset[`${group}Tab`] === name;
+    tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;
+    $(tab.getAttribute('aria-controls')).hidden = !selected;
+    if (selected && focus) tab.focus();
+  });
+  if (group === 'progress' && name === 'personal') { renderTrends(); renderWeight(); }
+  window.dispatchEvent(new CustomEvent('takeover:section', { detail: { group, name } }));
+}
+['profile', 'progress'].forEach(group => {
+  document.querySelectorAll(`[data-${group}-tab]`).forEach(tab => {
+    tab.addEventListener('click', () => selectDestination(group, tab.dataset[`${group}Tab`]));
+    tab.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const tabs = [...document.querySelectorAll(`[data-${group}-tab]`)];
+      const index = tabs.indexOf(tab);
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      selectDestination(group, tabs[next].dataset[`${group}Tab`], true);
+    });
+  });
+});
+document.addEventListener('click', event => {
+  if (event.target.closest('[data-open-preferences]')) selectDestination('profile', 'preferences', true);
+  if (event.target.closest('[data-open-friends]')) { window.Takeover.navigate('profile'); selectDestination('profile', 'friends', true); }
+  if (event.target.closest('[data-open-account]')) { window.Takeover.navigate('profile'); selectDestination('profile', 'account', true); }
 });

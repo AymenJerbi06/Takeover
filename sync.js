@@ -33,7 +33,8 @@
     return;
   }
 
-  const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  const sb = window.TakeoverAccount?.client;
+  if (!sb) return;
   let user = null;
   let timer = null, active = null, pending = false, sessionVersion = 0;
   let deferredRemote = false;
@@ -43,48 +44,17 @@
 
   function draw() {
     if (user) {
-      box.innerHTML = `<div><b>Cloud sync</b> · ${esc(user.email)}</div>
-        <div class="small" role="status"><span class="sync-dot" aria-hidden="true"></span><span class="sync-msg"></span></div>
-        <p class="muted">Use this same email on your other devices. Updates refresh automatically.</p>
-        <div class="tiny-actions"><button type="button" id="sync-now">Sync now</button><button type="button" class="link" id="sync-out">Sign out</button></div>
-        <div id="sync-choice" hidden><p><b>Choose the progress to keep</b></p><p class="muted">This device and your account have separate saves. Export a backup below before replacing either copy.</p><div class="tiny-actions"><button type="button" id="sync-use-cloud">Use account progress</button><button type="button" id="sync-use-device">Use this device’s progress</button></div></div>`;
+      box.innerHTML = '<div class="small" role="status"><span class="sync-dot" aria-hidden="true"></span><span class="sync-msg"></span></div><p class="account-note">Changes refresh automatically on your signed-in devices.</p><button class="account-secondary" type="button" id="sync-now">Sync now</button><div id="sync-choice" hidden><h3>Which progress should we keep?</h3><p class="account-note" id="sync-choice-description"></p><div class="tiny-actions"><button type="button" id="sync-use-cloud">Use account progress</button><button type="button" id="sync-use-device">Use this device’s progress</button></div></div>';
       box.querySelector('#sync-now').onclick = () => pull();
       const choose = choice => {
         firstChoice = choice; needsChoice = false;
-        box.querySelector('#sync-choice').hidden = true;
-        pull();
+        box.querySelector('#sync-choice').hidden = true; pull();
       };
       box.querySelector('#sync-use-cloud').onclick = () => choose('cloud');
       box.querySelector('#sync-use-device').onclick = () => choose('device');
-      box.querySelector('#sync-out').onclick = async () => {
-        const { error } = await sb.auth.signOut();
-        if (error) setStatus('err', error.message);
-      };
     } else {
-      box.innerHTML = `<div><b>Cloud sync</b> <span class="muted small">— sign in to keep your data safe and use it on every device</span></div>
-        <form id="sync-form">
-          <input name="email" type="email" placeholder="Email" aria-label="Sync account email" autocomplete="email" required>
-          <input name="password" type="password" placeholder="Password (6+ chars)" aria-label="Sync account password" autocomplete="current-password" minlength="6" required>
-          <div class="tiny-actions"><button name="in">Sign in</button><button name="up" class="link">Create account</button></div>
-        </form>
-        <div class="small" role="status"><span class="sync-dot" aria-hidden="true"></span><span class="sync-msg"></span></div>`;
-      setStatus('', 'Sign in with the same email on your phone and desktop.', 'Sign in to sync');
-      const f = box.querySelector('#sync-form');
-      f.addEventListener('submit', async e => {
-        e.preventDefault();
-        const creds = { email: f.email.value.trim(), password: f.password.value };
-        setStatus('busy', 'Working…');
-        try {
-          if (e.submitter?.name === 'up') {
-            const { data, error } = await sb.auth.signUp(creds);
-            if (error) return setStatus('err', error.message);
-            if (!data.session) setStatus('', 'Account created — confirm the email we sent you, then sign in here.', 'Confirm email');
-          } else {
-            const { error } = await sb.auth.signInWithPassword(creds);
-            if (error) setStatus('err', error.message);
-          }
-        } catch { setStatus('err', 'Could not connect. Please try again when you are online.'); }
-      });
+      box.innerHTML = '<div class="small" role="status"><span class="sync-dot" aria-hidden="true"></span><span class="sync-msg"></span></div><p class="account-note">Sign in above to bring your progress to every device.</p>';
+      setStatus('', 'Progress is saved in this browser.', 'Sign in to sync');
     }
   }
 
@@ -118,14 +88,27 @@
       const local = T.state, remote = row?.data;
       const firstTimeHere = local.syncUser !== account;
       let useRemote = remote && (remote.updatedAt || 0) > (local.updatedAt || 0);
+      // A browser can still hold the previous account's private dashboard after
+      // sign-out. Never copy that dashboard into a new account implicitly.
+      const belongsToAnotherAccount = local.syncUser && local.syncUser !== account;
+      if (firstTimeHere && !firstChoice && ((remote && local.updatedAt) || belongsToAnotherAccount)) {
+        needsChoice = true;
+        clearTimeout(timer); timer = null; pending = false;
+        box.querySelector('#sync-choice-description').textContent = remote
+          ? 'Your account and this device have separate saves. Export a backup in Preferences before replacing either copy.'
+          : 'This device holds another account’s progress. Start fresh for this account, or explicitly copy the device’s progress into it. Export a backup in Preferences before starting fresh.';
+        box.querySelector('#sync-use-cloud').textContent = remote ? 'Use account progress' : 'Start fresh';
+        box.querySelector('#sync-use-device').textContent = remote ? 'Use this device’s progress' : 'Copy device progress to this account';
+        box.querySelector('#sync-choice').hidden = false;
+        setStatus('busy', 'Choose which progress to keep in Profile → Account.', 'Choose progress');
+        return;
+      }
+      if (!remote && firstTimeHere && firstChoice === 'cloud') {
+        // Takeover's state setter fills in the fresh dashboard defaults.
+        T.state = { updatedAt: Date.now(), syncUser: account };
+        T.save(false); T.render();
+      }
       if (remote && firstTimeHere) {
-        if (local.updatedAt && !firstChoice) {
-          needsChoice = true;
-          clearTimeout(timer); timer = null; pending = false;
-          box.querySelector('#sync-choice').hidden = false;
-          setStatus('busy', 'Choose which progress to keep in More → Cloud sync.', 'Choose progress');
-          return;
-        }
         useRemote = firstChoice !== 'device';
         if (!useRemote) {
           local.updatedAt = Math.max(Date.now(), (remote.updatedAt || 0) + 1, (local.updatedAt || 0) + 1);
@@ -150,6 +133,7 @@
         if (state.syncUser !== account) { state.syncUser = account; T.save(false); }
         firstChoice = null;
         setStatus('ok', `Synced ${time()}`);
+        window.dispatchEvent(new CustomEvent('takeover:synced', { detail: { userId: account, updatedAt: T.state.updatedAt || 0 } }));
         return;
       }
       // Freeze the outgoing copy. Edits during the request trigger another cycle.
@@ -172,6 +156,7 @@
         setStatus('busy', 'Saving your latest changes…', 'Saving');
       } else {
         setStatus('ok', `Synced ${time()}`);
+        window.dispatchEvent(new CustomEvent('takeover:synced', { detail: { userId: account, updatedAt: T.state.updatedAt || 0 } }));
       }
     } catch (error) {
       if (current()) {
@@ -193,7 +178,7 @@
     schedule() {
       if (!user) return;
       if (needsChoice) {
-        setStatus('busy', 'Saved on this device. Choose which progress to keep in More → Cloud sync.', 'Choose progress');
+        setStatus('busy', 'Saved on this device. Choose which progress to keep in Profile → Account.', 'Choose progress');
         return;
       }
       setStatus('busy', 'Saved on this device. Uploading your changes…', 'Saving');
@@ -211,8 +196,7 @@
     if (!document.hidden || pending) pull();
   });
 
-  sb.auth.onAuthStateChange((_event, session) => {
-    const u = session?.user || null;
+  function accountChanged(u) {
     if (u?.id === user?.id) return;
     sessionVersion++;
     active?.abort();
@@ -221,6 +205,8 @@
     user = u;
     draw();
     if (user) { setStatus('busy', 'Connecting your account…'); requestSync(); }
-  });
+  }
+  window.addEventListener('takeover:account', event => accountChanged(event.detail.user));
   draw();
+  accountChanged(window.TakeoverAccount?.user || null);
 })();
