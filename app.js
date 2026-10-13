@@ -243,10 +243,11 @@ function renderFocus() {
   $('focus-status-text').textContent = state.running ? 'Session in progress' : 'Ready when you are';
   $('focus-status-text').parentElement.classList.toggle('is-running', !!state.running);
   const symbols = { study: 'exams', drop: 'wallet', fullstack: 'code', video: 'video' };
+  const tones = { study: 'violet', drop: 'mint', fullstack: 'blue', video: 'coral' };
   list.innerHTML = FOCUS.map((f, i) => {
     const m = focusMins(d, f.id, k);
     const on = state.running?.id === f.id;
-    return `<article class="focus ${on ? 'running' : ''}" aria-label="${esc(f.label)}">
+    return `<article class="focus ${on ? 'running' : ''}" data-tone="${tones[f.id]}" aria-label="${esc(f.label)}">
       <div class="focus-card-top"><span class="focus-symbol">${icon(symbols[f.id])}</span><span class="focus-number">${on ? 'IN SESSION' : String(i + 1).padStart(2, '0')}</span></div>
       <div class="name">${esc(f.label)}</div>
       <div class="focus-measure"><b data-fminutes="${f.id}">${fmtMin(m)}</b><span>of ${fmtMin(f.goal)}</span></div>
@@ -463,7 +464,7 @@ function renderPeriodSummary() {
     ['Active periods', `${periods.filter(p => p.loggedKeys.length).length}/${count}`, periodLabel],
     ['Focus time', fmtMin(totalFocus), windowLabel],
   ];
-  $('period-summary').innerHTML = stats.map(([label, value, sub]) => `<div class="period-stat"><span>${label}</span><b>${value}</b><small>${sub}</small></div>`).join('');
+  $('period-summary').innerHTML = stats.map(([label, value, sub], i) => `<div class="period-stat" data-tone="${['violet', 'mint', 'blue', 'coral'][i]}"><span>${label}</span><b>${value}</b><small>${sub}</small></div>`).join('');
 
   const noun = trendPeriod === 'day' ? 'daily score' : trendPeriod === 'week' ? 'weekly average' : 'monthly average';
   $('period-chart-title').textContent = `${noun[0].toUpperCase()}${noun.slice(1)}`;

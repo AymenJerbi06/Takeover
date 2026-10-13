@@ -256,3 +256,110 @@ button:focus-visible:active, .btn-like:focus-visible:active { transform: none; }
 @media (prefers-reduced-motion: reduce) {
   button:active, .btn-like:active { transform: none; }
 }
+
+/* Category color is carried by the surface, symbol, and action together. */
+[data-tone="violet"], .quick-nav a[data-view-target="focus"], #deen,
+.metric-sleep, .section-mark.settings-mark {
+  --tone-surface: var(--violet-surface); --tone-ink: var(--violet-ink); --tone-fill: var(--violet-fill);
+}
+[data-tone="blue"], .quick-nav a[data-view-target="today"], .metric-steps,
+.section-mark.plan-mark, .section-mark.calendar-mark, .charts figure:has(#c-steps) {
+  --tone-surface: var(--blue-surface); --tone-ink: var(--blue-ink); --tone-fill: var(--blue-fill);
+}
+[data-tone="mint"], .quick-nav a[data-view-target="progress"], #body,
+.gym-metric, .section-mark.money-mark, .charts figure:has(#c-prayers) {
+  --tone-surface: var(--mint-surface); --tone-ink: var(--mint-ink); --tone-fill: var(--mint-fill);
+}
+[data-tone="coral"], .quick-nav a[data-view-target="planner"], .metric-food,
+.section-mark.weight-mark, .charts figure:has(#c-kcal) {
+  --tone-surface: var(--coral-surface); --tone-ink: var(--coral-ink); --tone-fill: var(--coral-fill);
+}
+[data-tone="amber"], .quick-nav a[data-view-target="more"], .metric-screen,
+.section-mark.exam-mark {
+  --tone-surface: var(--amber-surface); --tone-ink: var(--amber-ink); --tone-fill: var(--amber-fill);
+}
+.quick-nav a.active, .quick-nav a[aria-current="page"] {
+  color: var(--tone-ink); background: var(--tone-surface); border-color: transparent;
+}
+.quick-nav a.active .nav-icon, .quick-nav a[aria-current="page"] .nav-icon { color: var(--tone-ink); }
+.daily-switch button[aria-selected="true"], .seg button[aria-pressed="true"] {
+  background: var(--violet-surface); color: var(--violet-ink); border-color: transparent;
+}
+.theme-toggle { color: var(--amber-ink); background: var(--amber-surface); border-color: transparent; }
+.brand-icon { background: var(--violet-fill); color: var(--tone-button-ink); }
+.sidebar-note { background: var(--violet-surface); }
+.note-mark { color: var(--tone-button-ink); background: var(--violet-fill); }
+.top-stat:nth-child(1) b { color: var(--blue-ink); }
+.top-stat:nth-child(2) b { color: var(--coral-ink); }
+.top-stat:nth-child(3) b { color: var(--violet-ink); }
+.section-mark { color: var(--tone-ink, var(--violet-ink)); background: var(--tone-surface, var(--violet-surface)); }
+.hero b { color: var(--violet-ink); }
+.ring-legend li:nth-child(1) .val { color: var(--s1); }
+.ring-legend li:nth-child(2) .val { color: var(--s2); }
+.ring-legend li:nth-child(3) .val { color: var(--s3); }
+
+/* A single expressive summary panel, inspired by the financial app references. */
+.card.now {
+  --text: #ffffff; --muted: #e4eaff; --accent: #ffffff; --accent-dark: #ffffff;
+  --accent-ink: #273b7a; --canvas: #273b7a; --panel: rgba(255, 255, 255, .1);
+  --card: rgba(255, 255, 255, .13); --line-subtle: rgba(255, 255, 255, .18);
+  --control-border: rgba(255, 255, 255, .24);
+  background: linear-gradient(120deg, var(--spotlight-start), var(--spotlight-end));
+  border-color: transparent; box-shadow: var(--shadow);
+}
+.now-focus-icon { color: #ffffff; background: rgba(255, 255, 255, .12); }
+.now .focus-link { background: #ffffff; color: #273b7a; }
+.now button.link { color: var(--muted); }
+.now .now-session-overview .title { font-size: 36px; font-variant-numeric: tabular-nums; letter-spacing: -.045em; }
+.now .actions button { background: rgba(12, 19, 54, .32); color: #ffffff; }
+.now button.primary { background: #ffffff; color: #273b7a; }
+
+/* Pastel in daylight, colored ink at night. All four sessions stay distinguishable. */
+.focus[data-tone] {
+  background: linear-gradient(135deg, var(--tone-surface), color-mix(in srgb, var(--tone-surface) 38%, var(--card)));
+  border-color: color-mix(in srgb, var(--tone-fill) 15%, var(--line-subtle));
+}
+.focus[data-tone] .focus-symbol { background: var(--tone-fill); color: var(--tone-button-ink); }
+.focus[data-tone] .focus-measure b, .focus[data-tone] .focus-number { color: var(--tone-ink); }
+.focus[data-tone] .bar { background: color-mix(in srgb, var(--tone-fill) 16%, var(--card)); }
+.focus[data-tone] .bar i { background: var(--tone-fill); }
+.focus[data-tone] .session-start { color: var(--tone-button-ink); background: var(--tone-fill); border-color: transparent; }
+.focus[data-tone].running { border-color: var(--tone-fill); box-shadow: inset 0 0 0 1px var(--tone-fill); }
+.focus[data-tone].running .session-start { background: var(--text); color: var(--canvas); }
+.focus-status.is-running { color: var(--mint-ink); background: var(--mint-surface); }
+.focus-status.is-running .live-dot { background: var(--mint-fill); }
+.session-indicator { background: var(--mint-surface); color: var(--mint-ink); }
+.session-clock { color: var(--mint-ink); }
+
+/* The color of a metric follows its purpose, and over-limit states stay explicit. */
+#deen .section-mark, #body .section-mark { background: var(--tone-surface); color: var(--tone-ink); }
+#deen .tasbih { background: var(--violet-surface); border-color: transparent; }
+#deen .tasbih span { color: var(--violet-ink); }
+#deen .chip.on, #deen .toggle.on { background: var(--violet-surface); color: var(--violet-ink); border-color: var(--violet-fill); }
+#body .metric { background: var(--tone-surface); }
+#body .metric-head b { color: var(--tone-ink); }
+#body .bar { background: color-mix(in srgb, var(--tone-fill) 18%, var(--card)); }
+#body .bar i { background: var(--tone-fill); }
+#body .bar i.over { background: var(--bad); }
+#body .target { border-color: color-mix(in srgb, var(--tone-fill) 20%, transparent); color: var(--tone-ink); }
+#body .metric button:not(.x) { background: var(--tone-fill); color: var(--tone-button-ink); border-color: transparent; }
+#body .metric button.toggle { background: var(--card); color: var(--tone-ink); border-color: var(--tone-fill); }
+#body .metric button.toggle.on { background: var(--tone-fill); color: var(--tone-button-ink); border-color: transparent; }
+#body .week-dots span.on { background: var(--mint-fill); color: var(--tone-button-ink); }
+#body .week-dots span.today { outline-color: var(--mint-fill); }
+.period-stat[data-tone] { background: var(--tone-surface); border-color: transparent; }
+.period-stat[data-tone] b { color: var(--tone-ink); }
+.period-insight { background: var(--blue-surface); border-color: transparent; }
+.insight-symbol { background: var(--blue-fill); color: var(--tone-button-ink); }
+.period-insight b { color: var(--blue-ink); }
+.charts .chart-icon { color: var(--tone-ink, var(--violet-ink)); }
+.calendar-board { background: color-mix(in srgb, var(--blue-surface) 40%, var(--card)); }
+.cal-nav button[data-cal="today"] { color: var(--blue-ink); background: var(--blue-surface); border-color: transparent; }
+.timeline li.now { border-color: var(--blue-fill); background: var(--blue-surface); }
+.debt-list .badge { color: var(--mint-ink); background: var(--mint-surface); }
+.sync-guide .guide-icon { color: var(--blue-ink); }
+@media (hover: hover) and (pointer: fine) {
+  .quick-nav a:hover { color: var(--tone-ink); background: var(--tone-surface); }
+  .quick-nav a:hover .nav-icon { color: var(--tone-ink); }
+  .now button.link:hover { background: rgba(255, 255, 255, .12); color: #ffffff; }
+}
