@@ -3,9 +3,7 @@
 const icon = window.TakeoverIcons.svg;
 
 /* ---------- Goals ---------- */
-const { GOALS, FOCUS, PRAYERS, kcalOf, dayParts, dayScore } = window.TakeoverMetrics;
-// The "day" rolls over at 4am, so a late night still counts toward the day you were living.
-const DAY_START_HOUR = 4;
+const { GOALS, FOCUS, PRAYERS, kcalOf, dayParts, dayScore, CHALLENGE_START_DATE, normalizeChallenge } = window.TakeoverMetrics;
 const STORE_KEY = 'takeover.v1';
 
 const DEFAULT_PLAN = `06:00-06:30 | Fajr · Quran (3 pages) · Tasbih | quran
@@ -40,7 +38,8 @@ const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate(
 const parseKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
 const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
 const diffDays = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 86400000);
-const todayKey = () => { const d = new Date(); d.setHours(d.getHours() - DAY_START_HOUR); return keyOf(d); };
+// Match the calendar date shown in the header, including the hours after midnight.
+const todayKey = () => keyOf(new Date());
 const weekStart = k => { const d = parseKey(k); return addDays(k, -((d.getDay() + 6) % 7)); }; // Monday
 const fmtMin = m => { m = Math.round(m); const h = Math.floor(m / 60); return h ? `${h}h ${pad(m % 60)}m` : `${m}m`; };
 const fmtClock = s => { s = Math.max(0, Math.floor(s)); return `${Math.floor(s / 3600)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`; };
@@ -53,7 +52,8 @@ function freshState() {
     version: 1,
     updatedAt: 0, // last local change (ms); cloud sync uses it to pick the newer copy
     syncUser: null, // Supabase user this device last synced with
-    startDate: todayKey(),
+    startDate: CHALLENGE_START_DATE,
+    challengeReset: CHALLENGE_START_DATE,
     startWeight: null,
     currency: '',
     plan: DEFAULT_PLAN,
@@ -68,7 +68,7 @@ function freshState() {
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return { ...freshState(), ...JSON.parse(raw) };
+    if (raw) return { ...freshState(), ...normalizeChallenge(JSON.parse(raw)) };
   } catch (e) { /* fall through */ }
   return freshState();
 }
@@ -103,13 +103,16 @@ function score(k) {
 function streak() {
   let k = todayKey(), n = 0;
   if (score(k) < 0.8) k = addDays(k, -1); // today still in progress doesn't break it
-  while (score(k) >= 0.8) { n++; k = addDays(k, -1); }
+  while (k >= state.startDate && score(k) >= 0.8) { n++; k = addDays(k, -1); }
   return n;
 }
 function gymThisWeek() {
   const ws = weekStart(todayKey());
   let n = 0;
-  for (let i = 0; i < 7; i++) if (state.days[addDays(ws, i)]?.gym) n++;
+  for (let i = 0; i < 7; i++) {
+    const k = addDays(ws, i);
+    if (k >= state.startDate && state.days[k]?.gym) n++;
+  }
   return n;
 }
 
@@ -255,7 +258,7 @@ function renderBody() {
   const ws = weekStart(k);
   $('gym-dots').innerHTML = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, i) => {
     const dk = addDays(ws, i);
-    return `<span class="${state.days[dk]?.gym ? 'on' : ''} ${dk === k ? 'today' : ''}">${l}</span>`;
+    return `<span class="${dk >= state.startDate && state.days[dk]?.gym ? 'on' : ''} ${dk === k ? 'today' : ''}">${l}</span>`;
   }).join('');
   const g = gymThisWeek();
   $('gym-week').textContent = `${g}/${GOALS.gymPerWeek} this week`;
@@ -329,7 +332,7 @@ function rangeKeys() {
     return Array.from({ length: n }, (_, i) => addDays(state.startDate, i));
   }
   const n = Number(trendRange);
-  return Array.from({ length: n }, (_, i) => addDays(k, i - n + 1));
+  return Array.from({ length: n }, (_, i) => addDays(k, i - n + 1)).filter(date => date >= state.startDate);
 }
 function axisLabels(keys) {
   const n = keys.length;
@@ -350,7 +353,7 @@ function hasProgress(d) {
 
 function progressPeriodCount(mode) {
   const today = todayKey();
-  const loggedKeys = Object.keys(state.days || {}).filter(k => k <= today && hasProgress(state.days[k])).sort();
+  const loggedKeys = Object.keys(state.days || {}).filter(k => k >= state.startDate && k <= today && hasProgress(state.days[k])).sort();
   const historyStart = loggedKeys[0] || (state.startDate <= today ? state.startDate : today);
   if (mode === 'day') return Math.max(1, Math.min(14, diffDays(historyStart, today) + 1));
   if (mode === 'week') return Math.max(1, Math.min(12, Math.floor(diffDays(weekStart(historyStart), weekStart(today)) / 7) + 1));
@@ -377,7 +380,7 @@ function progressPeriods(mode, count, offset = 0) {
     if (end > today) end = today;
     const keys = [];
     for (let k = start; k <= end; k = addDays(k, 1)) keys.push(k);
-    const loggedKeys = keys.filter(k => hasProgress(state.days[k]));
+    const loggedKeys = keys.filter(k => k >= state.startDate && hasProgress(state.days[k]));
     const scores = loggedKeys.map(k => score(k) * 100);
     const focusMinutes = loggedKeys.reduce((sum, k) => sum + FOCUS.reduce((n, f) => n + focusMins(state.days[k], f.id, k), 0), 0);
     return {
@@ -802,7 +805,7 @@ $('import').addEventListener('change', async e => {
     const data = JSON.parse(await file.text());
     if (!data || typeof data.days !== 'object') throw new Error();
     if (!confirm('Replace everything on this device with the backup?')) return;
-    state = { ...freshState(), ...data };
+    state = { ...freshState(), ...normalizeChallenge(data) };
     commit('Backup restored');
   } catch { toast('That file is not a Takeover backup'); }
   e.target.value = '';
@@ -825,7 +828,7 @@ function applyUrlParams() {
 // Hooks for sync.js
 window.Takeover = {
   get state() { return state; },
-  set state(v) { state = { ...freshState(), ...v }; },
+  set state(v) { state = { ...freshState(), ...normalizeChallenge(v) }; },
   save, render, toast,
 };
 

@@ -4,20 +4,19 @@
    covering the three days before. Reads the dashboard from Supabase, sends through Resend.
 
    Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY, REPORT_TO, CRON_SECRET,
-        REPORT_FROM (default onboarding@resend.dev), REPORT_TZ (default UTC, e.g. Africa/Tunis)
+        REPORT_FROM (default onboarding@resend.dev), REPORT_TZ (default America/Vancouver)
 
    Manual:  /api/report?key=CRON_SECRET&preview=1   → show the email in the browser
             /api/report?key=CRON_SECRET&force=1     → send it now */
-const { GOALS, FOCUS, PRAYERS, kcalOf, dayParts, dayScore } = require('../metrics.js');
+const { GOALS, FOCUS, PRAYERS, kcalOf, dayParts, dayScore, normalizeChallenge } = require('../metrics.js');
 
-const DAY_START_HOUR = 4; // same rollover as the dashboard
 const pad = n => String(n).padStart(2, '0');
 const toKey = d => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 const parseKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
 const addDays = (k, n) => { const d = parseKey(k); d.setUTCDate(d.getUTCDate() + n); return toKey(d); };
 const diffDays = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 86400000);
 const todayIn = tz => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
-  .format(new Date(Date.now() - DAY_START_HOUR * 3600000));
+  .format(new Date());
 const label = k => parseKey(k).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 const pct = x => `${Math.round(x * 100)}%`;
 const num = n => Math.round(n).toLocaleString('en-US');
@@ -35,11 +34,11 @@ const AYAT = [
 function analyze(state, today) {
   const keys = [-3, -2, -1].map(n => addDays(today, n));
   const prevKeys = [-6, -5, -4].map(n => addDays(today, n));
-  const days = keys.map(k => ({ k, d: state.days?.[k] || null }));
+  const days = keys.map(k => ({ k, d: k >= state.startDate ? state.days?.[k] || null : null }));
   const scores = days.map(x => dayScore(x.d));
   const avg = scores.reduce((a, b) => a + b, 0) / 3;
-  const prevAvg = prevKeys.reduce((a, k) => a + dayScore(state.days?.[k]), 0) / 3;
-  const hasPrev = prevKeys.some(k => state.days?.[k]);
+  const prevAvg = prevKeys.reduce((a, k) => a + (k >= state.startDate ? dayScore(state.days?.[k]) : 0), 0) / 3;
+  const hasPrev = prevKeys.some(k => k >= state.startDate && state.days?.[k]);
 
   // Average completion per area, to find what's slipping.
   const areas = {};
@@ -60,7 +59,7 @@ function analyze(state, today) {
   const beforeW = weights.filter(w => w.date < keys[0]).at(-1);
 
   let streak = 0;
-  for (let k = addDays(today, -1); dayScore(state.days?.[k]) >= 0.8; k = addDays(k, -1)) streak++;
+  for (let k = addDays(today, -1); k >= state.startDate && dayScore(state.days?.[k]) >= 0.8; k = addDays(k, -1)) streak++;
 
   const debts = state.debts || [];
   return {
@@ -177,9 +176,10 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'unauthorized' });
   }
   try {
-    const state = await loadState();
-    if (!state) return res.status(200).json({ skipped: 'no data in Supabase yet' });
-    const today = todayIn(process.env.REPORT_TZ || 'UTC');
+    const saved = await loadState();
+    if (!saved) return res.status(200).json({ skipped: 'no data in Supabase yet' });
+    const state = normalizeChallenge(saved);
+    const today = todayIn(process.env.REPORT_TZ || 'America/Vancouver');
     const since = diffDays(state.startDate, today);
     const due = since >= 3 && (since % 3 === 0 || since === GOALS.days);
     const preview = q.get('preview') === '1';
