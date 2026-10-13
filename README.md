@@ -25,7 +25,16 @@ Plus weight vs. a −15 kg goal, exam countdowns, money owed to you, and a 40-da
 
 The challenge restarts on **October 13, 2026 (Day 1)** and ends on **November 21, 2026 (Day 40)**. Existing saves receive this start date once, including cloud copies and imported backups. Earlier logs stay available in the calendar and backups; challenge streaks and progress counters begin with the new start date. You can still adjust **Challenge start** in Settings afterward.
 
-The schedule in **Today's plan** is editable (`HH:MM-HH:MM | Title | link`); the top card shows the current block and the running timer.
+The schedule in **Focus → Your schedule** is editable (`HH:MM-HH:MM | Title | link`); the top card shows the current block and the running timer.
+
+## Find your way around
+
+- **Today:** a short overview of your current block and progress. Open **Check in** to log Deen and Body goals; expand **All daily goals** for the full breakdown.
+- **Focus:** start a session or expand **Log time** to adjust minutes. A floating timer stays available while you visit other views; **Finish** saves the session.
+- **Progress:** review days, weeks, or months, with detailed charts available on demand.
+- **Plan:** calendar, events, and exams. **More:** money, settings, backups, and sync.
+
+Use the sun or moon button in the header to switch between dark and light mode. The choice is remembered on this browser. On phones and tablets, navigation floats at the bottom of the screen.
 
 ## Use it on your phone
 

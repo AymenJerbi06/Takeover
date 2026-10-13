@@ -153,6 +153,7 @@ function startTimer(id) {
   stopTimer();
   if (!same) state.running = { id, start: Date.now(), day: todayKey() };
   save(); render();
+  toast(same ? 'Session saved' : 'Focus session started');
 }
 
 /* ---------- Rendering ---------- */
@@ -166,6 +167,7 @@ const pct = x => `${Math.round(x * 100)}%`;
 const level = s => (s >= 0.8 ? 'l3' : s >= 0.5 ? 'l2' : s > 0 ? 'l1' : 'l0');
 
 function renderHeader() {
+  day();
   const now = new Date();
   $('today-date').textContent = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   $('clock').textContent = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -173,6 +175,8 @@ function renderHeader() {
   $('challenge-day').textContent = n < 1 ? `–${1 - n}` : `${Math.min(n, GOALS.days)}/${GOALS.days}`;
   $('streak').textContent = streak();
   $('today-score').textContent = pct(score(todayKey()));
+  const goals = parts(todayKey()) || [];
+  $('daily-completion').textContent = `${goals.filter(([, value]) => value >= 1).length} of ${goals.length} goals complete`;
 }
 
 function renderNow() {
@@ -189,7 +193,7 @@ function renderNow() {
     const remain = (cur.e - t + 1440) % 1440;
     left = `<div class="label">NOW · ${esc(cur.from)}–${esc(cur.to)}</div>
       <div class="title">${esc(cur.title)}</div>
-      <div class="meta">${fmtMin(remain)} left${next && next !== cur ? ` · Next ${esc(next.from)} ${esc(next.title)}` : ''}</div>`;
+      <div class="meta">${fmtMin(remain)} remaining</div>`;
   } else {
     left = `<div class="label">FREE</div><div class="title">Open time</div>
       <div class="meta">${next ? `Next ${esc(next.from)} · ${esc(next.title)}` : 'Edit plan to add a block'}</div>`;
@@ -209,14 +213,11 @@ function renderNow() {
     ? `<div class="label">FOCUS TIMER</div><div class="title">${esc(runF.label)}</div>
        <div class="running" id="run-clock">${fmtClock((Date.now() - r.start) / 1000)}</div>
        <div class="actions"><button data-start="${runF.id}" aria-label="Stop ${esc(runF.label)} timer">${icon('stop')} Stop</button></div>`
-    : `<div class="label">FOCUS TIMER</div><div class="title muted">No timer</div>`;
+    : `<span class="now-focus-icon">${icon('focus')}</span><div class="label">FOCUS TODAY</div><div class="title">${fmtMin(FOCUS.reduce((sum, f) => sum + focusMins(d, f.id, k), 0))}</div><a class="btn-like focus-link" href="#view-focus" data-view-target="focus">Sessions ${icon('arrowRight')}</a>`;
 
   const remainingItems = (parts(k) || []).filter(([, v]) => v < 1).map(([n]) => n);
-  const remaining = remainingItems.slice(0, 4).map(n => `<li>${esc(n)}</li>`).join('');
-  const more = remainingItems.length > 4 ? `<li class="left-more">+${remainingItems.length - 4}</li>` : '';
-  $('now-card').innerHTML = `<div class="now-grid"><div>${left}${actions ? `<div class="actions">${actions}</div>` : ''}</div><div>${right}</div></div>
-    <div class="row-label">${remainingItems.length ? `${remainingItems.length} TO GO` : `${icon('check')} All done · Alhamdulillah`}</div>
-    ${remainingItems.length ? `<ul class="left-list">${remaining}${more}</ul>` : ''}`;
+  $('now-card').innerHTML = `<div class="now-grid"><div>${left}${actions ? `<div class="actions">${actions}</div>` : ''}</div><div class="${runF ? 'now-active-session' : 'now-session-overview'}">${right}</div></div>
+    <div class="now-footer"><span>${next && next !== cur ? `<span class="muted">Up next</span> <b>${esc(next.from)}</b> ${esc(next.title)}` : 'Your day, at your pace.'}</span><button type="button" class="link" data-open-checkin>${remainingItems.length ? 'Check in' : 'All done'} ${icon(remainingItems.length ? 'arrowRight' : 'check')}</button></div>`;
 }
 
 function renderDeen() {
@@ -234,15 +235,42 @@ function renderDeen() {
 
 function renderFocus() {
   const k = todayKey(), d = day(k);
-  $('focus-list').innerHTML = FOCUS.map(f => {
+  const list = $('focus-list');
+  const openEditors = new Set([...list.querySelectorAll('details[open]')].map(el => el.dataset.focusEditor));
+  const active = list.contains(document.activeElement) ? document.activeElement : null;
+  const activeSelector = active?.dataset.start ? `[data-start="${active.dataset.start}"]` : active?.dataset.adj ? `[data-adj="${active.dataset.adj}"][data-v="${active.dataset.v}"]` : null;
+  renderFocusSummary();
+  $('focus-status-text').textContent = state.running ? 'Session in progress' : 'Ready when you are';
+  $('focus-status-text').parentElement.classList.toggle('is-running', !!state.running);
+  const symbols = { study: 'exams', drop: 'wallet', fullstack: 'code', video: 'video' };
+  list.innerHTML = FOCUS.map((f, i) => {
     const m = focusMins(d, f.id, k);
     const on = state.running?.id === f.id;
-    return `<div class="focus ${on ? 'running' : ''}">
-      <div><div class="name">${esc(f.label)}</div><div class="time" data-ftime="${f.id}">${fmtMin(m)} / ${fmtMin(f.goal)}</div></div>
-      <div class="ctrls"><button class="adjust" data-adj="${f.id}" data-v="-15" aria-label="Subtract 15 minutes from ${esc(f.label)}">${icon('minus')}<span>15</span></button><button class="adjust" data-adj="${f.id}" data-v="15" aria-label="Add 15 minutes to ${esc(f.label)}">${icon('plus')}<span>15</span></button><button class="play" data-start="${f.id}" aria-label="${on ? 'Stop' : 'Start'} ${esc(f.label)} timer" aria-pressed="${on}">${icon(on ? 'stop' : 'play')}</button></div>
-      <div class="bar"><i data-fbar="${f.id}" style="width:${pct(Math.min(m / f.goal, 1))}"></i></div>
-    </div>`;
+    return `<article class="focus ${on ? 'running' : ''}" aria-label="${esc(f.label)}">
+      <div class="focus-card-top"><span class="focus-symbol">${icon(symbols[f.id])}</span><span class="focus-number">${on ? 'IN SESSION' : String(i + 1).padStart(2, '0')}</span></div>
+      <div class="name">${esc(f.label)}</div>
+      <div class="focus-measure"><b data-fminutes="${f.id}">${fmtMin(m)}</b><span>of ${fmtMin(f.goal)}</span></div>
+      <div class="bar" aria-hidden="true"><i data-fbar="${f.id}" style="width:${pct(Math.min(m / f.goal, 1))}"></i></div>
+      <div class="focus-card-bottom"><details class="focus-editor" data-focus-editor="${f.id}" ${openEditors.has(f.id) ? 'open' : ''}><summary>${icon('edit')} Log time</summary><div class="ctrls"><button class="adjust" data-adj="${f.id}" data-v="-15" aria-label="Subtract 15 minutes from ${esc(f.label)}">${icon('minus')}15 min</button><button class="adjust" data-adj="${f.id}" data-v="15" aria-label="Add 15 minutes to ${esc(f.label)}">${icon('plus')}15 min</button></div></details><button class="session-start ${on ? 'is-running' : ''}" data-start="${f.id}" aria-label="${on ? 'Stop and save' : 'Start'} ${esc(f.label)} session" aria-pressed="${on}">${icon(on ? 'stop' : 'play')}<span>${on ? 'Finish' : 'Start'}</span></button></div>
+    </article>`;
   }).join('');
+  if (activeSelector) list.querySelector(activeSelector)?.focus({ preventScroll: true });
+}
+
+function renderFocusSummary() {
+  const k = todayKey(), d = day(k);
+  const total = FOCUS.reduce((sum, f) => sum + focusMins(d, f.id, k), 0);
+  $('focus-summary').textContent = `${fmtMin(total)} focused today · ${fmtMin(FOCUS.reduce((sum, f) => sum + f.goal, 0))} daily goal`;
+}
+
+function renderSessionDock() {
+  const r = state.running;
+  const session = r && FOCUS.find(f => f.id === r.id);
+  const dock = $('session-dock');
+  dock.hidden = !session;
+  document.body.classList.toggle('has-session', !!session);
+  if (!session) { dock.innerHTML = ''; return; }
+  dock.innerHTML = `<a href="#view-focus" data-view-target="focus" class="session-return"><span class="session-indicator">${icon('focus')}</span><span><small>FOCUSING</small><b>${esc(session.label)}</b></span></a><span class="session-clock" id="session-clock">${fmtClock((Date.now() - r.start) / 1000)}</span><button type="button" data-start="${session.id}" aria-label="Finish and save ${esc(session.label)} session">${icon('stop')}<span>Finish</span></button>`;
 }
 
 function renderBody() {
@@ -654,6 +682,7 @@ function renderSettings() {
 function render() {
   renderHeader(); renderNow(); renderDeen(); renderFocus(); renderBody();
   renderGlance(); renderWeight(); renderTimeline(); renderTrends(); renderExams(); renderMoney(); renderCalendar(); renderSettings();
+  renderSessionDock();
 }
 
 /* Lightweight per-second refresh: only the live numbers. */
@@ -661,14 +690,17 @@ let lastMinute = -1, lastDay = todayKey();
 function tick() {
   const now = new Date();
   if (todayKey() !== lastDay) { lastDay = todayKey(); render(); return; }
-  if (now.getMinutes() !== lastMinute) { lastMinute = now.getMinutes(); renderHeader(); renderNow(); renderTimeline(); renderGlance(); return; }
+  if (now.getMinutes() !== lastMinute) { lastMinute = now.getMinutes(); renderHeader(); renderNow(); renderTimeline(); renderGlance(); }
   const r = state.running;
   if (r) {
+    renderFocusSummary();
+    const dockClock = $('session-clock'); if (dockClock) dockClock.textContent = fmtClock((Date.now() - r.start) / 1000);
     const rc = $('run-clock'); if (rc) rc.textContent = fmtClock((Date.now() - r.start) / 1000);
     const f = FOCUS.find(x => x.id === r.id), d = day(r.day);
     const m = focusMins(d, f.id, r.day);
     const ft = document.querySelector(`[data-ftime="${f.id}"]`); if (ft) ft.textContent = `${fmtMin(m)} / ${fmtMin(f.goal)}`;
     const fb = document.querySelector(`[data-fbar="${f.id}"]`); if (fb) fb.style.width = pct(Math.min(m / f.goal, 1));
+    const minutes = document.querySelector(`[data-fminutes="${f.id}"]`); if (minutes) minutes.textContent = fmtMin(m);
   }
 }
 
@@ -678,8 +710,10 @@ function commit(msg) { save(); render(); if (msg) toast(msg); }
 document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) return;
-  const d = day();
   const ds = b.dataset;
+  if (ds.dailyTab) return activateDailyTab(ds.dailyTab);
+  if ('openCheckin' in ds) return activateDailyTab('checkin', { focus: true, reveal: true });
+  const d = day();
   if (ds.start) return startTimer(ds.start);
   if (ds.day) { calSel = ds.day; calMonth = ds.day.slice(0, 7); return renderCalendar(); }
   if (ds.cal) {
@@ -851,6 +885,34 @@ const viewLinks = [...document.querySelectorAll('[data-view-target]')];
 const viewPanels = [...document.querySelectorAll('.view-panel')];
 const pageTitle = $('page-title');
 
+function activateDailyTab(name, { focus = false, reveal = false } = {}) {
+  const selected = name === 'checkin' ? 'checkin' : 'overview';
+  document.querySelectorAll('[data-daily-tab]').forEach(tab => {
+    const active = tab.dataset.dailyTab === selected;
+    tab.setAttribute('aria-selected', String(active));
+    tab.tabIndex = active ? 0 : -1;
+    $(tab.getAttribute('aria-controls')).hidden = !active;
+  });
+  if (selected === 'overview') renderGlance();
+  if (focus) $(`daily-${selected}-tab`).focus({ preventScroll: true });
+  if (reveal) document.querySelector('.today-toolbar').scrollIntoView({ block: 'start', behavior: 'instant' });
+}
+
+document.querySelector('.daily-switch').addEventListener('keydown', event => {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  event.preventDefault();
+  const current = event.target.closest('[data-daily-tab]');
+  if (!current) return;
+  const next = event.key === 'Home' ? 'overview' : event.key === 'End' ? 'checkin'
+    : current.dataset.dailyTab === 'overview' ? 'checkin' : 'overview';
+  activateDailyTab(next, { focus: true });
+});
+
+function applyDailyHash() {
+  if (['#deen', '#body'].includes(location.hash)) activateDailyTab('checkin');
+  else if (['#overview', '#now-card'].includes(location.hash)) activateDailyTab('overview');
+}
+
 function viewFromHash() {
   const hash = location.hash.slice(1);
   if (hash.startsWith('view-') && viewNames[hash.slice(5)]) return hash.slice(5);
@@ -891,13 +953,17 @@ document.addEventListener('click', event => {
 });
 
 activateView(viewFromHash());
+applyDailyHash();
 if (location.hash && !location.hash.startsWith('#view-')) {
   history.replaceState(null, '', `${location.pathname}${location.search}#view-${viewFromHash()}`);
 }
 $('trend-details').addEventListener('toggle', event => {
   if (event.currentTarget.open) renderTrends();
 });
-window.addEventListener('hashchange', () => activateView(viewFromHash(), { focus: true }));
+window.addEventListener('hashchange', () => {
+  activateView(viewFromHash(), { focus: true });
+  applyDailyHash();
+});
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   state = load(); render();

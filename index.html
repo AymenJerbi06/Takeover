@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#090a0d">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0e0f13">
+  <script src="theme.js?v=20261013-ux"></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,7 +16,8 @@
   <meta name="apple-mobile-web-app-title" content="Takeover">
   <title>Takeover · 40 Days</title>
   <link rel="preload" href="assets/fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261013-ux">
+  <link rel="stylesheet" href="experience.css?v=20261013-ux">
 </head>
 <body>
   <a class="skip-link" href="#view-today" data-view-target="today">Skip to content</a>
@@ -48,6 +50,9 @@
           <h1 id="page-title" tabindex="-1">Today</h1>
           <div class="sub"><span id="today-date"></span><span class="date-divider" aria-hidden="true">·</span><span id="clock" class="mono"></span></div>
         </div>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to light mode">
+          <span data-theme-icon aria-hidden="true"></span><span data-theme-label>Light mode</span>
+        </button>
         <div class="top-stats" aria-label="Today's stats">
           <div class="top-stat"><span class="stat-symbol" data-icon="calendar" aria-hidden="true"></span><div><b id="challenge-day"></b><span>challenge</span></div></div>
           <div class="top-stat"><span class="stat-symbol" data-icon="streak" aria-hidden="true"></span><div><b id="streak"></b><span>day streak</span></div></div>
@@ -57,16 +62,24 @@
 
       <main id="main-content">
         <section class="view-panel" id="view-today" data-view="today" aria-label="Today" tabindex="-1">
+        <div class="today-toolbar">
+          <div class="daily-switch" role="tablist" aria-label="Today">
+            <button type="button" role="tab" id="daily-overview-tab" aria-selected="true" aria-controls="daily-overview" data-daily-tab="overview"><span data-icon="today" aria-hidden="true"></span>Overview</button>
+            <button type="button" role="tab" id="daily-checkin-tab" aria-selected="false" aria-controls="daily-checkin" data-daily-tab="checkin" tabindex="-1"><span data-icon="check" aria-hidden="true"></span>Check in</button>
+          </div>
+          <span id="daily-completion" class="daily-completion"></span>
+        </div>
+        <div id="daily-overview" class="today-panel" role="tabpanel" aria-labelledby="daily-overview-tab" tabindex="0">
         <section class="card now" id="now-card" aria-label="Current plan and focus timer"></section>
         <section class="card glance" id="overview" aria-labelledby="overview-title">
           <div class="section-heading">
-            <div><div class="section-kicker">A QUICK CHECK-IN</div><h2 id="overview-title"><span class="section-mark" data-icon="today" aria-hidden="true"></span>Today at a glance</h2></div>
-            <span class="heading-note">Small wins add up <span data-icon="spark" aria-hidden="true"></span></span>
+            <div><h2 id="overview-title"><span class="section-mark" data-icon="today" aria-hidden="true"></span>Your momentum</h2></div>
+            <button type="button" class="link" data-open-checkin>Check in <span data-icon="arrowRight" aria-hidden="true"></span></button>
           </div>
           <div class="glance-grid">
             <div class="score-panel">
               <div class="hero"><b id="hero-score">0%</b><span>of today complete</span></div>
-              <p class="score-caption">Keep your pace. Every check-in counts.</p>
+              <p class="score-caption">One small win at a time.</p>
               <div class="rings-wrap" id="rings"></div>
             </div>
             <div class="glance-side">
@@ -74,15 +87,16 @@
               <ul class="ring-legend" id="ring-legend"></ul>
             </div>
           </div>
-          <div class="gauge-board">
-            <div class="mini-heading">Daily signals</div>
+          <details class="gauge-board signal-details">
+            <summary><span>All daily goals</span><span data-icon="chevronDown" aria-hidden="true"></span></summary>
             <div class="gauges" id="gauges"></div>
-          </div>
+          </details>
         </section>
+        </div>
+        <div id="daily-checkin" class="today-panel checkin-panel" role="tabpanel" aria-labelledby="daily-checkin-tab" tabindex="0" hidden>
         <section class="card" id="deen" aria-labelledby="deen-title">
           <div class="section-heading">
             <div><div class="section-kicker">SPIRIT</div><h2 id="deen-title"><span class="section-mark deen-mark" data-icon="spirit" aria-hidden="true"></span>Deen</h2></div>
-            <span class="heading-note">A little, consistently</span>
           </div>
           <div class="row-label">Prayers</div>
           <div class="chips" id="prayers"></div>
@@ -105,7 +119,6 @@
         <section class="card" id="body" aria-labelledby="body-title">
           <div class="section-heading">
             <div><div class="section-kicker">ENERGY</div><h2 id="body-title"><span class="section-mark body-mark" data-icon="body" aria-hidden="true"></span>Body</h2></div>
-            <span class="heading-note">Move · rest · refuel</span>
           </div>
 
           <div class="metric">
@@ -151,19 +164,20 @@
             </div>
           </div>
         </section>
+        </div>
         </section>
 
         <section class="view-panel" id="view-focus" data-view="focus" aria-label="Focus" tabindex="-1" hidden>
         <section class="card" id="focus" aria-labelledby="focus-title">
           <div class="section-heading">
-            <div><div class="section-kicker">DEEP WORK</div><h2 id="focus-title"><span class="section-mark focus-mark" data-icon="focus" aria-hidden="true"></span>Focus</h2></div>
-            <span class="heading-note"><span class="live-dot" aria-hidden="true"></span>One timer at a time</span>
+            <div><h2 id="focus-title">Make time for what matters.</h2><p class="section-description" id="focus-summary">Choose a session to get started.</p></div>
+            <span class="focus-status"><span class="live-dot" aria-hidden="true"></span><span id="focus-status-text">Ready when you are</span></span>
           </div>
           <div id="focus-list"></div>
         </section>
         <section class="card plan" id="plan" aria-labelledby="plan-title">
           <div class="section-heading">
-            <div><div class="section-kicker">MAKE SPACE FOR WHAT MATTERS</div><h2 id="plan-title"><span class="section-mark plan-mark" data-icon="plan" aria-hidden="true"></span>Today's plan</h2></div>
+            <div><h2 id="plan-title"><span class="section-mark plan-mark" data-icon="plan" aria-hidden="true"></span>Your schedule</h2></div>
             <button class="link edit-plan" id="edit-plan" aria-label="Edit plan"><span data-icon="edit" aria-hidden="true"></span>Edit</button>
           </div>
         <details class="timeline-details" id="timeline-details">
@@ -331,7 +345,7 @@
         </section>
 
 </main>
-      <footer class="page-footer"><span class="footer-star" data-icon="check" aria-hidden="true"></span> End of this view · one day at a time.</footer>
+      <footer class="page-footer">Takeover <span aria-hidden="true">·</span> One day at a time.</footer>
     </div>
   </div>
 
@@ -339,10 +353,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="api/config"></script>
-  <script src="icons.js"></script>
+  <aside class="session-dock" id="session-dock" aria-label="Active focus session" hidden></aside>
+  <script src="icons.js?v=20261013-ux"></script>
   <script src="metrics.js?v=20261013-reset"></script>
   <script src="charts.js"></script>
-  <script src="app.js?v=20261013-reset"></script>
+  <script src="app.js?v=20261013-ux"></script>
   <script src="sync.js?v=20261013-reset"></script>
 </body>
 </html>
