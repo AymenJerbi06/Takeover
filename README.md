@@ -21,7 +21,9 @@ Open `index.html` in any browser (no build step, no server). Everything is saved
 | Full-stack dev | 1h (timer) |
 | Video basics | 1h (timer) |
 
-Plus weight vs. a −15 kg goal, exam countdowns, money owed to you, and a 40-day grid colored by each day's completion. A day counts toward the streak at 80%+. The day rolls over at 4am.
+Plus weight vs. a −15 kg goal, exam countdowns, money owed to you, and a 40-day grid colored by each day's completion. A day counts toward the streak at 80%+. Days follow the local calendar and roll over at midnight.
+
+The challenge restarts on **October 13, 2026 (Day 1)** and ends on **November 21, 2026 (Day 40)**. Existing saves receive this start date once, including cloud copies and imported backups. Earlier logs stay available in the calendar and backups; challenge streaks and progress counters begin with the new start date. You can still adjust **Challenge start** in Settings afterward.
 
 The schedule in **Today's plan** is editable (`HH:MM-HH:MM | Title | link`); the top card shows the current block and the running timer.
 
@@ -70,7 +72,7 @@ When a device signs in for the first time and the cloud already has data, the cl
    | `SUPABASE_URL` | same Project URL as in `config.js` |
    | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** / secret key. Keep it secret: only here, never in `config.js` |
    | `CRON_SECRET` | any long random string |
-   | `REPORT_TZ` | your time zone, e.g. `Africa/Tunis` |
+   | `REPORT_TZ` | your time zone; defaults to `America/Vancouver` |
 
 3. Redeploy (Deployments → … → Redeploy) so the variables and the cron take effect.
 4. Test it: open `https://<your-app>.vercel.app/api/report?key=<CRON_SECRET>&preview=1` to see the email, or `&force=1` instead of `&preview=1` to send it now.

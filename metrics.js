@@ -4,6 +4,13 @@
   else root.TakeoverMetrics = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
+  const CHALLENGE_START_DATE = '2026-10-13';
+  // Apply this reset once to each saved copy, preserving logs and sync timestamps.
+  // Later edits to Challenge start remain valid because the marker is retained.
+  function normalizeChallenge(state) {
+    if (state.challengeReset === CHALLENGE_START_DATE) return state;
+    return { ...state, startDate: CHALLENGE_START_DATE, challengeReset: CHALLENGE_START_DATE };
+  }
   const GOALS = { kcal: 1400, steps: 20000, gymPerWeek: 3, quran: 3, tasbih: 100, sleep: 7, days: 40, weightLoss: 15 };
   const FOCUS = [
     { id: 'study', label: 'University study', goal: 240 },
@@ -32,5 +39,5 @@
   const avgParts = p => p.reduce((s, [, v]) => s + v, 0) / p.length;
   const dayScore = (d, minsOf) => (d ? avgParts(dayParts(d, minsOf)) : 0);
 
-  return { GOALS, FOCUS, PRAYERS, kcalOf, dayParts, dayScore };
+  return { GOALS, FOCUS, PRAYERS, kcalOf, dayParts, dayScore, CHALLENGE_START_DATE, normalizeChallenge };
 });

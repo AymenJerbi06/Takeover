@@ -80,8 +80,11 @@
     if (useRemote) {
       T.state = { ...remote, syncUser: user.id };
       T.save(false); T.render();
-      setStatus('ok', `Synced ${time()}`);
-    } else if (!remote || (local.updatedAt || 0) !== (remote.updatedAt || 0) || firstTimeHere) {
+      // Sync the reset only after selecting the winning copy, so older local logs
+      // cannot overwrite newer cloud data just because the app was upgraded.
+      if (remote.challengeReset !== T.state.challengeReset) await push();
+      else setStatus('ok', `Synced ${time()}`);
+    } else if (!remote || (local.updatedAt || 0) !== (remote.updatedAt || 0) || firstTimeHere || remote.challengeReset !== local.challengeReset) {
       local.syncUser = user.id; T.save(false);
       await push();
     } else {
