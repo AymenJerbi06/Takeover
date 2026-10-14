@@ -334,11 +334,13 @@
     removeButton.onclick = () => {
       photoVersion++; pendingAvatar = null;
       updatePhoto();
+      undoButton.focus({ preventScroll: true });
       status(form, 'Save your profile to remove the photo.');
     };
     undoButton.onclick = () => {
       photoVersion++; pendingAvatar = undefined;
       updatePhoto(); status(form, 'Photo change undone.');
+      libraryButton.focus({ preventScroll: true });
     };
     form.onsubmit = event => {
       event.preventDefault();
