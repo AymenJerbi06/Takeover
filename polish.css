@@ -930,3 +930,15 @@ body.account-connecting .workspace { margin: 0; max-width: none; padding-inline:
 /* The one action in the hero is the primary button: indigo in light, white in dark (Von Restorff). */
 .personal-hero.hero-centered .hero-next { background: var(--cta); color: var(--cta-ink); }
 :root[data-theme="light"] .personal-hero.hero-centered .hero-meter { background: #e3e2f5; }
+
+/* Typed check-ins confirm in green once saved, like every other "done" state. */
+#daily-checkin button.is-saved:not(.x):not(.chip):not(.tasbih):not(.link) { background: var(--success); color: #fff; }
+#daily-checkin button.is-saved .app-icon { width: 16px; height: 16px; }
+
+/* Category selection reads by contrast, not by an outline (Von Restorff):
+   picking a category fades the others; "All" (nothing filtered) has no ring at all. */
+.home-category[aria-pressed="true"] .category-ring { box-shadow: none; }
+.home-category { transition: opacity 180ms ease; }
+.home-categories:has(.home-category[aria-pressed="true"]:not([data-home-filter="all"])) .home-category:not([aria-pressed="true"]) { opacity: .38; }
+.home-category[aria-pressed="true"]:not([data-home-filter="all"]) .category-label { color: var(--text); font-weight: 700; }
+.home-category[data-home-filter="all"][aria-pressed="true"] .category-label { font-weight: 600; color: var(--muted); }
