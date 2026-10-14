@@ -368,6 +368,82 @@ let trendPeriod = (() => {
     return ['day', 'week', 'month'].includes(value) ? value : 'day';
   } catch { return 'day'; }
 })();
+/* ---------- Today: the 40-day goals in the shared hero / week / habit-list layout ---------- */
+// Same markup as the personal routine dashboard, so both get one design and one motion system.
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const FOCUS_ICONS = { study: ['exams', 'violet'], drop: ['wallet', 'mint'], fullstack: ['code', 'blue'], video: ['video', 'coral'] };
+function todayGoals(k = todayKey()) {
+  const d = day(k), kcal = kcalOf(d), prayed = d.prayers.filter(Boolean).length, nextPrayer = d.prayers.findIndex(p => !p);
+  const r = state.running, gymWeek = gymThisWeek();
+  return [
+    { group: 'Deen', id: 'prayers', title: 'Prayers', icon: 'spirit', tone: 'violet', frac: prayed / 5, done: prayed === 5,
+      text: `${prayed} / 5 prayed`, act: nextPrayer >= 0 ? `data-quick="pray" data-i="${nextPrayer}"` : 'data-open-checkin',
+      label: nextPrayer >= 0 ? `Mark ${PRAYERS[nextPrayer]} prayed` : 'Edit prayers', next: nextPrayer >= 0 && `Pray ${PRAYERS[nextPrayer]}` },
+    { group: 'Deen', id: 'quran', title: 'Quran', icon: 'book', tone: 'violet', frac: Math.min(d.quran / GOALS.quran, 1), done: d.quran >= GOALS.quran,
+      text: `${d.quran} / ${GOALS.quran} pages`, act: 'data-quick="quran"', label: 'Add one Quran page', next: 'Read a page of Quran' },
+    { group: 'Deen', id: 'tasbih', title: 'Tasbih', icon: 'spark', tone: 'violet', frac: Math.min(d.tasbih / GOALS.tasbih, 1), done: d.tasbih >= GOALS.tasbih,
+      text: `${d.tasbih} / ${GOALS.tasbih}`, act: 'data-quick="tasbih33"', label: 'Add 33 tasbih', next: 'Tasbih' },
+    { group: 'Deen', id: 'call', title: 'Call parents', icon: 'phone', tone: 'coral', frac: d.call ? 1 : 0, done: d.call,
+      text: d.call ? 'Called today' : 'Not yet', act: 'data-quick="call-toggle"', label: d.call ? 'Undo call parents' : 'Mark parents called', pressed: d.call, next: 'Call your parents' },
+    ...FOCUS.map(f => {
+      const m = focusMins(d, f.id, k), on = r?.id === f.id;
+      return { group: 'Work', id: f.id, title: f.label, icon: FOCUS_ICONS[f.id][0], tone: FOCUS_ICONS[f.id][1], frac: Math.min(m / f.goal, 1), done: m >= f.goal,
+        text: `${fmtMin(m)} / ${fmtMin(f.goal)}${on ? ' · in session' : ''}`, act: `data-start="${f.id}"`, label: `${on ? 'Stop' : 'Start'} ${f.label} session`,
+        glyph: on ? 'stop' : null, running: on, next: `Start ${f.label}` };
+    }),
+    { group: 'Body', id: 'steps', title: 'Steps', icon: 'steps', tone: 'mint', frac: Math.min(d.steps / GOALS.steps, 1), done: d.steps >= GOALS.steps,
+      text: `${num(d.steps)} / ${num(GOALS.steps)}`, act: 'data-open-checkin data-focus-field="#steps-form input"', label: 'Log steps', next: 'Log your steps' },
+    { group: 'Body', id: 'kcal', title: 'Calories', icon: 'food', tone: 'mint', frac: Math.min(kcal / GOALS.kcal, 1), done: kcal > 0 && kcal <= GOALS.kcal, over: kcal > GOALS.kcal,
+      text: kcal > GOALS.kcal ? `${num(kcal)} kcal · ${num(kcal - GOALS.kcal)} over` : `${num(kcal)} / ${num(GOALS.kcal)} kcal max`,
+      act: 'data-open-checkin data-focus-field="#food-form input"', label: 'Add food', next: 'Log a meal' },
+    { group: 'Body', id: 'gym', title: 'Gym', icon: 'body', tone: 'mint', frac: Math.min(gymWeek / GOALS.gymPerWeek, 1), done: d.gym,
+      text: `${gymWeek} / ${GOALS.gymPerWeek} this week${d.gym ? ' · today' : ''}`, act: 'data-quick="gym-toggle"', label: d.gym ? 'Undo gym today' : 'Log gym today', pressed: d.gym, weekly: true },
+    { group: 'Body', id: 'sleep', title: 'Sleep', icon: 'sleep', tone: 'amber', frac: d.sleep != null ? Math.min(d.sleep / GOALS.sleep, 1) : 0, done: d.sleep != null && d.sleep >= GOALS.sleep,
+      text: d.sleep != null ? `${d.sleep} / ${GOALS.sleep} h` : 'Not logged', act: 'data-open-checkin data-focus-field="#sleep-form input"', label: 'Log sleep', next: 'Log last night’s sleep' },
+  ];
+}
+let todayFractions = null, lastPress = 0;
+document.addEventListener('pointerdown', () => { lastPress = performance.now(); }, true);
+function renderToday() {
+  const root = $('legacy-today');
+  if (!root || state.experience === 'personal') return;
+  const k = todayKey(), goals = todayGoals(k), sc = score(k), scored = goals.filter(g => !g.weekly);
+  const done = scored.filter(g => g.done).length, n = Math.max(1, diffDays(state.startDate, k) + 1);
+  // Next step: the current schedule block if it is unfinished, otherwise the first open goal.
+  const cur = blockAt(parsePlan(state.plan), nowMin());
+  const linked = cur?.link && goals.find(g => g.id === cur.link || (cur.link === 'pray' && g.id === 'prayers'));
+  const next = (linked && !linked.done && linked.next ? linked : null) || scored.find(g => !g.done && g.next && !g.running);
+  const monday = weekStart(k), stk = streak();
+  const row = g => `<div class="personal-habit ${g.done ? 'is-done' : ''} ${g.over ? 'is-over' : ''} ${g.running ? 'is-running' : ''}" data-habit-row="${g.id}" data-log-date="${k}">
+    <span class="profile-feature-icon ${g.tone}">${icon(g.icon)}</span>
+    <div class="habit-copy"><b>${esc(g.title)}</b><span>${esc(g.text)}</span><div class="habit-meter" role="progressbar" aria-label="${esc(g.title)}" aria-valuenow="${Math.round(g.frac * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${g.frac * 100}%"></i></div></div>
+    <button type="button" class="habit-check" ${g.act} aria-label="${esc(g.label)}" ${g.pressed !== undefined ? `aria-pressed="${g.pressed}"` : ''}>${icon(g.glyph || (g.done ? 'check' : 'plus'))}</button></div>`;
+  const groups = ['Deen', 'Work', 'Body'].map(name => `<p class="habit-group">${name}</p>${goals.filter(g => g.group === name).map(row).join('')}`).join('');
+  root.innerHTML = `<section class="personal-hero"><div><p class="account-eyebrow">Day ${Math.min(n, GOALS.days)} of ${GOALS.days}${stk ? ` · ${stk}-day streak` : ''}</p>
+      <h2>${done === scored.length ? 'You showed up.' : 'Make today yours.'}</h2>
+      <p>${done} of ${scored.length} goals complete. ${cur ? `Now: ${esc(cur.title)}.` : done === scored.length ? 'Enjoy the rest of your day.' : 'One small step at a time.'}</p>
+      ${next ? `<button type="button" class="account-primary" ${next.act}>Next: ${esc(next.next)} ${icon('arrowRight')}</button>` : ''}</div>
+      <div class="personal-ring" style="--completion:${Math.round(sc * 100)}%"><div><b>${pct(sc)}</b><span>today</span></div></div></section>
+    <div class="personal-week" aria-label="This week">${Array.from({ length: 7 }, (_, i) => {
+      const dk = addDays(monday, i), future = dk > k, counted = dk >= state.startDate && !future, s = counted ? score(dk) : null;
+      return `<button type="button" data-week-day="${dk}" ${future ? 'disabled' : ''} aria-label="${parseKey(dk).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: ${future ? 'upcoming' : s === null ? 'before the challenge' : pct(s)}" ${dk === k ? 'aria-current="date"' : ''}><span>${DAY_NAMES[parseKey(dk).getDay()]}</span><b class="${s >= 0.8 ? 'week-done' : ''}">${s >= 1 ? icon('check') : Number(dk.slice(-2))}</b><i class="${s > 0 ? 'has-progress' : ''}"></i></button>`;
+    }).join('')}</div>
+    <section class="profile-card"><div class="personal-card-head"><h2>Your habits</h2><button type="button" class="account-secondary" data-open-checkin>${icon('edit')} Check in</button></div>${groups}
+      <div class="personal-card-foot"><button type="button" class="link" data-open-checkin>Detailed check-in ${icon('chevronRight')}</button><span>A day counts at 80%+</span></div></section>
+    <div class="personal-shortcuts"><button type="button" data-goto="progress">${icon('progress')} Your reports ${icon('chevronRight')}</button><button type="button" data-goto="profile" data-goto-tab="friends">${icon('users')} Your circle ${icon('chevronRight')}</button></div>`;
+  // Spring from the previous values only after a deliberate tap, never on background renders.
+  const fractions = Object.fromEntries(goals.map(g => [g.id, g.frac]));
+  if (todayFractions?.k === k && performance.now() - lastPress < 1500 && window.TakeoverMotion) {
+    const before = todayFractions;
+    requestAnimationFrame(() => goals.forEach(g => {
+      if (before.f[g.id] === g.frac) return;
+      window.TakeoverMotion.progress(g.id, k, before.f[g.id], g.frac, before.score, sc);
+      if (g.frac >= 1 && before.f[g.id] < 1) window.TakeoverMotion.complete(g.id, k, before.score, sc);
+    }));
+  }
+  todayFractions = { k, f: fractions, score: sc };
+}
+
 function rangeKeys() {
   const k = todayKey();
   if (trendRange === 'all') {
@@ -704,7 +780,7 @@ function render() {
     return;
   }
   renderHeader(); renderNow(); renderDeen(); renderFocus(); renderBody();
-  renderGlance(); renderWeight(); renderTimeline(); renderTrends(); renderExams(); renderMoney(); renderCalendar(); renderSettings();
+  renderGlance(); renderToday(); renderWeight(); renderTimeline(); renderTrends(); renderExams(); renderMoney(); renderCalendar(); renderSettings();
   renderSessionDock();
 }
 
@@ -718,7 +794,7 @@ function tick() {
     return;
   }
   if (todayKey() !== lastDay) { lastDay = todayKey(); render(); return; }
-  if (now.getMinutes() !== lastMinute) { lastMinute = now.getMinutes(); renderHeader(); renderNow(); renderTimeline(); renderGlance(); }
+  if (now.getMinutes() !== lastMinute) { lastMinute = now.getMinutes(); renderHeader(); renderNow(); renderTimeline(); renderGlance(); renderToday(); }
   const r = state.running;
   if (r) {
     renderFocusSummary();
@@ -741,7 +817,13 @@ document.addEventListener('click', e => {
   const ds = b.dataset;
   if (ds.personalAction) return;
   if (ds.dailyTab) return activateDailyTab(ds.dailyTab);
-  if ('openCheckin' in ds) return activateDailyTab('checkin', { focus: true, reveal: true });
+  if ('openCheckin' in ds) {
+    activateDailyTab('checkin', { focus: !ds.focusField, reveal: true });
+    if (ds.focusField) document.querySelector(ds.focusField)?.focus({ preventScroll: true });
+    return;
+  }
+  if (ds.goto) { window.Takeover.navigate(ds.goto); if (ds.gotoTab) selectDestination(ds.goto, ds.gotoTab); return; }
+  if (ds.weekDay) { calSel = ds.weekDay; calMonth = ds.weekDay.slice(0, 7); window.Takeover.navigate('planner'); return renderCalendar(); }
   const d = day();
   if (ds.start) return startTimer(ds.start);
   if (ds.day) { calSel = ds.day; calMonth = ds.day.slice(0, 7); return renderCalendar(); }
@@ -788,6 +870,9 @@ document.addEventListener('click', e => {
   if (ds.quick === 'call') { d.call = true; return commit('Parents called ❤️'); }
   if (ds.quick === 'gym') { d.gym = true; return commit('Gym logged 💪'); }
   if (ds.quick === 'pray') { d.prayers[ds.i] = true; return commit(); }
+  if (ds.quick === 'tasbih33') { d.tasbih += 33; return commit(d.tasbih >= GOALS.tasbih && d.tasbih - 33 < GOALS.tasbih ? '100 tasbihat — SubhanAllah 🤍' : ''); }
+  if (ds.quick === 'call-toggle') { d.call = !d.call; return commit(d.call ? 'Parents called ❤️' : ''); }
+  if (ds.quick === 'gym-toggle') { d.gym = !d.gym; return commit(d.gym ? 'Gym logged 💪' : ''); }
   if (ds.step && b.parentElement.dataset.field === 'quran') { d.quran = Math.max(0, d.quran + Number(ds.step)); return commit(); }
 
   switch (b.id) {
@@ -796,7 +881,7 @@ document.addEventListener('click', e => {
     case 'tasbih-btn':
       d.tasbih++;
       if (navigator.vibrate) navigator.vibrate(d.tasbih % 33 === 0 ? 60 : 10);
-      save(); renderDeen(); renderHeader(); renderGlance();
+      save(); renderDeen(); renderHeader(); renderGlance(); renderToday();
       if (d.tasbih === GOALS.tasbih) toast('100 tasbihat — SubhanAllah 🤍');
       return;
     case 'tasbih-undo': d.tasbih = Math.max(0, d.tasbih - 1); return commit();

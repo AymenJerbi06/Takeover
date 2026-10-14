@@ -60,12 +60,27 @@
   function tick(now) {
     // Clamp long gaps (background tabs) so springs never jump.
     const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
-    last = now;
+    last = now; lastTick = performance.now();
     // One failing animation must not stall every other spring on the page.
     [...live].forEach(animation => { try { animation.step(dt); } catch (error) { live.delete(animation); reportError?.(error); } });
     frame = live.size ? requestAnimationFrame(tick) : (last = 0, 0);
+    if (live.size) guard();
   }
-  const schedule = animation => { live.add(animation); if (!frame) frame = requestAnimationFrame(tick); };
+  // Watchdog: if the browser stops producing frames (background tab, stalled renderer),
+  // settle every spring on its target so the screen never shows stale values.
+  let watchdog = 0, lastTick = 0;
+  function guard() {
+    clearTimeout(watchdog);
+    watchdog = setTimeout(() => {
+      if (!live.size || performance.now() - lastTick < 250) return;
+      [...live].forEach(animation => { try { animation.finish(); } catch (error) { live.delete(animation); reportError?.(error); } });
+    }, 250);
+  }
+  const schedule = animation => {
+    live.add(animation);
+    if (!frame) { frame = requestAnimationFrame(tick); lastTick = performance.now(); }
+    guard();
+  };
 
   const list = value => Array.isArray(value) ? value.slice() : [value];
   const shape = (value, template) => Array.isArray(template) ? value : value[0];

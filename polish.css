@@ -503,3 +503,18 @@ a, .link { color: var(--accent-dark); }
   .compact-title { display: grid; }
   #page-title { transform-origin: left center; }
 }
+
+/* ---------- 40-day Today in the shared routine layout ---------- */
+body:not(.personal-mode) #daily-overview > #now-card, body:not(.personal-mode) #daily-overview > #overview { display: none; }
+body:not(.personal-mode) #daily-overview { display: block; }
+/* The Overview / Check in switch only appears inside Check in, as the way back. */
+.today-toolbar:has(#daily-overview-tab[aria-selected="true"]) { display: none; }
+.habit-group { margin: 22px 0 2px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.personal-card-head + .habit-group { margin-top: 10px; }
+.personal-habit.is-over .habit-meter i { background: var(--coral-fill); }
+.personal-habit.is-over .habit-copy span { color: var(--coral-ink); }
+.personal-habit.is-running .habit-check { background: var(--cta); color: var(--cta-ink); border-color: transparent; }
+.personal-card-head .account-secondary { min-height: 40px; padding: 8px 14px; font-size: 14px; }
+@media (max-width: 520px) {
+  .top-stats { display: none; }
+}
