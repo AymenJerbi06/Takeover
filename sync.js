@@ -12,6 +12,7 @@
   const time = () => new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
   function setStatus(kind, text, label) {
+    window.dispatchEvent(new CustomEvent('takeover:sync-status', { detail: { kind, text } }));
     const dot = box.querySelector('.sync-dot'), msg = box.querySelector('.sync-msg');
     if (dot) dot.className = `sync-dot ${kind}`;
     if (msg) msg.textContent = text;
@@ -39,6 +40,11 @@
   let timer = null, active = null, pending = false, sessionVersion = 0;
   let deferredRemote = false;
   let firstChoice = null, needsChoice = false;
+  let readyUser = null;
+  function ready(account) {
+    readyUser = account;
+    window.dispatchEvent(new CustomEvent('takeover:sync-ready', { detail: { userId: account } }));
+  }
   const POLL_MS = 10000;
   const editing = () => !document.hidden && document.activeElement?.matches('input, textarea, select, [contenteditable="true"]');
 
@@ -101,6 +107,7 @@
         box.querySelector('#sync-use-device').textContent = remote ? 'Use this device’s progress' : 'Copy device progress to this account';
         box.querySelector('#sync-choice').hidden = false;
         setStatus('busy', 'Choose which progress to keep in Profile → Account.', 'Choose progress');
+        window.dispatchEvent(new CustomEvent('takeover:sync-choice'));
         return;
       }
       if (!remote && firstTimeHere && firstChoice === 'cloud') {
@@ -127,6 +134,9 @@
       }
       deferredRemote = false;
       const state = T.state;
+      // Hydration has resolved ownership, even if the subsequent upload is offline.
+      state.syncUser = account;
+      ready(account);
       const needsWrite = !remote || (state.updatedAt || 0) !== (remote.updatedAt || 0)
         || state.challengeReset !== remote.challengeReset;
       if (!needsWrite) {
@@ -175,6 +185,7 @@
   }
 
   window.TakeoverSync = {
+    get readyUser() { return readyUser; },
     schedule() {
       if (!user) return;
       if (needsChoice) {
@@ -203,6 +214,7 @@
     clearTimeout(timer); timer = null;
     pending = false; deferredRemote = false; firstChoice = null; needsChoice = false;
     user = u;
+    readyUser = null;
     draw();
     if (user) { setStatus('busy', 'Connecting your account…'); requestSync(); }
   }

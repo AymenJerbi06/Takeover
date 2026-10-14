@@ -18,7 +18,10 @@
   const callbackRequested = callbackHash.has('access_token') || callbackHash.has('error') || new URLSearchParams(location.search).has('account');
   const sb = cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase?.createClient
     ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
-  const account = window.TakeoverAccount = { client: sb, user, profile, ready: false, refreshProfile };
+  const account = window.TakeoverAccount = { client: sb, user, profile, ready: false, refreshProfile,
+    openAuth(next = 'signin') { mode = next === 'signup' ? 'signup' : 'signin'; draw(); navigate(); },
+    get recovering() { return recovery; }
+  };
 
   function navigate() {
     if (window.Takeover?.navigate) window.Takeover.navigate('profile');

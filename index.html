@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-personal-entry="loading">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
@@ -14,13 +14,16 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" href="icon-192.png">
   <meta name="apple-mobile-web-app-title" content="Takeover">
-  <title>Takeover · 40 Days</title>
+  <title>Takeover · Your daily rhythm</title>
   <link rel="preload" href="assets/fonts/Manrope-Variable.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="style.css?v=20261013-color">
   <link rel="stylesheet" href="experience.css?v=20261013-sync">
   <link rel="stylesheet" href="profile.css?v=20261013-mobile-photo">
+  <link rel="stylesheet" href="personal.css?v=20261013-personal">
 </head>
 <body>
+  <section id="welcome-root" hidden aria-label="Welcome to Takeover"></section>
+  <dialog id="routine-dialog" aria-labelledby="routine-dialog-title"></dialog>
   <a class="skip-link" href="#view-today" data-view-target="today">Skip to content</a>
   <div class="app-shell">
     <aside class="sidebar" aria-label="Dashboard navigation">
@@ -64,6 +67,7 @@
 
       <main id="main-content">
         <section class="view-panel" id="view-today" data-view="today" aria-label="Today" tabindex="-1">
+        <div id="personal-today" class="personal-root" hidden></div>
         <div class="today-toolbar">
           <div class="daily-switch" role="tablist" aria-label="Today">
             <button type="button" role="tab" id="daily-overview-tab" aria-selected="true" aria-controls="daily-overview" data-daily-tab="overview"><span data-icon="today" aria-hidden="true"></span>Overview</button>
@@ -170,6 +174,7 @@
         </section>
 
         <section class="view-panel" id="view-focus" data-view="focus" aria-label="Focus" tabindex="-1" hidden>
+        <div id="personal-focus" class="personal-root" hidden></div>
         <section class="card" id="focus" aria-labelledby="focus-title">
           <div class="section-heading">
             <div><h2 id="focus-title">Make time for what matters.</h2><p class="section-description" id="focus-summary">Choose a session to get started.</p></div>
@@ -257,6 +262,7 @@
         </section>
 
         <section class="view-panel" id="view-planner" data-view="planner" aria-label="Plan" tabindex="-1" hidden>
+        <div id="personal-plan" class="personal-root" hidden></div>
         <section class="card wide calendar" id="calendar" aria-labelledby="calendar-title">
           <div class="section-heading">
             <div><div class="section-kicker">YOUR DAYS, IN VIEW</div><h2 id="calendar-title"><span class="section-mark calendar-mark" data-icon="calendar" aria-hidden="true"></span>Calendar <span class="muted small" id="cal-progress"></span></h2></div>
@@ -332,6 +338,7 @@
         </div>
         <div class="profile-content" id="profile-friends" role="tabpanel" aria-labelledby="profile-friends-tab" hidden><div id="friends-root"></div></div>
         <div class="profile-content" id="profile-preferences" role="tabpanel" aria-labelledby="profile-preferences-tab" hidden>
+        <section class="profile-card"><div class="profile-section-heading"><span class="profile-feature-icon" data-icon="spark" aria-hidden="true"></span><div><h2>Your goals & routine</h2><p class="account-note">Make room for what matters to you.</p></div></div><button class="account-secondary" type="button" data-personal-action="setup">Customize my routine</button><button class="account-secondary" type="button" data-personal-action="billing">Plans & commitment demo</button></section>
         <section class="card wide settings-card" id="settings" aria-labelledby="settings-title">
           <div class="section-heading">
             <div><h2 id="settings-title"><span class="section-mark settings-mark" data-icon="settings" aria-hidden="true"></span>Make it yours</h2><p class="account-note">Your challenge and everyday preferences.</p></div>
@@ -377,10 +384,12 @@
   <aside class="session-dock" id="session-dock" aria-label="Active focus session" hidden></aside>
   <script src="icons.js?v=20261013-mobile-photo"></script>
   <script src="metrics.js?v=20261013-reset"></script>
+  <script src="personal-engine.js?v=20261013-personal"></script>
   <script src="charts.js"></script>
-  <script src="app.js?v=20261013-profile"></script>
-  <script src="account.js?v=20261013-mobile-photo"></script>
-  <script src="sync.js?v=20261013-profile"></script>
-  <script src="social.js?v=20261013-profile"></script>
+  <script src="app.js?v=20261013-personal"></script>
+  <script src="account.js?v=20261013-personal"></script>
+  <script src="sync.js?v=20261013-personal"></script>
+  <script src="social.js?v=20261013-personal"></script>
+  <script src="personal.js?v=20261013-personal"></script>
 </body>
 </html>
