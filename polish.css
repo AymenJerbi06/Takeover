@@ -518,3 +518,415 @@ body:not(.personal-mode) #daily-overview { display: block; }
 @media (max-width: 520px) {
   .top-stats { display: none; }
 }
+
+/* ---------- Home: category strip, header bell, four-tab bar ---------- */
+/* One round icon per category, ringed by today's progress (Apple Fitness rings, Revolut actions). */
+.home-categories { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; padding: 2px 2px 4px; margin-inline: -2px; }
+.home-categories::-webkit-scrollbar { display: none; }
+.home-category { flex: 1 0 68px; display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 44px; padding: 6px 2px; border: 0; border-radius: 18px; background: transparent; color: var(--muted); scroll-snap-align: start; }
+.category-ring { --ring: var(--tone-fill, var(--accent)); display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; padding: 3px;
+  background: conic-gradient(var(--ring) var(--p), var(--panel) 0); transition: box-shadow 160ms ease; }
+.category-ring .profile-feature-icon { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--canvas); }
+.category-ring.violet { --ring: var(--violet-fill); } .category-ring.blue { --ring: var(--blue-fill); } .category-ring.mint { --ring: var(--mint-fill); }
+.category-ring.coral { --ring: var(--coral-fill); } .category-ring.amber { --ring: var(--amber-fill); } .category-ring.accent { --ring: var(--accent); }
+.profile-feature-icon.accent { background: var(--accent-soft); color: var(--accent-dark); }
+:root[data-theme="light"] .profile-feature-icon.accent { color: var(--accent); }
+.category-label { max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; }
+.home-category[aria-pressed="true"] { color: var(--text); }
+.home-category[aria-pressed="true"] .category-ring { box-shadow: 0 0 0 2px var(--canvas), 0 0 0 4px var(--text); }
+.home-category[aria-pressed="true"] .category-label { font-weight: 700; }
+
+/* Header: bell and avatar; the theme switch lives with the other settings on Profile. */
+.notify-trigger { position: relative; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: var(--card); color: var(--text); }
+.notify-trigger .app-icon { width: 22px; height: 22px; }
+.notify-badge { position: absolute; top: 4px; right: 3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--coral-fill); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--canvas); }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+body:not([data-view="profile"]) .header-actions .theme-toggle { display: none; }
+body[data-view="profile"] .profile-trigger { box-shadow: 0 0 0 2px var(--canvas), 0 0 0 4px var(--accent); }
+
+/* Four destinations now that Profile sits in the header. */
+@media (max-width: 1120px) {
+  .quick-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .sidebar { width: min(360px, calc(100% - 32px)); }
+}
+
+/* Notifications sheet: grouped rows, new items marked with an accent edge. */
+.notes-list { display: grid; gap: 10px; margin-top: 18px; }
+.note { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px; border-radius: 18px; background: var(--panel); box-shadow: inset 3px 0 0 transparent; transition: box-shadow 600ms ease; }
+.note.is-new { box-shadow: inset 3px 0 0 var(--accent); }
+.note.is-new.is-read { box-shadow: inset 3px 0 0 transparent; }
+.note .profile-feature-icon { width: 44px; height: 44px; border-radius: 50%; }
+.note-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.note-head b { font-size: 15px; font-weight: 650; }
+.note-head small { flex: none; color: var(--muted); font-size: 12px; }
+.note p { margin: 4px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.notes-empty { display: grid; justify-items: center; gap: 8px; padding: 32px 12px; text-align: center; }
+.notes-empty .app-icon { width: 32px; height: 32px; color: var(--muted); }
+/* The tinted icon sits on a solid disc so the progress ring never shows through it. */
+.category-ring .profile-feature-icon { background: linear-gradient(var(--chip), var(--chip)), var(--canvas); }
+.category-ring.violet { --chip: var(--violet-surface); } .category-ring.blue { --chip: var(--blue-surface); } .category-ring.mint { --chip: var(--mint-surface); }
+.category-ring.coral { --chip: var(--coral-surface); } .category-ring.amber { --chip: var(--amber-surface); } .category-ring.accent { --chip: var(--accent-soft); }
+/* Anchor the hidden screen-reader text inside each tile so it is clipped by the scrolling strip. */
+.home-categories, .home-category { position: relative; }
+
+/* ---------- Law audit of home + notifications ---------- */
+/* "All" is a plain grid tile: no second score ring next to the hero's (Von Restorff, Miller). */
+.category-ring.neutral { --ring: transparent; --chip: var(--panel); background: transparent; }
+.profile-feature-icon.neutral { color: var(--text); }
+/* A finished category closes its ring and gets a check (Peak–End, Zeigarnik closure). */
+.category-ring { position: relative; }
+.category-done { position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--mint-fill); color: #fff; box-shadow: 0 0 0 2px var(--canvas); }
+.category-done .app-icon { width: 13px; height: 13px; }
+/* Notifications are tappable rows that say where they lead (Jakob, Fitts). */
+button.note { width: 100%; border: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.note-copy { display: grid; gap: 4px; min-width: 0; }
+.note-body { color: var(--muted); font-size: 14px; line-height: 1.45; }
+.note-action { display: inline-flex; align-items: center; gap: 2px; margin-top: 4px; color: var(--accent-dark); font-size: 13px; font-weight: 600; }
+:root[data-theme="light"] .note-action { color: var(--accent); }
+.note-action .app-icon { width: 14px; height: 14px; }
+@media (hover: hover) and (pointer: fine) { button.note:hover { background: var(--surface-raised); } }
+/* Anything scrolled into view stops below the frosted title bar, never under it. */
+@media (max-width: 760px) { .home-categories, .personal-card-head, .today-toolbar { scroll-margin-top: calc(58px + env(safe-area-inset-top)); } }
+
+/* Profile is opened from the header, so it carries an iOS back button (Jakob, Fitts: 44px target). */
+.view-back { display: inline-flex; align-items: center; gap: 2px; min-height: 44px; margin: -8px 0 4px -8px; padding: 0 12px 0 2px;
+  border: 0; border-radius: 12px; background: transparent; color: var(--accent-dark); font-size: 17px; font-weight: 500; letter-spacing: -.02em; }
+:root[data-theme="light"] .view-back { color: var(--accent); }
+.view-back[hidden], .entry-mode .view-back { display: none; }
+.view-back .app-icon { width: 24px; height: 24px; }
+@media (hover: hover) and (pointer: fine) { .view-back:hover { background: var(--accent-soft); } }
+
+/* ---------- Full-app audit: 44px targets and 12px minimum text on phones (Fitts, Miller) ---------- */
+.account-secondary, .personal-card-head .account-secondary, .seg button, .destination-tabs button, .account-tabs button, .daily-switch button { min-height: 44px; }
+.personal-ring span, .period-label, .report-day-detail span, .personal-report-stats small, .profile-card small { font-size: 12px; }
+.cal-day-head .muted, .cal-day-head .small { font-size: 13px; }
+.sync-indicator { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 13px; }
+@media (max-width: 1120px) { .quick-nav > a { font-size: 12px; } }
+@media (max-width: 540px) {
+  /* Seven 44px+ day cells: the calendar uses the card's full width on a phone. */
+  .calendar-board { margin-inline: -12px; padding: 8px 4px; border: 0; }
+  .cal-grid { gap: 2px; }
+  .cal-cell { min-height: 44px; aspect-ratio: auto; }
+  .cal-cell .n { font-size: 13px; }
+}
+.report-navigation span, .report-archive small, .report-list small { font-size: 12px; }
+.completed-reports small, .personal-report-stats span { font-size: 12px; }
+@media (max-width: 540px) { .personal-report-stats small, .personal-report-stats span { font-size: 12px; } }
+body[data-view="profile"] .sync-indicator { min-height: 44px; }
+
+/* 40-day dashboard: older Progress, Focus and Check in parts raised to the same minimums. */
+.notify-badge { min-width: 20px; height: 20px; font-size: 12px; line-height: 20px; top: 2px; right: 1px; }
+.focus-status, #focus-status-text { font-size: 13px; }
+.focus-editor summary, .focus[data-tone] .session-start, .session-start { min-height: 44px; }
+.seg button { font-size: 13px; }
+.period-kicker, .period-insight small { font-size: 12px; letter-spacing: 0; text-transform: none; }
+.goal-note, .legend-row, .charts figcaption .muted, #prayer-range, .period-insight div span, .stat span { font-size: 12px; }
+.legend-row b { font-size: 12px; }
+.charts .axis, svg .axis { font-size: 12px; }
+.chips .chip, .chip { font-size: 13px; }
+.metric-head .target, .row-label .muted, .target { font-size: 12px; letter-spacing: .02em; }
+@media (max-width: 540px) {
+  /* Small iPhones: the calendar runs almost edge to edge so each day stays 44px wide. */
+  .calendar-board { margin-inline: -16px; }
+}
+.focus .ctrls .adjust { font-size: 13px; }
+.period-stat span, .period-stat small, .stat small { font-size: 12px; }
+.seg button { min-width: 44px; }
+@media (max-width: 400px) { .cal-grid { gap: 1px; } .calendar-board { padding-inline: 2px; } }
+/* Progress (40-day): one heading, one level of cards, and the brand colour for the overall score. */
+.period-board { background: transparent; border: 0; padding: 4px 0 0; }
+#period-chart svg .fill, #c-score svg .fill { fill: var(--accent); }
+
+/* Focus rings are for keyboard users; after a tap they read as a stray glow. */
+:root[data-input="pointer"] :focus-visible { outline: none; }
+
+/* ======================================================================
+   Check in: one quiet grouped list per area (Similarity, Von Restorff, Miller).
+   ====================================================================== */
+#daily-checkin { --tone-surface: var(--panel); --tone-ink: var(--text); --tone-fill: var(--accent); --tone-button-ink: var(--text); }
+#daily-checkin #deen, #daily-checkin #body, #daily-checkin .metric { --tone-surface: var(--panel); --tone-ink: var(--text); --tone-fill: var(--accent); }
+#daily-checkin .section-mark, #deen .section-mark, #body .section-mark { background: var(--panel); color: var(--text); }
+#daily-checkin .row-label, #daily-checkin .metric-head > span { font-size: 15px; font-weight: 600; color: var(--text); }
+#daily-checkin .target, #body .target { border: 0; padding: 0; background: none; color: var(--muted); font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+#daily-checkin .target::before { content: "· "; }
+/* Metrics become rows separated by hairlines, not tinted cards inside a card. */
+#body .metric, #daily-checkin .metric { background: transparent; border: 0; border-radius: 0; padding: 18px 0; }
+#body .metric + .metric, #body .body-split { border-top: .5px solid var(--line); }
+#body .body-split { gap: 16px; padding-top: 2px; }
+#body .body-split .metric { padding-bottom: 4px; }
+#body .metric-head b { color: var(--text); font-weight: 600; }
+/* One progress colour; coral only when a limit is crossed. */
+#body .bar { background: var(--panel); height: 6px; }
+#body .bar i { background: var(--accent); }
+#body .bar i.over { background: var(--coral-fill); }
+/* Buttons: neutral grey, white text. Done/selected states are white (Revolut "Send"). */
+#daily-checkin button:not(.x):not(.chip):not(.tasbih):not(.link) { background: var(--panel); color: var(--text); border-color: transparent; }
+#daily-checkin .chip { background: var(--panel); color: var(--text); border-color: transparent; }
+#daily-checkin .chip.on, #daily-checkin .toggle.on, #body .metric button.toggle.on, #deen .chip.on, #deen .toggle.on {
+  background: var(--text); color: var(--canvas); border-color: transparent; }
+#daily-checkin .stepper button { background: var(--panel); color: var(--text); }
+/* Tasbih: a large calm tap surface, number in white. */
+#deen .tasbih, #daily-checkin .tasbih { background: var(--panel); border-color: transparent; }
+#deen .tasbih span, #daily-checkin .tasbih span { color: var(--text); font-weight: 600; letter-spacing: -.03em; }
+#daily-checkin .tasbih small { color: var(--muted); }
+#daily-checkin .tasbih.done { background: var(--text); }
+#daily-checkin .tasbih.done span, #daily-checkin .tasbih.done small { color: var(--canvas); }
+/* Gym week: neutral days, done days white, today outlined. */
+#body .week-dots span { background: var(--panel); color: var(--muted); border-color: transparent; }
+#body .week-dots span.on { background: var(--text); color: var(--canvas); }
+#body .week-dots span.today { outline: 1.5px solid var(--text); outline-offset: 2px; }
+/* Inputs: the same filled field everywhere. */
+#daily-checkin input { background: var(--panel); border-color: transparent; color: var(--text); }
+#daily-checkin .food-list li { border-color: var(--line); color: var(--muted); }
+:root[data-theme="light"] #daily-checkin input { background: var(--canvas); }
+#daily-checkin .target { margin-left: 4px; }
+#daily-checkin .food-list li { border-bottom-style: solid; border-bottom-width: .5px; }
+#daily-checkin .target::before { content: "·\00a0"; }
+
+/* ======================================================================
+   Colour system (from insp15, Revolut): colour is ASSIGNED, never decorative.
+   - Category  = one solid saturated circle with a white glyph (Rent orange, Lunch indigo)
+   - Action    = grey circle with a white glyph (Add money, Move, More)
+   - Done      = green, only for finished things (Revolut "Active", ▲ 2.52%)
+   - Warning   = red, only for over-limit and unread badges
+   - Brand     = indigo: hero, today, selection, links
+   Each category repeats its one colour on its icon, ring and bar.
+   ====================================================================== */
+:root {
+  --violet-fill: #5b4fe3; --violet-ink: #aea7ff; --violet-surface: #5b4fe324;   /* Deen, Reading, Faith */
+  --coral-fill:  #f28a1e; --coral-ink:  #ffb877; --coral-surface:  #f28a1e24;   /* Work, Wellbeing, Connection */
+  --mint-fill:   #12a29a; --mint-ink:   #6fd6cd; --mint-surface:   #12a29a24;   /* Body, Fitness, Money */
+  --blue-fill:   #2f7cf6; --blue-ink:   #8fbaff; --blue-surface:   #2f7cf624;   /* Learning, Other */
+  --amber-fill:  #e3a21a; --amber-ink:  #f5cf73; --amber-surface:  #e3a21a24;   /* Dates and exams */
+  --success: #2db665; --success-ink: #6fdc9b; --danger: #e5484d;
+  --accent: #6f64f2; --accent-dark: #b3adff; --accent-soft: #6f64f226; --accent-border: #6f64f280;
+  --action-circle: #3a3a3c;
+  --s1: var(--violet-fill); --s2: var(--mint-fill); --s3: var(--coral-fill); --s4: var(--blue-fill);
+  --spotlight-start: #3a3196; --spotlight-end: #14122a; --spotlight-glow: transparent;
+  --l1: #2b2752; --l2: #4a42b8; --l3: #8a82f5;
+}
+:root[data-theme="light"] {
+  --violet-ink: #4a3fd0; --coral-ink: #b8600b; --mint-ink: #0c7c75; --blue-ink: #1d63d6; --amber-ink: #8f6200;
+  --success: #24a65a; --success-ink: #1c8a4a; --danger: #d93a40;
+  --accent: #5b4fe3; --accent-dark: #4a3fd0; --accent-soft: #5b4fe31a; --accent-border: #5b4fe366;
+  --action-circle: #ececf1;
+  --spotlight-start: #5b4fe3; --spotlight-end: #2a2287;
+}
+
+/* Category icons: solid colour, white glyph (Rent / Lunch). */
+.profile-feature-icon { background: var(--action-circle); color: var(--text); }
+.profile-feature-icon.violet { background: var(--violet-fill); color: #fff; }
+.profile-feature-icon.coral  { background: var(--coral-fill);  color: #fff; }
+.profile-feature-icon.mint   { background: var(--mint-fill);   color: #fff; }
+.profile-feature-icon.blue   { background: var(--blue-fill);   color: #fff; }
+.profile-feature-icon.amber  { background: var(--amber-fill);  color: #fff; }
+.profile-feature-icon.accent { background: var(--accent); color: #fff; }
+.profile-feature-icon.neutral { background: var(--action-circle); color: var(--text); }
+
+/* Category strip: the ring closes in the category's own colour; a finished category gets a green check. */
+.category-ring.violet { --ring: var(--violet-fill); --chip: var(--violet-fill); }
+.category-ring.coral  { --ring: var(--coral-fill);  --chip: var(--coral-fill); }
+.category-ring.mint   { --ring: var(--mint-fill);   --chip: var(--mint-fill); }
+.category-ring.blue   { --ring: var(--blue-fill);   --chip: var(--blue-fill); }
+.category-ring.amber  { --ring: var(--amber-fill);  --chip: var(--amber-fill); }
+.category-ring.neutral { --ring: transparent; --chip: var(--action-circle); }
+.category-ring { background: conic-gradient(var(--ring) var(--p), var(--action-circle) 0); }
+.category-ring .profile-feature-icon { background: var(--chip); color: #fff; border-color: var(--canvas); }
+.category-ring.neutral .profile-feature-icon { color: var(--text); }
+.home-category.is-complete .category-ring { --ring: var(--success); }
+.category-done { background: var(--success); color: #fff; }
+
+/* Habit rows: the bar repeats the category colour; done turns the button and bar green. */
+.personal-habit:has(.profile-feature-icon.violet) .habit-meter i { background: var(--violet-fill); }
+.personal-habit:has(.profile-feature-icon.coral)  .habit-meter i { background: var(--coral-fill); }
+.personal-habit:has(.profile-feature-icon.mint)   .habit-meter i { background: var(--mint-fill); }
+.personal-habit:has(.profile-feature-icon.blue)   .habit-meter i { background: var(--blue-fill); }
+.personal-habit:has(.profile-feature-icon.amber)  .habit-meter i { background: var(--amber-fill); }
+.habit-meter { background: var(--action-circle); }
+.habit-check { background: var(--action-circle); color: var(--text); border-color: transparent; }
+.is-done .habit-check { background: var(--success); color: #fff; }
+.personal-habit.is-done .habit-meter i { background: var(--success); }
+.personal-habit.is-over .habit-meter i { background: var(--danger); }
+.personal-habit.is-over .habit-copy span { color: var(--danger); }
+.personal-habit.is-running .habit-check { background: var(--cta); color: var(--cta-ink); }
+.is-done .habit-copy b { color: var(--text); }
+
+/* Week strip: today in brand indigo, strong days green. */
+.personal-week button[aria-current] b { background: var(--accent); color: #fff; }
+.personal-week b.week-done { background: var(--success); color: #fff; }
+.personal-week i.has-progress { background: var(--muted); }
+
+/* Hero: brand indigo, settling into black; no glow. */
+.personal-hero, .now, .preview-score { background: linear-gradient(165deg, var(--spotlight-start) 0%, var(--spotlight-end) 85%); }
+.personal-ring > div { background: color-mix(in srgb, var(--spotlight-end) 70%, var(--spotlight-start)); }
+
+.notify-badge { background: var(--danger); }
+
+/* Check in: Deen indigo, Body teal; done states green; actions grey. */
+#daily-checkin #deen { --tone-fill: var(--violet-fill); }
+#daily-checkin #body, #daily-checkin #body .metric { --tone-fill: var(--mint-fill); }
+#daily-checkin #deen .section-mark { background: var(--violet-fill); color: #fff; }
+#daily-checkin #body .section-mark { background: var(--mint-fill); color: #fff; }
+#daily-checkin button:not(.x):not(.chip):not(.tasbih):not(.link), #daily-checkin .chip, #daily-checkin .stepper button,
+#deen .tasbih, #daily-checkin .tasbih, #body .week-dots span { background: var(--action-circle); color: var(--text); }
+#body .bar, #daily-checkin .bar { background: var(--action-circle); }
+#body .bar i, #daily-checkin .bar i { background: var(--mint-fill); }
+#body .bar i.over, #daily-checkin .bar i.over { background: var(--danger); }
+#daily-checkin .chip.on, #daily-checkin .toggle.on, #body .metric button.toggle.on, #deen .chip.on, #deen .toggle.on,
+#body .week-dots span.on, #daily-checkin .tasbih.done { background: var(--success); color: #fff; }
+#daily-checkin .tasbih.done span, #daily-checkin .tasbih.done small { color: #fff; }
+#body .week-dots span.today { outline-color: var(--accent); }
+:root[data-theme="light"] #daily-checkin input { background: var(--canvas); }
+
+/* Profile: the Sign in / Create account switch keeps a visible track inside its card. */
+.profile-card .account-tabs { background: var(--action-circle); }
+.profile-card .account-tabs button[aria-selected="true"] { background: var(--card); color: var(--text); box-shadow: 0 1px 3px #00000026; }
+:root:not([data-theme="light"]) .profile-card .account-tabs button[aria-selected="true"] { background: #636366; }
+.profile-card .account-tabs .motion-tab-indicator { background: var(--card); }
+:root:not([data-theme="light"]) .profile-card .account-tabs .motion-tab-indicator { background: #636366; }
+/* Done and over-limit always win over the category colour. */
+.personal-habit.is-done:has(.profile-feature-icon) .habit-meter i { background: var(--success); }
+.personal-habit.is-over:has(.profile-feature-icon) .habit-meter i { background: var(--danger); }
+#daily-checkin button.toggle.on:not(.x):not(.chip):not(.tasbih):not(.link) { background: var(--success); color: #fff; }
+
+/* One segmented control everywhere, with iOS's own values: translucent track, raised selected pill. */
+:root { --seg-track: rgba(118, 118, 128, .24); --seg-pill: #636366; }
+:root[data-theme="light"] { --seg-track: rgba(118, 118, 128, .12); --seg-pill: #fff; }
+.daily-switch, .seg, .destination-tabs, .account-tabs, .profile-card .account-tabs { background: var(--seg-track); border-color: transparent; }
+:is(.daily-switch, .seg, .destination-tabs, .account-tabs) button { background: transparent; color: var(--text); }
+:is(.daily-switch, .seg, .destination-tabs, .account-tabs) button:is([aria-selected="true"], [aria-pressed="true"]),
+.profile-card .account-tabs button:is([aria-selected="true"], [aria-pressed="true"]),
+:root:not([data-theme="light"]) .profile-card .account-tabs button[aria-selected="true"] {
+  background: var(--seg-pill); color: var(--text); box-shadow: 0 1px 3px #0000001f, 0 0 0 .5px #0000000a; }
+:is(.daily-switch, .seg, .destination-tabs, .account-tabs) .motion-tab-indicator,
+:root:not([data-theme="light"]) .profile-card .account-tabs .motion-tab-indicator { background: var(--seg-pill); box-shadow: 0 1px 3px #0000001f; }
+:is(.daily-switch, .seg, .destination-tabs, .account-tabs) button.motion-selected { background: transparent; box-shadow: none; }
+/* Light mode uses the same assigned hues, so a category is the same colour in both themes. */
+:root[data-theme="light"] {
+  --violet-fill: #5b4fe3; --coral-fill: #f28a1e; --mint-fill: #12a29a; --blue-fill: #2f7cf6; --amber-fill: #e3a21a;
+  --violet-surface: #5b4fe31a; --coral-surface: #f28a1e1a; --mint-surface: #12a29a1a; --blue-surface: #2f7cf61a; --amber-surface: #e3a21a1a;
+  --s1: #5b4fe3; --s2: #12a29a; --s3: #f28a1e; --s4: #2f7cf6;
+}
+
+/* Navigation is never taken away from a signed-in person. While the account is still connecting,
+   edits are already blocked by the app, so the tab bar and layout stay exactly as normal (Jakob). */
+body.account-connecting .sidebar { display: block !important; }
+body.account-connecting .app-shell { display: grid; }
+@media (max-width: 1120px) { body.account-connecting .app-shell { display: block; } }
+body.account-connecting .workspace { margin: 0; max-width: none; padding-inline: 0; }
+@media (min-width: 1121px) { body.account-connecting .workspace { max-width: 1220px; width: 100%; margin-inline: auto; } }
+
+/* ======================================================================
+   Check in as grouped sections (iOS / Revolut): the area title sits on the page,
+   every subsection is its own card (Common Region, Proximity) with its own icon
+   in the area colour (Similarity) and its value on the right (insp15 amounts).
+   ====================================================================== */
+#daily-checkin #deen, #daily-checkin #body { background: transparent; box-shadow: none; padding: 0; border: 0; }
+#daily-checkin #deen { --area: var(--violet-fill); }
+#daily-checkin #body { --area: var(--mint-fill); margin-top: 18px; }
+#daily-checkin .section-heading { margin: 4px 4px 10px; }
+#daily-checkin .section-heading h2 { font-size: 22px; }
+#daily-checkin #deen .metric, #daily-checkin #body .metric, #daily-checkin .control-block.metric {
+  background: var(--card); border: 0; border-radius: 20px; padding: 16px; margin: 0 0 10px; box-shadow: var(--shadow-small); }
+#daily-checkin #body .metric + .metric, #daily-checkin #body .body-split { border-top: 0; }
+#daily-checkin .deen-split, #daily-checkin .body-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; padding: 0; }
+#daily-checkin .deen-split .metric, #daily-checkin .body-split .metric { margin: 0 0 10px; }
+#daily-checkin .metric-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+#daily-checkin .metric-head > span { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0 4px; font-size: 16px; font-weight: 600; color: var(--text); min-width: 0; }
+#daily-checkin .metric-head > b { flex: none; font-size: 15px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+#daily-checkin .metric-icon { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; margin-right: 8px; border-radius: 50%; background: var(--area); color: #fff; }
+#daily-checkin .metric-icon .app-icon { width: 18px; height: 18px; }
+#daily-checkin .target { width: 100%; margin: 2px 0 0 40px; font-size: 13px; }
+#daily-checkin .target::before { content: none; }
+#daily-checkin .metric .bar { margin: -2px 0 14px; }
+#daily-checkin .chips { margin: 0; }
+#daily-checkin .stepper { justify-content: space-between; }
+#daily-checkin .control-block .toggle { width: 100%; }
+#daily-checkin .tasbih { margin-top: 0; min-height: 120px; }
+#daily-checkin .tiny-actions { margin-top: 8px; }
+#daily-checkin .metric .inline-form, #daily-checkin .metric .week-dots { margin-top: 0; }
+#daily-checkin .food-list:empty { display: none; }
+
+/* ======================================================================
+   Hero as a Revolut balance: small label, one big centred number, a thin bar,
+   one line, one pill. The brand colour fades into the page instead of a heavy block.
+   ====================================================================== */
+.personal-hero.hero-centered {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0;
+  padding: 26px 22px 24px; border-radius: 28px; overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 34%, var(--card)) 0%, var(--card) 100%);
+  color: var(--text);
+}
+:root[data-theme="light"] .personal-hero.hero-centered { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, #fff) 0%, #fff 100%); }
+.personal-hero.hero-centered::after { content: none; }
+.hero-label { margin: 0; color: var(--muted); font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+.personal-hero .personal-ring.hero-score {
+  position: static; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  width: auto; height: auto; margin: 10px 0 0; padding: 0; border-radius: 0; background: none; scale: none;
+}
+.personal-hero .hero-score > b { font-size: 64px; line-height: 1; font-weight: 700; letter-spacing: -.045em; color: var(--text); font-variant-numeric: tabular-nums; }
+.hero-meter { display: block; width: 160px; height: 6px; border-radius: 99px; background: var(--action-circle); overflow: hidden; }
+.hero-meter i { display: block; width: var(--completion); height: 100%; border-radius: inherit; background: var(--accent); transition: width 200ms ease; }
+.hero-sub { margin: 14px 0 0; color: var(--muted); font-size: 15px; line-height: 1.4; max-width: 30ch; }
+.hero-next { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; margin-top: 18px; padding: 10px 18px;
+  border: 0; border-radius: 999px; background: var(--action-circle); color: var(--text); font-size: 15px; font-weight: 600; }
+.hero-next .app-icon { width: 18px; height: 18px; }
+@media (max-width: 520px) {
+  .personal-hero.hero-centered { padding: 22px 18px 20px; }
+  .personal-hero .hero-score > b { font-size: 58px; }
+  .personal-hero .personal-ring.hero-score { top: auto; right: auto; width: auto; height: auto; }
+}
+
+/* ======================================================================
+   Plan: iOS Calendar. Plain numbers, colour only where it means something:
+   green = strong day (same green as "done"), soft indigo = partial, indigo = today.
+   ====================================================================== */
+#calendar .heading-note, #exams .heading-note { display: none; }
+#calendar .section-mark, #exams .section-mark { background: var(--action-circle); color: var(--text); }
+.calendar-board { background: transparent; border: 0; }
+.cal-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.cal-nav #cal-title { order: -1; flex: 1; font-size: 20px; font-weight: 700; letter-spacing: -.02em; text-align: left; padding-left: 6px; }
+.cal-nav button { width: 44px; min-width: 44px; height: 44px; border-radius: 50%; background: var(--action-circle); color: var(--text); }
+.cal-nav button[data-cal="today"] { width: auto; padding-inline: 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); }
+:root[data-theme="light"] .cal-nav button[data-cal="today"] { color: var(--accent); }
+.cal-wd { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: none; }
+.cal-cell, .cal-cell.l1, .cal-cell.l2, .cal-cell.l3 { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px;
+  padding: 3px 0; border: 0; border-radius: 12px; background: transparent; color: var(--text); box-shadow: none; aspect-ratio: auto; }
+.cal-cell::after, .cal-cell.ch::after { content: none; }
+.cal-cell .n { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cal-cell.l2 .n { background: var(--accent-soft); color: var(--text); }
+.cal-cell.l3 .n { background: var(--success); color: #fff; font-weight: 600; }
+.cal-cell.today .n { background: var(--accent); color: #fff; font-weight: 700; }
+.cal-cell.sel:not(.today) .n { box-shadow: inset 0 0 0 1.5px var(--text); }
+.cal-cell.sel { box-shadow: none; }
+.cal-cell.out { opacity: .3; }
+.cal-cell .dots { min-height: 5px; }
+.cal-cell .dots i { width: 5px; height: 5px; box-shadow: none; }
+.cal-cell .dots i.s1, .dot-key.s1 { background: var(--accent); }
+.cal-cell .dots i.s2, .dot-key.s2 { background: var(--amber-fill); }
+.legend { gap: 6px 14px; color: var(--muted); font-size: 12px; }
+.legend i.l3 { background: var(--success); border-radius: 50%; }
+.legend i.l2 { background: var(--accent-soft); border-radius: 50%; box-shadow: inset 0 0 0 1px var(--accent-border); }
+@media (hover: hover) and (pointer: fine) { .cal-cell:hover { background: var(--action-circle); } }
+/* Day details and the add-event form read as one grouped card below the month. */
+.cal-side { background: transparent; }
+.cal-day-head b { font-size: 17px; font-weight: 600; }
+#calendar .list li, #exams .list li { border-color: var(--line); }
+/* Plan leftovers: one filled-field style, quiet badges, the challenge note on its own line. */
+#calendar h2, #exams h2 { flex-wrap: wrap; }
+#cal-progress { display: block; width: 100%; margin: 4px 0 0 0; font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+#view-planner .event-form { background: transparent; border: 0; padding: 0; }
+#view-planner input, #view-planner select { background: var(--action-circle); border-color: transparent; color: var(--text); }
+:root[data-theme="light"] #view-planner input, :root[data-theme="light"] #view-planner select { background: var(--canvas); }
+#view-planner .badge { background: var(--action-circle); color: var(--text); border: 0; font-size: 12px; font-weight: 600; }
+#view-planner .badge.soon, #view-planner .badge.today { background: var(--amber-fill); color: #fff; }
+
+/* Hero text follows the theme (an older rule forced white for the old dark card). */
+.personal-hero.hero-centered { --text: #f5f5f7; --muted: #a1a1a6; color: var(--text); }
+:root[data-theme="light"] .personal-hero.hero-centered { --text: #1d1d1f; --muted: #6e6e73; }
+.personal-hero.hero-centered .hero-label, .personal-hero.hero-centered p.hero-sub { color: var(--muted); }
+.personal-hero.hero-centered .hero-score > b { color: var(--text); }
+/* The one action in the hero is the primary button: indigo in light, white in dark (Von Restorff). */
+.personal-hero.hero-centered .hero-next { background: var(--cta); color: var(--cta-ink); }
+:root[data-theme="light"] .personal-hero.hero-centered .hero-meter { background: #e3e2f5; }

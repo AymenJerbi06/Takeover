@@ -243,7 +243,8 @@ function renderDeen() {
   call.setAttribute('aria-pressed', String(d.call));
   call.classList.toggle('on', d.call);
   $('tasbih-val').textContent = d.tasbih;
-  $('tasbih-label').textContent = `/ ${GOALS.tasbih}`;
+  $('tasbih-label').textContent = `${d.tasbih} / ${GOALS.tasbih}`;
+  $('prayers-count').textContent = `${d.prayers.filter(Boolean).length} / 5`;
   $('tasbih-btn').classList.toggle('done', d.tasbih >= GOALS.tasbih);
 }
 
@@ -371,7 +372,8 @@ let trendPeriod = (() => {
 /* ---------- Today: the 40-day goals in the shared hero / week / habit-list layout ---------- */
 // Same markup as the personal routine dashboard, so both get one design and one motion system.
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const FOCUS_ICONS = { study: ['exams', 'violet'], drop: ['wallet', 'mint'], fullstack: ['code', 'blue'], video: ['video', 'coral'] };
+// One colour per category, repeated for every goal in it: Deen indigo, Work orange, Body teal.
+const FOCUS_ICONS = { study: ['exams', 'coral'], drop: ['wallet', 'coral'], fullstack: ['code', 'coral'], video: ['video', 'coral'] };
 function todayGoals(k = todayKey()) {
   const d = day(k), kcal = kcalOf(d), prayed = d.prayers.filter(Boolean).length, nextPrayer = d.prayers.findIndex(p => !p);
   const r = state.running, gymWeek = gymThisWeek();
@@ -383,7 +385,7 @@ function todayGoals(k = todayKey()) {
       text: `${d.quran} / ${GOALS.quran} pages`, act: 'data-quick="quran"', label: 'Add one Quran page', next: 'Read a page of Quran' },
     { group: 'Deen', id: 'tasbih', title: 'Tasbih', icon: 'spark', tone: 'violet', frac: Math.min(d.tasbih / GOALS.tasbih, 1), done: d.tasbih >= GOALS.tasbih,
       text: `${d.tasbih} / ${GOALS.tasbih}`, act: 'data-quick="tasbih33"', label: 'Add 33 tasbih', next: 'Tasbih' },
-    { group: 'Deen', id: 'call', title: 'Call parents', icon: 'phone', tone: 'coral', frac: d.call ? 1 : 0, done: d.call,
+    { group: 'Deen', id: 'call', title: 'Call parents', icon: 'phone', tone: 'violet', frac: d.call ? 1 : 0, done: d.call,
       text: d.call ? 'Called today' : 'Not yet', act: 'data-quick="call-toggle"', label: d.call ? 'Undo call parents' : 'Mark parents called', pressed: d.call, next: 'Call your parents' },
     ...FOCUS.map(f => {
       const m = focusMins(d, f.id, k), on = r?.id === f.id;
@@ -398,7 +400,7 @@ function todayGoals(k = todayKey()) {
       act: 'data-open-checkin data-focus-field="#food-form input"', label: 'Add food', next: 'Log a meal' },
     { group: 'Body', id: 'gym', title: 'Gym', icon: 'body', tone: 'mint', frac: Math.min(gymWeek / GOALS.gymPerWeek, 1), done: d.gym,
       text: `${gymWeek} / ${GOALS.gymPerWeek} this week${d.gym ? ' · today' : ''}`, act: 'data-quick="gym-toggle"', label: d.gym ? 'Undo gym today' : 'Log gym today', pressed: d.gym, weekly: true },
-    { group: 'Body', id: 'sleep', title: 'Sleep', icon: 'sleep', tone: 'amber', frac: d.sleep != null ? Math.min(d.sleep / GOALS.sleep, 1) : 0, done: d.sleep != null && d.sleep >= GOALS.sleep,
+    { group: 'Body', id: 'sleep', title: 'Sleep', icon: 'sleep', tone: 'mint', frac: d.sleep != null ? Math.min(d.sleep / GOALS.sleep, 1) : 0, done: d.sleep != null && d.sleep >= GOALS.sleep,
       text: d.sleep != null ? `${d.sleep} / ${GOALS.sleep} h` : 'Not logged', act: 'data-open-checkin data-focus-field="#sleep-form input"', label: 'Log sleep', next: 'Log last night’s sleep' },
   ];
 }
@@ -414,23 +416,28 @@ function renderToday() {
   const linked = cur?.link && goals.find(g => g.id === cur.link || (cur.link === 'pray' && g.id === 'prayers'));
   const next = (linked && !linked.done && linked.next ? linked : null) || scored.find(g => !g.done && g.next && !g.running);
   const monday = weekStart(k), stk = streak();
-  const row = g => `<div class="personal-habit ${g.done ? 'is-done' : ''} ${g.over ? 'is-over' : ''} ${g.running ? 'is-running' : ''}" data-habit-row="${g.id}" data-log-date="${k}">
+  const row = g => `<div class="personal-habit ${g.done ? 'is-done' : ''} ${g.over ? 'is-over' : ''} ${g.running ? 'is-running' : ''}" data-habit-row="${g.id}" data-log-date="${k}" data-category="${g.group.toLowerCase()}">
     <span class="profile-feature-icon ${g.tone}">${icon(g.icon)}</span>
     <div class="habit-copy"><b>${esc(g.title)}</b><span>${esc(g.text)}</span><div class="habit-meter" role="progressbar" aria-label="${esc(g.title)}" aria-valuenow="${Math.round(g.frac * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${g.frac * 100}%"></i></div></div>
     <button type="button" class="habit-check" ${g.act} aria-label="${esc(g.label)}" ${g.pressed !== undefined ? `aria-pressed="${g.pressed}"` : ''}>${icon(g.glyph || (g.done ? 'check' : 'plus'))}</button></div>`;
-  const groups = ['Deen', 'Work', 'Body'].map(name => `<p class="habit-group">${name}</p>${goals.filter(g => g.group === name).map(row).join('')}`).join('');
-  root.innerHTML = `<section class="personal-hero"><div><p class="account-eyebrow">Day ${Math.min(n, GOALS.days)} of ${GOALS.days}${stk ? ` · ${stk}-day streak` : ''}</p>
-      <h2>${done === scored.length ? 'You showed up.' : 'Make today yours.'}</h2>
-      <p>${done} of ${scored.length} goals complete. ${cur ? `Now: ${esc(cur.title)}.` : done === scored.length ? 'Enjoy the rest of your day.' : 'One small step at a time.'}</p>
-      ${next ? `<button type="button" class="account-primary" ${next.act}>Next: ${esc(next.next)} ${icon('arrowRight')}</button>` : ''}</div>
-      <div class="personal-ring" style="--completion:${Math.round(sc * 100)}%"><div><b>${pct(sc)}</b><span>today</span></div></div></section>
+  const groups = ['Deen', 'Work', 'Body'].map(name => `<p class="habit-group" data-category="${name.toLowerCase()}">${name}</p>${goals.filter(g => g.group === name).map(row).join('')}`).join('');
+  const groupFrac = name => { const list = scored.filter(g => g.group === name); return list.reduce((sum, g) => sum + g.frac, 0) / Math.max(1, list.length); };
+  const strip = window.TakeoverHome?.categoryStrip([['Deen', 'spirit', 'violet'], ['Work', 'focus', 'coral'], ['Body', 'body', 'mint']]
+    .map(([title, glyph, tone]) => ({ id: title.toLowerCase(), title, icon: glyph, tone, frac: groupFrac(title) })), sc) || '';
+  root.innerHTML = `<section class="personal-hero hero-centered" aria-label="Today's progress">
+      <p class="hero-label">Day ${Math.min(n, GOALS.days)} of ${GOALS.days}${stk ? ` · ${stk}-day streak` : ''}</p>
+      <div class="personal-ring hero-score" style="--completion:${Math.round(sc * 100)}%"><b>${pct(sc)}</b><span class="hero-meter" aria-hidden="true"><i></i></span></div>
+      <p class="hero-sub">${done === scored.length ? `All ${scored.length} goals done. You showed up.` : `${done} of ${scored.length} goals done today${cur ? ` · Now: ${esc(cur.title)}` : ''}`}</p>
+      ${next ? `<button type="button" class="hero-next" ${next.act}>Next: ${esc(next.next)} ${icon('arrowRight')}</button>` : ''}</section>
     <div class="personal-week" aria-label="This week">${Array.from({ length: 7 }, (_, i) => {
       const dk = addDays(monday, i), future = dk > k, counted = dk >= state.startDate && !future, s = counted ? score(dk) : null;
       return `<button type="button" data-week-day="${dk}" ${future ? 'disabled' : ''} aria-label="${parseKey(dk).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: ${future ? 'upcoming' : s === null ? 'before the challenge' : pct(s)}" ${dk === k ? 'aria-current="date"' : ''}><span>${DAY_NAMES[parseKey(dk).getDay()]}</span><b class="${s >= 0.8 ? 'week-done' : ''}">${s >= 1 ? icon('check') : Number(dk.slice(-2))}</b><i class="${s > 0 ? 'has-progress' : ''}"></i></button>`;
     }).join('')}</div>
-    <section class="profile-card"><div class="personal-card-head"><h2>Your habits</h2><button type="button" class="account-secondary" data-open-checkin>${icon('edit')} Check in</button></div>${groups}
+    ${strip}
+    <section class="profile-card"><div class="personal-card-head"><h2 class="habit-list-title">Your habits</h2><button type="button" class="account-secondary" data-open-checkin>${icon('edit')} Check in</button></div>${groups}
       <div class="personal-card-foot"><button type="button" class="link" data-open-checkin>Detailed check-in ${icon('chevronRight')}</button><span>A day counts at 80%+</span></div></section>
     <div class="personal-shortcuts"><button type="button" data-goto="progress">${icon('progress')} Your reports ${icon('chevronRight')}</button><button type="button" data-goto="profile" data-goto-tab="friends">${icon('users')} Your circle ${icon('chevronRight')}</button></div>`;
+  window.TakeoverHome?.applyFilter(root);
   // Spring from the previous values only after a deliberate tap, never on background renders.
   const fractions = Object.fromEntries(goals.map(g => [g.id, g.frac]));
   if (todayFractions?.k === k && performance.now() - lastPress < 1500 && window.TakeoverMotion) {
@@ -579,7 +586,7 @@ function renderPeriodSummary() {
     const title = change > 1 ? `Up ${change} points` : change < -1 ? `Down ${Math.abs(change)} points` : 'Holding steady';
     insight = [direction, title, `Compared with the previous ${count} ${periodLabel}.`];
   }
-  $('period-insight').innerHTML = `<span class="insight-symbol" aria-hidden="true">${icon(insight[0])}</span><div><small>THE TREND</small><b>${insight[1]}</b><span>${insight[2]}</span></div>`;
+  $('period-insight').innerHTML = `<span class="insight-symbol" aria-hidden="true">${icon(insight[0])}</span><div><small>The trend</small><b>${insight[1]}</b><span>${insight[2]}</span></div>`;
 }
 
 function renderTrends() {
@@ -1034,9 +1041,15 @@ function viewFromHash() {
   return legacyViews[hash] || 'today';
 }
 
+// Profile opens from the header avatar, so it gets an iOS back button to the tab you came from.
+let returnView = 'today';
 function activateView(name, { focus = false, skip = false } = {}) {
   const view = viewNames[name] ? name : 'today';
   const previousView = document.body.dataset.view;
+  if (view === 'profile' && previousView && previousView !== 'profile' && viewNames[previousView]) returnView = previousView;
+  $('view-back').hidden = view !== 'profile';
+  $('view-back-label').textContent = viewNames[returnView];
+  $('view-back').setAttribute('aria-label', `Back to ${viewNames[returnView]}`);
   viewPanels.forEach(panel => { panel.hidden = panel.dataset.view !== view; });
   viewLinks.forEach(link => {
     const active = link.dataset.viewTarget === view;
@@ -1095,6 +1108,7 @@ document.addEventListener('visibilitychange', () => {
   state = load(); render();
 });
 
+$('view-back').addEventListener('click', () => window.Takeover.navigate(returnView));
 window.Takeover.navigate = view => {
   history.pushState(null, '', `#view-${view}`);
   activateView(view, { focus: true });

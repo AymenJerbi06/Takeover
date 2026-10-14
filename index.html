@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#000000">
-  <script src="theme.js?v=20261014-today3"></script>
+  <script src="theme.js?v=20261014-home2"></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="experience.css?v=20261013-sync">
   <link rel="stylesheet" href="profile.css?v=20261013-mobile-photo">
   <link rel="stylesheet" href="personal.css?v=20261013-personal">
-  <link rel="stylesheet" href="polish.css?v=20261014-today3">
+  <link rel="stylesheet" href="polish.css?v=20261014-release2">
 </head>
 <body>
   <section id="welcome-root" hidden aria-label="Welcome to Takeover"></section>
@@ -38,7 +38,6 @@
         <a href="#view-focus" data-view-target="focus"><span class="nav-icon" data-icon="focus" aria-hidden="true"></span><span>Focus</span></a>
         <a href="#view-progress" data-view-target="progress"><span class="nav-icon" data-icon="progress" aria-hidden="true"></span><span>Progress</span></a>
         <a href="#view-planner" data-view-target="planner"><span class="nav-icon" data-icon="calendar" aria-hidden="true"></span><span>Plan</span></a>
-        <a href="#view-profile" data-view-target="profile"><span class="nav-icon" data-icon="profile" aria-hidden="true"></span><span>Profile</span></a>
       </nav>
 
       <div class="sidebar-note">
@@ -50,6 +49,7 @@
     <div class="workspace">
       <header class="top">
         <div class="page-heading">
+          <button type="button" class="view-back" id="view-back" hidden><span data-icon="chevronLeft" aria-hidden="true"></span><span id="view-back-label">Today</span></button>
           <div class="eyebrow">40-day reset</div>
           <h1 id="page-title" tabindex="-1">Today</h1>
           <div class="sub"><span id="today-date"></span><span class="date-divider" aria-hidden="true">·</span><span id="clock" class="mono"></span></div>
@@ -57,7 +57,7 @@
         </div>
         <div class="header-actions"><button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to light mode">
           <span data-theme-icon aria-hidden="true"></span><span data-theme-label>Light mode</span>
-        </button><a class="profile-trigger" id="profile-trigger" href="#view-profile" data-view-target="profile" aria-label="Open your profile"><span id="profile-avatar" class="profile-avatar" data-icon="profile" aria-hidden="true"></span><span id="profile-trigger-label">Your profile</span></a></div>
+        </button><button type="button" class="notify-trigger" id="notify-trigger" aria-label="Notifications"><span data-icon="bell" aria-hidden="true"></span><span class="notify-badge" id="notify-badge" hidden></span></button><a class="profile-trigger" id="profile-trigger" href="#view-profile" data-view-target="profile" aria-label="Open your profile"><span id="profile-avatar" class="profile-avatar" data-icon="profile" aria-hidden="true"></span><span id="profile-trigger-label">Your profile</span></a></div>
         <div class="top-stats" aria-label="Today's stats">
           <div class="top-stat"><span class="stat-symbol" data-icon="calendar" aria-hidden="true"></span><div><b id="challenge-day"></b><span>challenge</span></div></div>
           <div class="top-stat"><span class="stat-symbol" data-icon="streak" aria-hidden="true"></span><div><b id="streak"></b><span>day streak</span></div></div>
@@ -103,33 +103,37 @@
         <div id="daily-checkin" class="today-panel checkin-panel" role="tabpanel" aria-labelledby="daily-checkin-tab" tabindex="0" hidden>
         <section class="card" id="deen" aria-labelledby="deen-title">
           <div class="section-heading">
-            <div><div class="section-kicker">Spirit</div><h2 id="deen-title"><span class="section-mark deen-mark" data-icon="spirit" aria-hidden="true"></span>Deen</h2></div>
+            <div><h2 id="deen-title"><span class="section-mark deen-mark" data-icon="spirit" aria-hidden="true"></span>Deen</h2></div>
           </div>
-          <div class="row-label">Prayers</div>
-          <div class="chips" id="prayers"></div>
+          <div class="metric metric-prayers">
+            <div class="metric-head"><span><span class="metric-icon" data-icon="sun" aria-hidden="true"></span>Prayers <span class="target">5 a day</span></span><b id="prayers-count"></b></div>
+            <div class="chips" id="prayers"></div>
+          </div>
           <div class="split deen-split">
-            <div class="control-block">
-              <div class="row-label">Quran <span class="muted">· 3 pages</span></div>
+            <div class="control-block metric">
+              <div class="metric-head"><span><span class="metric-icon" data-icon="book" aria-hidden="true"></span>Quran <span class="target">3 pages</span></span></div>
               <div class="stepper" data-field="quran">
                 <button data-step="-1" aria-label="Remove one Quran page"><span data-icon="minus" aria-hidden="true"></span></button><b id="quran-val"></b><button data-step="1" aria-label="Add one Quran page"><span data-icon="plus" aria-hidden="true"></span></button>
               </div>
             </div>
-            <div class="control-block">
-              <div class="row-label">Call parents</div>
+            <div class="control-block metric">
+              <div class="metric-head"><span><span class="metric-icon" data-icon="phone" aria-hidden="true"></span>Call parents</span></div>
               <button class="toggle" id="call-btn"></button>
             </div>
           </div>
-          <div class="row-label tasbih-label">Tasbih <span class="muted" id="tasbih-label"></span></div>
+          <div class="metric metric-tasbih">
+          <div class="metric-head tasbih-label"><span><span class="metric-icon" data-icon="spark" aria-hidden="true"></span>Tasbih <span class="target">100 a day</span></span><b id="tasbih-label"></b></div>
           <button class="tasbih" id="tasbih-btn" aria-label="Add one tasbih"><span id="tasbih-val">0</span><small>tap to count <span data-icon="plus" aria-hidden="true"></span></small></button>
           <div class="tiny-actions"><button id="tasbih-undo" class="link"><span data-icon="undo" aria-hidden="true"></span>Undo</button><button id="tasbih-33" class="link" aria-label="Add 33 tasbih"><span data-icon="plus" aria-hidden="true"></span>33</button></div>
+          </div>
         </section>
         <section class="card" id="body" aria-labelledby="body-title">
           <div class="section-heading">
-            <div><div class="section-kicker">Energy</div><h2 id="body-title"><span class="section-mark body-mark" data-icon="body" aria-hidden="true"></span>Body</h2></div>
+            <div><h2 id="body-title"><span class="section-mark body-mark" data-icon="heart" aria-hidden="true"></span>Body</h2></div>
           </div>
 
           <div class="metric metric-food">
-            <div class="metric-head"><span>Calories <span class="target">MAX 1.4K</span></span><b id="kcal-total"></b></div>
+            <div class="metric-head"><span><span class="metric-icon" data-icon="food" aria-hidden="true"></span>Calories <span class="target">max 1,400 kcal</span></span><b id="kcal-total"></b></div>
             <div class="bar"><i id="kcal-bar"></i></div>
             <form id="food-form" class="inline-form wrap">
               <input name="name" placeholder="Add a food" aria-label="Food name" autocomplete="off">
@@ -140,7 +144,7 @@
           </div>
 
           <div class="metric metric-steps">
-            <div class="metric-head"><span>Steps <span class="target">20K</span></span><b id="steps-total"></b></div>
+            <div class="metric-head"><span><span class="metric-icon" data-icon="steps" aria-hidden="true"></span>Steps <span class="target">goal 20,000</span></span><b id="steps-total"></b></div>
             <div class="bar"><i id="steps-bar"></i></div>
             <form id="steps-form" class="inline-form">
               <input name="steps" type="number" inputmode="numeric" placeholder="Today's steps" aria-label="Steps" min="0">
@@ -149,21 +153,21 @@
           </div>
 
           <div class="metric gym-metric">
-            <div class="metric-head"><span>Gym <span class="target">3× / WEEK</span></span><b id="gym-week"></b></div>
+            <div class="metric-head"><span><span class="metric-icon" data-icon="body" aria-hidden="true"></span>Gym <span class="target">3× a week</span></span><b id="gym-week"></b></div>
             <div class="week-dots" id="gym-dots"></div>
             <button class="toggle" id="gym-btn"></button>
           </div>
 
           <div class="split body-split">
             <div class="metric metric-sleep">
-              <div class="metric-head"><span>Sleep <span class="target">7H+</span></span></div>
+              <div class="metric-head"><span><span class="metric-icon" data-icon="sleep" aria-hidden="true"></span>Sleep <span class="target">7h or more</span></span></div>
               <form id="sleep-form" class="inline-form">
                 <input name="sleep" type="number" inputmode="decimal" step="0.25" min="0" max="16" placeholder="Hours" aria-label="Sleep in hours">
                 <button>Save</button>
               </form>
             </div>
             <div class="metric metric-screen">
-              <div class="metric-head"><span>Screen time</span></div>
+              <div class="metric-head"><span><span class="metric-icon" data-icon="eye" aria-hidden="true"></span>Screen time</span></div>
               <form id="screen-form" class="inline-form">
                 <input name="screen" type="number" inputmode="numeric" min="0" placeholder="Minutes" aria-label="Screen time in minutes">
                 <button>Save</button>
@@ -206,7 +210,7 @@
         <div class="progress-content" id="progress-personal" role="tabpanel" aria-labelledby="progress-personal-tab">
         <section class="card wide trends" id="trends" aria-labelledby="trends-title">
           <div class="section-heading trends-heading">
-            <div><div class="section-kicker">Look how far you’ve come</div><h2 id="trends-title"><span class="section-mark trends-mark" data-icon="progress" aria-hidden="true"></span>Progress</h2></div>
+            <div><h2 id="trends-title"><span class="section-mark trends-mark" data-icon="progress" aria-hidden="true"></span>Look how far you’ve come</h2></div>
             <div class="seg period-switch" role="group" aria-label="Group progress by period">
               <button data-period="day" aria-pressed="false">Days</button>
               <button data-period="week" aria-pressed="false">Weeks</button>
@@ -266,7 +270,7 @@
         <div id="personal-plan" class="personal-root" hidden></div>
         <section class="card wide calendar" id="calendar" aria-labelledby="calendar-title">
           <div class="section-heading">
-            <div><div class="section-kicker">Your days, in view</div><h2 id="calendar-title"><span class="section-mark calendar-mark" data-icon="calendar" aria-hidden="true"></span>Calendar <span class="muted small" id="cal-progress"></span></h2></div>
+            <div><h2 id="calendar-title"><span class="section-mark calendar-mark" data-icon="calendar" aria-hidden="true"></span>Calendar <span class="muted small" id="cal-progress"></span></h2></div>
             <span class="heading-note">Tap a day to see the details</span>
           </div>
           <div class="cal-layout">
@@ -279,8 +283,7 @@
               </div>
               <div class="cal-grid" id="cal-grid" role="grid"></div>
               <div class="legend">
-                <span><i class="l1"></i>&lt;50%</span><span><i class="l2"></i>50–79%</span><span><i class="l3"></i>80%+</span>
-                <span><i class="dot-key s1"></i>Event</span><span><i class="dot-key s2"></i>Exam</span><span><i class="ch-key"></i>Challenge</span>
+                <span><i class="l3"></i>Strong day</span><span><i class="l2"></i>50–79%</span><span><i class="dot-key s1"></i>Event</span><span><i class="dot-key s2"></i>Exam</span>
               </div>
             </div>
             <div class="cal-side">
@@ -300,7 +303,7 @@
         </section>
         <section class="card" id="exams" aria-labelledby="exams-title">
           <div class="section-heading">
-            <div><div class="section-kicker">On your horizon</div><h2 id="exams-title"><span class="section-mark exam-mark" data-icon="exams" aria-hidden="true"></span>Exams</h2></div>
+            <div><h2 id="exams-title"><span class="section-mark exam-mark" data-icon="exams" aria-hidden="true"></span>Exams</h2></div>
             <span class="heading-note">Stay one step ahead</span>
           </div>
           <ul class="list" id="exam-list"></ul>
@@ -383,16 +386,17 @@
   <script src="config.js?v=20261013-sync"></script>
   <script src="api/config"></script>
   <aside class="session-dock" id="session-dock" aria-label="Active focus session" hidden></aside>
-  <script src="icons.js?v=20261014-refined"></script>
+  <script src="icons.js?v=20261014-release2"></script>
   <script src="metrics.js?v=20261013-reset"></script>
   <script src="personal-engine.js?v=20261013-personal"></script>
   <script src="charts.js"></script>
-  <script src="app.js?v=20261014-today3"></script>
-  <script src="spring.js?v=20261014-today3"></script>
-  <script src="motion.js?v=20261014-today3"></script>
-  <script src="account.js?v=20261014-today3"></script>
+  <script src="home.js?v=20261014-release2"></script>
+  <script src="app.js?v=20261014-release2"></script>
+  <script src="spring.js?v=20261014-home2"></script>
+  <script src="motion.js?v=20261014-home2"></script>
+  <script src="account.js?v=20261014-home2"></script>
   <script src="sync.js?v=20261013-personal"></script>
   <script src="social.js?v=20261013-personal"></script>
-  <script src="personal.js?v=20261014-today3"></script>
+  <script src="personal.js?v=20261014-release2"></script>
 </body>
 </html>
