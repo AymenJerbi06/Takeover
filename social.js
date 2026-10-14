@@ -120,7 +120,7 @@
     let place = 0, previous = null;
     boardRoot.innerHTML = `<section class="profile-card"><div class="leaderboard-hero"><span class="profile-feature-icon">${icon('trophy')}</span><h2>Small wins. Shared.</h2><p class="account-note">Your circle’s overall completion, at a glance.</p></div>
       <div class="leaderboard-tabs" role="group" aria-label="Leaderboard period">${[['today','Today'],['week','This week'],['month','This month']].map(([id, label]) => `<button type="button" data-board-period="${id}" aria-pressed="${period === id}">${label}</button>`).join('')}</div>
-      <p class="account-note">Average completion across elapsed days since each person’s challenge began. Unlogged days count as zero. Only shared scores appear.</p>
+      <p class="account-note">Each person’s own targets, equally weighted. Averages use synced scheduled days; rest days are excluded and unlogged habits count as zero. Scores are self-reported. Personal goals, income and demo balances stay private.</p>
       ${!A.profile?.share_progress ? '<div class="sharing-prompt"><p class="account-note">Your score is private. Enable sharing in Friends to join in.</p><button class="account-secondary" type="button" data-open-friends>Manage friends & sharing</button></div>' : ''}
       <p class="account-status" role="status" ${boardError || sharingError ? 'data-kind="error"' : ''}>${esc(boardError || sharingError || (loadingBoard ? 'Refreshing scores…' : ''))}</p>
       <ol class="leaderboard-list">${sorted.map((row, index) => {
@@ -165,7 +165,7 @@
     const days = [];
     while (dateKey(cursor) <= today && days.length < 367) {
       const day = dateKey(cursor), d = state.days[day]; let score = 0;
-      try { score = Math.round(window.TakeoverMetrics.dayScore(d) * 100); } catch { score = 0; }
+      try { score = Math.round((state.personalPlan ? window.TakeoverPersonal.dayScore(state, day) : state.experience === 'personal' ? 0 : window.TakeoverMetrics.dayScore(d)) * 100); } catch { score = 0; }
       days.push({ day, score: Math.max(0, Math.min(100, Number.isFinite(score) ? score : 0)) });
       cursor.setDate(cursor.getDate() + 1);
     }

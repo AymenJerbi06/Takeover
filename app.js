@@ -52,25 +52,31 @@ function freshState() {
     version: 1,
     updatedAt: 0, // last local change (ms); cloud sync uses it to pick the newer copy
     syncUser: null, // Supabase user this device last synced with
-    startDate: CHALLENGE_START_DATE,
+    experience: 'personal',
+    startDate: todayKey(),
     challengeReset: CHALLENGE_START_DATE,
     startWeight: null,
     currency: '',
-    plan: DEFAULT_PLAN,
+    plan: '',
     days: {},
     weights: [],
     running: null,
     exams: [],
     events: [],
-    debts: DEFAULT_DEBTS.map(d => ({ ...d, paid: 0 })),
+    debts: [],
   };
 }
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return { ...freshState(), ...normalizeChallenge(JSON.parse(raw)) };
+    if (raw) return restoreState(JSON.parse(raw));
   } catch (e) { /* fall through */ }
   return freshState();
+}
+function restoreState(value) {
+  const legacy = !value.experience && !value.personalPlan && (value.version || value.days || value.plan);
+  return { ...freshState(), ...(legacy ? { experience: 'legacy', plan: DEFAULT_PLAN } : {}),
+    ...(legacy || value.experience === 'legacy' ? normalizeChallenge(value) : value) };
 }
 let state = load();
 function save(touch = true) {
@@ -94,14 +100,19 @@ function runningMins(id, k) {
 }
 function focusMins(d, id, k) { return (d.mins[id] || 0) + runningMins(id, k); }
 function parts(k) {
+  if (state.personalPlan) return window.TakeoverPersonal.dayParts(state, k);
+  if (state.experience === 'personal') return [];
   const d = state.days[k];
   return d ? dayParts(d, id => focusMins(d, id, k)) : null;
 }
 function score(k) {
+  if (state.personalPlan) return window.TakeoverPersonal.dayScore(state, k) ?? 0;
+  if (state.experience === 'personal') return 0;
   const d = state.days[k];
   return dayScore(d, d && (id => focusMins(d, id, k)));
 }
 function streak() {
+  if (state.personalPlan) return window.TakeoverPersonal.streak(state);
   let k = todayKey(), n = 0;
   if (score(k) < 0.8) k = addDays(k, -1); // today still in progress doesn't break it
   while (k >= state.startDate && score(k) >= 0.8) { n++; k = addDays(k, -1); }
@@ -173,7 +184,9 @@ function renderHeader() {
   $('today-date').textContent = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   $('clock').textContent = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   const n = diffDays(state.startDate, todayKey()) + 1;
-  $('challenge-day').textContent = n < 1 ? `–${1 - n}` : `${Math.min(n, GOALS.days)}/${GOALS.days}`;
+  $('challenge-day').textContent = state.experience === 'personal' ? `Day ${Math.max(1, n)}` : n < 1 ? `–${1 - n}` : `${Math.min(n, GOALS.days)}/${GOALS.days}`;
+  document.querySelector('.page-heading .eyebrow').textContent = state.experience === 'personal' ? 'YOUR DAILY RHYTHM' : '40 DAY RESET';
+  $('challenge-day').nextElementSibling.textContent = state.experience === 'personal' ? 'your journey' : 'challenge';
   $('streak').textContent = streak();
   $('today-score').textContent = pct(score(todayKey()));
   const goals = parts(todayKey()) || [];
@@ -631,10 +644,11 @@ function upcomingItems(limit = 6) {
 const inDays = n => (n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`);
 
 function renderCalendar() {
+  const personal = state.experience === 'personal';
   const k = todayKey();
   const end = addDays(state.startDate, GOALS.days - 1);
   const dayN = diffDays(state.startDate, k) + 1;
-  $('cal-progress').textContent = dayN >= 1 && dayN <= GOALS.days
+  $('cal-progress').textContent = personal ? '' : dayN >= 1 && dayN <= GOALS.days
     ? `· challenge day ${dayN} of ${GOALS.days}, ends ${parseKey(end).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`
     : dayN < 1 ? `· challenge starts ${shortDate(state.startDate)}` : '· challenge complete';
 
@@ -650,7 +664,7 @@ function renderCalendar() {
     const hasData = dk <= k && state.days[dk];
     const sc = hasData ? score(dk) : 0;
     const items = itemsOn(dk);
-    const ch = dk >= state.startDate && dk <= end;
+    const ch = !personal && dk >= state.startDate && dk <= end;
     const cls = ['cal-cell', out && 'out', hasData && level(sc), dk === k && 'today', dk === calSel && 'sel', ch && 'ch'].filter(Boolean).join(' ');
     const tip = [shortDate(dk), ch ? `Challenge day ${diffDays(state.startDate, dk) + 1}` : '', hasData ? `Score ${pct(sc)}` : '', ...items.map(e => `${e.kind === 'exam' ? 'Exam: ' : ''}${e.time ? e.time + ' ' : ''}${e.title}`)].filter(Boolean).join('\n');
     html += `<button class="${cls}" data-day="${dk}" aria-label="${esc(tip.replace(/\n/g, ', '))}">
@@ -664,7 +678,7 @@ function renderCalendar() {
   const sd = state.days[calSel];
   const chN = diffDays(state.startDate, calSel) + 1;
   $('cal-day').innerHTML = `<div class="cal-day-head"><b>${esc(parseKey(calSel).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }))}</b>
-    <span class="muted small">${[calSel === k ? 'Today' : calSel > k ? inDays(diffDays(k, calSel)) : '', chN >= 1 && chN <= GOALS.days ? `Challenge day ${chN}` : '', sd && calSel <= k ? `Score ${pct(score(calSel))}` : ''].filter(Boolean).join(' · ')}</span></div>
+    <span class="muted small">${[calSel === k ? 'Today' : calSel > k ? inDays(diffDays(k, calSel)) : '', !personal && chN >= 1 && chN <= GOALS.days ? `Challenge day ${chN}` : '', sd && calSel <= k ? `Score ${pct(score(calSel))}` : ''].filter(Boolean).join(' · ')}</span></div>
     <ul class="list">${items.length ? items.map(e => `<li><i class="dot-key ${e.kind === 'exam' ? 's2' : 's1'}"></i><span class="grow">${e.time ? `<span class="muted mono">${esc(e.time)}</span> ` : ''}${esc(e.title)}${e.kind === 'exam' ? ' <span class="badge">exam</span>' : ''}</span><button class="x" data-del-item="${e.kind}:${e.i}" aria-label="Remove ${esc(e.title)}">${icon('close')}</button></li>`).join('') : '<li class="muted small">No events</li>'}</ul>`;
 
   const up = upcomingItems();
@@ -682,6 +696,13 @@ function renderSettings() {
 }
 
 function render() {
+  document.body.classList.toggle('personal-mode', state.experience === 'personal');
+  if (state.experience === 'personal') {
+    renderHeader(); renderExams(); renderMoney(); renderCalendar(); renderSettings();
+    $('session-dock').hidden = true;
+    window.TakeoverPersonalUI?.render();
+    return;
+  }
   renderHeader(); renderNow(); renderDeen(); renderFocus(); renderBody();
   renderGlance(); renderWeight(); renderTimeline(); renderTrends(); renderExams(); renderMoney(); renderCalendar(); renderSettings();
   renderSessionDock();
@@ -691,6 +712,11 @@ function render() {
 let lastMinute = -1, lastDay = todayKey();
 function tick() {
   const now = new Date();
+  if (state.experience === 'personal') {
+    if (todayKey() !== lastDay) { lastDay = todayKey(); render(); }
+    if (now.getMinutes() !== lastMinute) { lastMinute = now.getMinutes(); renderHeader(); window.TakeoverPersonalUI?.tick(); }
+    return;
+  }
   if (todayKey() !== lastDay) { lastDay = todayKey(); render(); return; }
   if (now.getMinutes() !== lastMinute) { lastMinute = now.getMinutes(); renderHeader(); renderNow(); renderTimeline(); renderGlance(); }
   const r = state.running;
@@ -713,6 +739,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) return;
   const ds = b.dataset;
+  if (ds.personalAction) return;
   if (ds.dailyTab) return activateDailyTab(ds.dailyTab);
   if ('openCheckin' in ds) return activateDailyTab('checkin', { focus: true, reveal: true });
   const d = day();
@@ -841,7 +868,7 @@ $('import').addEventListener('change', async e => {
     const data = JSON.parse(await file.text());
     if (!data || typeof data.days !== 'object') throw new Error();
     if (!confirm('Replace everything on this device with the backup?')) return;
-    state = { ...freshState(), ...normalizeChallenge(data) };
+    state = restoreState(data);
     commit('Backup restored');
   } catch { toast('That file is not a Takeover backup'); }
   e.target.value = '';
@@ -865,7 +892,7 @@ function applyUrlParams() {
 // Hooks for sync.js
 window.Takeover = {
   get state() { return state; },
-  set state(v) { state = { ...freshState(), ...normalizeChallenge(v) }; },
+  set state(v) { state = restoreState(v); },
   save, render, toast,
 };
 
@@ -936,7 +963,8 @@ function activateView(name, { focus = false, skip = false } = {}) {
   document.title = `${viewNames[view]} · Takeover`;
 
   // SVG charts need a measured panel width before they can be drawn.
-  if (view === 'progress') { renderTrends(); renderWeight(); }
+  if (view === 'progress' && state.experience !== 'personal') { renderTrends(); renderWeight(); }
+  window.TakeoverPersonalUI?.render();
   if (focus) {
     if (skip) document.getElementById(`view-${view}`).focus();
     else {
@@ -990,7 +1018,10 @@ function selectDestination(group, name, focus = false) {
     $(tab.getAttribute('aria-controls')).hidden = !selected;
     if (selected && focus) tab.focus();
   });
-  if (group === 'progress' && name === 'personal') { renderTrends(); renderWeight(); }
+  if (group === 'progress' && name === 'personal') {
+    if (state.experience === 'personal') window.TakeoverPersonalUI?.render();
+    else { renderTrends(); renderWeight(); }
+  }
   window.dispatchEvent(new CustomEvent('takeover:section', { detail: { group, name } }));
 }
 ['profile', 'progress'].forEach(group => {

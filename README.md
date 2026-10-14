@@ -56,7 +56,7 @@ Screen time (iOS Screen Time / Flora) isn't exposed to apps or Shortcuts, so it'
 Without it, data lives only in the browser on one device. With it, you sign in and the dashboard is saved to your Supabase database and shared across your devices.
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. **SQL Editor → New query**, run [`supabase.sql`](supabase.sql), then [`supabase-social.sql`](supabase-social.sql) for profiles, friends, and shared scores. The second migration leaves existing dashboard progress intact.
+2. **SQL Editor → New query**, run [`supabase.sql`](supabase.sql), then [`supabase-social.sql`](supabase-social.sql) for profiles, friends, and shared scores. Then run [`supabase-personal.sql`](supabase-personal.sql) to support scheduled rest days. These migrations leave private dashboard progress intact.
 3. Give the app your keys, either way works:
    - **Easiest:** link Supabase to the project in Vercel (Integrations / Storage), or add `SUPABASE_URL` and `SUPABASE_ANON_KEY` under Vercel → Settings → Environment Variables, then redeploy. `api/config.js` passes the public values to the page. Check by opening `https://<your-app>.vercel.app/api/config`: it should show your Supabase URL.
    - Or copy the **Project URL** and **anon public** key from **Project Settings → API** into [`config.js`](config.js) and push.
@@ -80,7 +80,7 @@ Photos up to 25 MB are cropped and resized locally to a small JPEG, which strips
 
 **Profile → Friends** provides a private invitation code. Requests must be accepted before shared scores become visible. Friends see names and profile photos; email addresses, individual goals, and personal logs stay private. Score sharing starts off. Turning it off removes that account's shared score history without removing its private dashboard.
 
-**Progress → Leaderboard** shows today, the current week, or the current month. Scores are self-reported overall completion, averaged across elapsed days since each challenge started; unlogged days count as zero. The app publishes at most the latest 367 days and only after the underlying dashboard has synced. The database checks the dashboard revision to reject uploads from stale device copies.
+**Progress → Leaderboard** shows today, the current week, or the current month. Scores are self-reported overall completion, averaged across synced scheduled days; rest days are excluded, and unlogged scheduled habits count as zero. A stale device keeps its last shared snapshot until it reconnects. The app publishes at most the latest 367 days and only after the underlying dashboard has synced. The database checks the dashboard revision to reject uploads from stale device copies.
 
 The social migration uses row-level security for owned profiles and scoped database functions for friendships and scores. A friend code grants the ability to request a connection, not to read progress.
 
@@ -95,6 +95,7 @@ The social migration uses row-level security for owned profiles and scoped datab
    | --- | --- |
    | `RESEND_API_KEY` | the Resend key (`re_…`) |
    | `REPORT_TO` | the email you signed up to Resend with |
+   | `REPORT_USER_ID` | the specific Supabase Auth user UUID whose legacy dashboard belongs to the recipient; required |
    | `SUPABASE_URL` | same Project URL as in `config.js` |
    | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** / secret key. Keep it secret: only here, never in `config.js` |
    | `CRON_SECRET` | any long random string |
@@ -104,3 +105,19 @@ The social migration uses row-level security for owned profiles and scoped datab
 4. Test it: open `https://<your-app>.vercel.app/api/report?key=<CRON_SECRET>&preview=1` to see the email, or `&force=1` instead of `&preview=1` to send it now.
 
 Without your own domain, Resend's `onboarding@resend.dev` sender can only email the address on your Resend account. To send from your own address, verify a domain in Resend and set `REPORT_FROM`, e.g. `Takeover <report@yourdomain.com>`.
+
+## Personal routines
+
+New visitors see the welcome page and account portal. New accounts start with an empty dashboard, never the original owner's debts or routine. Existing saved dashboards remain in legacy mode until their owner chooses **Profile → Preferences → Customize my routine**.
+
+Onboarding collects up to four goal areas, a goal description, time availability, preferred time and constraints. Weight and income are optional private context. Habit suggestions are transparent category-based examples, not AI or a medical/financial prescription. A bespoke paid plan is visibly unavailable until Stripe, prices, server-side entitlements and verified webhooks are implemented. No client flag can unlock or claim a purchased plan. The free alternative is a manual routine: users write each habit, choose its target/unit and choose weekdays.
+
+Habits have immutable IDs and date ranges. The first starts today; subsequent additions and edits begin tomorrow. Ending a habit keeps today's goal and its history. Daily scores equally weight scheduled habits and cap each at 100%. Rest days have no score. Points are daily percentages summed across scheduled days. Reports exclude future/rest days; missing logs on scheduled days count as zero. Strong-day streaks use 80% and skip rest days.
+
+**Progress** includes Day, Week and Month, previous-period navigation, a selected-day chart, per-habit adherence, last-week and last-month reports, and optional adjustments after a completed period. Recommendations require at least three scheduled days at 85% adherence, fit inside the available minutes, and require the user to review and save. Nothing changes automatically. Reports are in-app; email delivery is not configured for general members.
+
+The $5/$10 commitment feature is explicitly a simulation. It starts tomorrow, counts scheduled days, keeps the pretend amount at 100% completion, and marks it missed below 100% after the local day ends. Stopping takes effect tomorrow. Corrections recalculate demo totals. There is no checkout, money movement, withdrawable balance or real forfeiture. Demo amounts, goal details, weight and income are never sent to the social score table.
+
+The legacy email cron now requires `REPORT_USER_ID` and queries only that account. With no owner configured it sends nothing. Personal routines are excluded from that old report renderer. Do not configure a recipient for another person's account.
+
+Before public signup, finish the deferred custom SMTP/domain configuration in Supabase. Email confirmation, recovery and secure email changes remain enabled; the app cannot bypass email delivery restrictions.

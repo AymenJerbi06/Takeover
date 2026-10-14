@@ -3,7 +3,7 @@
    Vercel Cron calls this once a day (see vercel.json); it only sends on challenge days 4, 7, 10, …
    covering the three days before. Reads the dashboard from Supabase, sends through Resend.
 
-   Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY, REPORT_TO, CRON_SECRET,
+   Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY, REPORT_TO, REPORT_USER_ID, CRON_SECRET,
         REPORT_FROM (default onboarding@resend.dev), REPORT_TZ (default America/Vancouver)
 
    Manual:  /api/report?key=CRON_SECRET&preview=1   → show the email in the browser
@@ -146,10 +146,12 @@ function render(a) {
 }
 
 async function loadState() {
+  const owner = process.env.REPORT_USER_ID;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(owner || '')) return null;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const headers = { apikey: key };
   if (key.startsWith('eyJ')) headers.Authorization = `Bearer ${key}`; // legacy JWT keys
-  const r = await fetch(`${process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/takeover_state?select=data&order=updated_at.desc&limit=1`, { headers });
+  const r = await fetch(`${process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/takeover_state?select=data&user_id=eq.${encodeURIComponent(owner)}&limit=1`, { headers });
   if (!r.ok) throw new Error(`Supabase ${r.status}: ${await r.text()}`);
   const rows = await r.json();
   return rows[0]?.data || null;
@@ -177,7 +179,8 @@ module.exports = async (req, res) => {
   }
   try {
     const saved = await loadState();
-    if (!saved) return res.status(200).json({ skipped: 'no data in Supabase yet' });
+    if (!saved) return res.status(200).json({ skipped: 'No configured report owner or no saved progress.' });
+    if (saved.personalPlan || saved.experience === 'personal') return res.status(200).json({ skipped: 'Personal routines use private weekly and monthly reports inside the app.' });
     const state = normalizeChallenge(saved);
     const today = todayIn(process.env.REPORT_TZ || 'America/Vancouver');
     const since = diffDays(state.startDate, today);
