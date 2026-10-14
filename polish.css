@@ -1,46 +1,52 @@
 /* Takeover / October 2026. Shared materials, clear hierarchy and purposeful motion. */
+/* Apple-style grouped surfaces: true black / iOS grey, one indigo brand accent.
+   CTA is a white pill in dark (Revolut) and a solid indigo pill in light (Shop). */
 :root {
-  --canvas: #101113; --card: #1b1d20; --panel: #24272b; --surface-raised: #303338;
-  --surface-hover: #2b2f35; --text: #f6f7f9; --muted: #b1b5bd; --faint: #969da8;
-  --line: #393d44; --line-subtle: #2c3036; --control-border: #444a54;
-  --input-bg: #15171b; --control-bg: #262a30; --sidebar-bg: rgba(25,28,32,.94);
-  --accent: #9bbdff; --accent-dark: #c1d6ff; --accent-ink: #101d35;
-  --accent-soft: #20314e; --accent-border: #5979a9;
-  --blue-surface: #1e304b; --blue-ink: #b3cfff; --blue-fill: #91b8ff;
-  --mint-surface: #1b372f; --mint-ink: #a5e6c9; --mint-fill: #7ed5b3;
-  --violet-surface: #322b45; --violet-ink: #d3c3f2; --violet-fill: #baa5df;
-  --coral-surface: #3d2c29; --coral-ink: #f4beae; --coral-fill: #e8ac97;
-  --amber-surface: #3a3222; --amber-ink: #f1d39c; --amber-fill: #dfbd7d;
-  --spotlight-start: #2455a2; --spotlight-end: #132c50;
-  --selection-bg: #304979; --selection-ink: #fff; --focus-ring: #9bbdff;
-  --hero-start: #25364a; --hero-end: #202329;
-  --s1: #baa5df; --s2: #7ed5b3; --s3: #91b8ff; --s4: #e8ac97;
-  --l0: #24282e; --l1: #243954; --l1-ink: #c5daff;
-  --l2: #466eab; --l2-ink: #fff; --l3: #a0c2fa; --l3-ink: #14233a;
-  --shadow-small: 0 2px 5px #00000010; --shadow: 0 18px 40px #00000022;
-  --grid: #343941; --axis: #b1b5bd;
+  --canvas: #000; --card: #1c1c1e; --panel: #2c2c2e; --surface-raised: #3a3a3c;
+  --surface-hover: #323235; --text: #f5f5f7; --muted: #a1a1a6; --faint: #8e8e93;
+  --line: #38383a; --line-subtle: #2a2a2d; --control-border: #48484a;
+  --input-bg: #111113; --control-bg: #2c2c2e; --sidebar-bg: rgba(30,30,32,.72);
+  --accent: #7b6cff; --accent-dark: #b2a8ff; --accent-ink: #fff;
+  --accent-soft: #7b6cff26; --accent-border: #7b6cff80;
+  --cta: #f5f5f7; --cta-ink: #000;
+  --blue-surface: #0a84ff24; --blue-ink: #6cb6ff; --blue-fill: #0a84ff;
+  --mint-surface: #30d15824; --mint-ink: #6ee38f; --mint-fill: #30d158;
+  --violet-surface: #bf5af226; --violet-ink: #d9a2f8; --violet-fill: #bf5af2;
+  --coral-surface: #ff6b5e24; --coral-ink: #ff9d92; --coral-fill: #ff6b5e;
+  --amber-surface: #ffb3401f; --amber-ink: #ffcb6b; --amber-fill: #ffb340;
+  --spotlight-start: #3427b8; --spotlight-end: #0d0b22; --spotlight-glow: #7b6cff;
+  --selection-bg: #3a2f9e; --selection-ink: #fff; --focus-ring: #9d91ff;
+  --hero-start: #1c1c1e; --hero-end: #1c1c1e;
+  --s1: #bf5af2; --s2: #30d158; --s3: #0a84ff; --s4: #ff6b5e;
+  --l0: #2c2c2e; --l1: #2e2a5c; --l1-ink: #cfc9ff;
+  --l2: #5446c9; --l2-ink: #fff; --l3: #a99dff; --l3-ink: #120d33;
+  --shadow-small: none; --shadow: 0 18px 40px #00000066;
+  --dock-shadow: 0 10px 30px #00000080, inset 0 1px 0 #ffffff12;
+  --grid: #2c2c2e; --axis: #a1a1a6;
   --ease-drawer: cubic-bezier(.32,.72,0,1);
 }
 :root[data-theme="light"] {
-  --canvas: #f4f5f7; --card: #fff; --panel: #f0f2f5; --surface-raised: #fff;
-  --surface-hover: #e9edf3; --text: #171b22; --muted: #596170; --faint: #687280;
-  --line: #dbe0e7; --line-subtle: #e5e8ed; --control-border: #cbd2dc;
-  --input-bg: #f8f9fb; --control-bg: #f0f2f5; --sidebar-bg: rgba(255,255,255,.94);
-  --accent: #245cca; --accent-dark: #164aa9; --accent-ink: #fff;
-  --accent-soft: #e7efff; --accent-border: #a5bde9;
-  --blue-surface: #e7efff; --blue-ink: #2759ad; --blue-fill: #366ac4;
-  --mint-surface: #e0f1e8; --mint-ink: #206548; --mint-fill: #2c7857;
-  --violet-surface: #eee7f7; --violet-ink: #65448f; --violet-fill: #75549e;
-  --coral-surface: #f9e5dd; --coral-ink: #96462f; --coral-fill: #a65339;
-  --amber-surface: #f7edce; --amber-ink: #795817; --amber-fill: #886522;
-  --spotlight-start: #356dcc; --spotlight-end: #163c78;
-  --selection-bg: #dbe7ff; --selection-ink: #173c80; --focus-ring: #245cca;
-  --hero-start: #e8eef8; --hero-end: #f8fafc;
-  --s1: #75549e; --s2: #2c7857; --s3: #366ac4; --s4: #a65339;
-  --l0: #eff1f5; --l1: #e0eaff; --l1-ink: #2759ad;
-  --l2: #9ebded; --l2-ink: #173c78; --l3: #3164b4; --l3-ink: #fff;
-  --shadow-small: 0 2px 5px #17243d05; --shadow: 0 18px 40px #17243d0a;
-  --grid: #e0e5ec; --axis: #596170;
+  --canvas: #f2f2f7; --card: #fff; --panel: #f2f2f7; --surface-raised: #fff;
+  --surface-hover: #e9e9ee; --text: #1d1d1f; --muted: #6e6e73; --faint: #737378;
+  --line: #d8d8dc; --line-subtle: #e5e5ea; --control-border: #d1d1d6;
+  --input-bg: #f2f2f7; --control-bg: #f2f2f7; --sidebar-bg: rgba(255,255,255,.78);
+  --accent: #5b3df5; --accent-dark: #4a2fe0; --accent-ink: #fff;
+  --accent-soft: #5b3df51a; --accent-border: #5b3df566;
+  --cta: #5b3df5; --cta-ink: #fff;
+  --blue-surface: #007aff17; --blue-ink: #0062cc; --blue-fill: #007aff;
+  --mint-surface: #34c7591f; --mint-ink: #1a7f3c; --mint-fill: #28b14c;
+  --violet-surface: #af52de1a; --violet-ink: #8a35c2; --violet-fill: #af52de;
+  --coral-surface: #ff3b301a; --coral-ink: #c4352a; --coral-fill: #ff453a;
+  --amber-surface: #ff95001f; --amber-ink: #9a5800; --amber-fill: #ff9500;
+  --spotlight-start: #4a35e8; --spotlight-end: #160f4a; --spotlight-glow: #8f7dff;
+  --selection-bg: #e4e0ff; --selection-ink: #2a1b99; --focus-ring: #5b3df5;
+  --hero-start: #fff; --hero-end: #fff;
+  --s1: #af52de; --s2: #28b14c; --s3: #007aff; --s4: #ff453a;
+  --l0: #ececf0; --l1: #e4e0ff; --l1-ink: #3d2bb5;
+  --l2: #a397f7; --l2-ink: #1b1259; --l3: #5b3df5; --l3-ink: #fff;
+  --shadow-small: 0 1px 2px #0000000a; --shadow: 0 18px 40px #0000001a;
+  --dock-shadow: 0 10px 30px #0000001f, 0 0 0 .5px #0000000d;
+  --grid: #e5e5ea; --axis: #6e6e73;
 }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 400; letter-spacing: -.015em; background: var(--canvas); }
 h1,h2,h3 { text-wrap: balance; }
@@ -257,3 +263,243 @@ button[aria-busy="true"], [aria-busy="true"] button:disabled { cursor: progress;
   .confirmation-progress > span { animation: none; width: 100%; opacity: .55; }
 }
 
+
+/* ---------- Premium pass: grouped surfaces, one CTA, iOS type scale ---------- */
+/* Type: SF on Apple devices, Segoe UI Variable on Windows (Jakob, Aesthetic–Usability). */
+body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, sans-serif; letter-spacing: -.011em; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+h1, h2, h3, .hero b, .personal-ring b, .personal-report-stats b, .preview-score b, #personal-elapsed {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+h1 { font-weight: 700; letter-spacing: -.03em; }
+h2 { letter-spacing: -.022em; }
+/* Programmatic focus on headings moves the screen reader, it is not a control. */
+[tabindex="-1"]:focus { outline: none; }
+::selection { background: var(--selection-bg); color: var(--selection-ink); }
+
+/* Section labels: calm sentence case, like "Recent posts" or "Automations" (Similarity). */
+.eyebrow, .account-eyebrow, .section-kicker, .mini-heading, .preview-heading > span:first-child {
+  text-transform: none; letter-spacing: -.005em; font-size: 13px; font-weight: 600; color: var(--muted);
+}
+
+/* Grouped surfaces: fill separates, borders do not (Proximity, Aesthetic–Usability). */
+.card, .profile-card, .account-section, .top-stats, .personal-week, .calendar-board,
+.personal-shortcuts button, .focus[data-tone], .period-stat[data-tone], .welcome-preview { border-color: transparent; }
+.card, .profile-card { box-shadow: var(--shadow-small); }
+#body .metric, .plan-preview, .personal-timer { border-color: transparent; }
+
+/* One confident primary action per surface (Von Restorff). */
+.account-primary, .action-button, .now button.primary, .focus[data-tone] .session-start, .focus .ctrls .play, .session-start.is-running {
+  background: var(--cta); color: var(--cta-ink); border-color: transparent; font-weight: 600; letter-spacing: -.01em;
+}
+.account-primary { min-height: 52px; }
+.account-secondary { background: var(--panel); border-color: transparent; font-weight: 600; }
+.profile-card .account-secondary, .card .account-secondary { background: var(--panel); }
+@media (hover: hover) and (pointer: fine) {
+  .account-primary:hover, .action-button:hover { filter: none; opacity: .88; }
+  .account-secondary:hover { background: var(--surface-raised); }
+}
+
+/* Progress and selection share the brand accent; category colour stays on icons only. */
+.bar i, .confirmation-progress > span, .week-dots span.on { background: var(--accent); }
+.week-dots span.on { color: var(--accent-ink); border-color: var(--accent); }
+.habit-meter { background: var(--panel); }
+.habit-meter i { background: var(--accent); }
+.is-done .habit-meter i { background: var(--mint-fill); }
+.goal-choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+a, .link { color: var(--accent-dark); }
+
+/* Hero: deep indigo with a soft glow, the single expressive surface (Von Restorff, Peak–End). */
+.personal-hero, .now, .preview-score {
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--spotlight-glow) 55%, transparent) 0%, transparent 55%),
+    linear-gradient(160deg, var(--spotlight-start) 0%, var(--spotlight-end) 78%);
+  color: #fff; border-color: transparent;
+}
+.personal-hero::after { border-color: #ffffff08; }
+.personal-hero h2 { font-weight: 700; letter-spacing: -.035em; }
+.personal-hero .account-eyebrow, .personal-hero p { color: #ffffffc7; }
+.personal-hero .account-primary { background: #fff; color: #000; }
+.personal-ring { background: conic-gradient(#fff var(--completion), #ffffff26 0); }
+.personal-ring > div { background: #1a1446; }
+.now .eyebrow, .now .section-kicker { color: #ffffffb3; }
+
+/* Week strip: today is a filled accent disc, finished days a soft check (Jakob: iOS Fitness). */
+.personal-week button[aria-current] { background: var(--panel); color: var(--text); }
+.personal-week button[aria-current] b { background: var(--accent); color: #fff; }
+.personal-week b.week-done { background: var(--mint-surface); color: var(--mint-ink); }
+.personal-week i.has-progress { background: var(--accent); }
+.personal-week button > span { font-size: 12px; font-weight: 600; }
+
+/* Habit rows: hairline separators inset past the icon, like iOS grouped lists. */
+.personal-habit + .personal-habit { border-top-color: var(--line-subtle); }
+.habit-check { border-color: var(--line); }
+.is-done .habit-check { background: var(--mint-fill); color: #fff; border-color: transparent; }
+
+/* Floating tab bar: compact frosted capsule, filled accent icon when active (Shop). */
+.quick-nav a[aria-current="page"], .quick-nav a.active { color: var(--text); }
+.quick-nav a[aria-current="page"] .nav-icon, .quick-nav a.active .nav-icon { color: var(--accent-dark); }
+:root[data-theme="light"] .quick-nav a[aria-current="page"] .nav-icon { color: var(--accent); }
+.motion-tab-indicator { background: var(--panel); box-shadow: none; }
+@media (max-width: 1120px) {
+  .sidebar { border-color: transparent; background: var(--sidebar-bg); box-shadow: var(--dock-shadow);
+    backdrop-filter: saturate(180%) blur(24px); -webkit-backdrop-filter: saturate(180%) blur(24px); width: min(420px, calc(100% - 32px)); }
+  .quick-nav > a { font-size: 11px; font-weight: 600; }
+  .quick-nav a.active, .quick-nav a[aria-current="page"] { background: var(--panel); }
+}
+
+/* Header controls: quiet 40px circles that sit on the title baseline. */
+.theme-toggle, .profile-trigger { background: var(--card); border-color: transparent; }
+
+/* Desktop sidebar: the selected destination reads as a filled row. */
+@media (min-width: 1121px) {
+  .sidebar { border-right-color: var(--line-subtle); }
+  .quick-nav a[aria-current="page"], .quick-nav a.active { background: var(--card); box-shadow: none; }
+}
+
+/* Brand state uses the accent everywhere; blue only means the Learning category (Similarity). */
+.personal-bars i, .setup-progress .active { background: var(--accent); }
+.personal-bars button[aria-pressed="true"] > span { outline-color: var(--accent); }
+.personal-report-stats > div:first-child b, .personal-timer > b { color: var(--accent-dark); }
+:root[data-theme="light"] .personal-report-stats > div:first-child b, :root[data-theme="light"] .personal-timer > b { color: var(--accent); }
+.goal-choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.goal-choice:has(input:checked) .choice-check { background: var(--accent); }
+.habit-days input:checked + span { background: var(--accent-soft); color: var(--text); border-color: var(--accent); }
+.personal-timer:has(#personal-elapsed) { background: var(--accent-soft); }
+.focus[data-tone].running { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.account-hero .profile-avatar, .account-portal .account-hero .profile-avatar, .confirmation-card .account-hero .confirmation-symbol { background: var(--accent-soft); color: var(--accent-dark); }
+:root[data-theme="light"] .account-hero .profile-avatar, :root[data-theme="light"] .confirmation-card .account-hero .confirmation-symbol { color: var(--accent); }
+.preview-score b { color: #fff; }
+.preview-score > span { color: #ffffffc7; }
+
+/* The hero keeps its own white-on-indigo actions in both themes. */
+.card.now { --cta: #fff; --cta-ink: #000; --accent-ink: #000; --canvas: #1a1446; --panel: rgba(255,255,255,.1); --card: rgba(255,255,255,.1); }
+.now .focus-link, .now button.primary { background: #fff; color: #000; }
+.now .actions button:not(.primary) { background: rgba(255,255,255,.14); }
+.now .label { text-transform: none; letter-spacing: -.005em; font-size: 13px; font-weight: 600; color: #ffffffb3; }
+.daily-switch, .seg, .destination-tabs, .account-tabs { border-color: transparent; background: var(--card); }
+.daily-switch button[aria-selected="true"], .seg button[aria-pressed="true"] { background: var(--panel); box-shadow: none; }
+:root[data-theme="light"] .daily-switch, :root[data-theme="light"] .seg, :root[data-theme="light"] .destination-tabs, :root[data-theme="light"] .account-tabs { background: #e3e3e8; }
+:root[data-theme="light"] .daily-switch button[aria-selected="true"], :root[data-theme="light"] .seg button[aria-pressed="true"] { background: #fff; box-shadow: 0 1px 3px #0000001a; }
+:root[data-theme="light"] .motion-tab-indicator { background: #fff; box-shadow: 0 1px 3px #0000001a; }
+:root[data-theme="light"] .quick-nav .motion-tab-indicator { box-shadow: none; background: var(--panel); }
+.ring-legend small, .ring-legend .meta, .daily-completion { font-size: 12px; }
+
+/* Focus sessions as compact rows: one glance, one quiet Start per row; only a running
+   session gets the bright action (Von Restorff, Fitts, Miller). */
+.focus, .focus.running, .focus:last-child {
+  display: grid; grid-template-columns: 44px minmax(0,1fr) auto; column-gap: 14px; row-gap: 2px;
+  align-items: center; padding: 18px 18px 10px; border-radius: 22px; background: var(--card);
+}
+.focus-card-top, .focus-card-bottom { display: contents; }
+.focus-symbol { grid-column: 1; grid-row: 1 / 3; width: 44px; height: 44px; }
+.focus[data-tone] .focus-symbol { background: var(--tone-surface); color: var(--tone-ink); }
+.focus-number { display: none; }
+.focus .name { grid-column: 2; grid-row: 1; font-size: 16px; font-weight: 600; }
+.focus-measure { grid-column: 2; grid-row: 2; margin: 0; gap: 5px; }
+.focus-measure b, .focus[data-tone] .focus-measure b { font-size: 14px; font-weight: 600; letter-spacing: -.01em; color: var(--text); }
+.focus-measure > span { font-size: 14px; }
+.focus .bar, .focus[data-tone] .bar { grid-column: 2 / -1; grid-row: 3; height: 4px; margin-top: 12px; background: var(--panel); }
+.focus[data-tone] .bar i { background: var(--accent); }
+.focus-editor { grid-column: 2 / -1; grid-row: 4; }
+.focus-editor summary { min-height: 40px; font-size: 13px; }
+.focus[data-tone] .session-start, .session-start {
+  grid-column: 3; grid-row: 1 / 3; min-height: 40px; padding: 8px 16px; border-radius: 999px;
+  background: var(--panel); color: var(--text); font-weight: 600; font-size: 14px;
+}
+.focus[data-tone].running { box-shadow: inset 0 0 0 1.5px var(--accent); border-color: transparent; }
+.focus[data-tone].running .session-start, .session-start.is-running { background: var(--cta); color: var(--cta-ink); }
+#focus-list { gap: 12px; }
+
+/* Toast: restores the confirmation pill lost in 6fe25a3 so feedback is seen (Doherty). */
+#toast {
+  position: fixed; z-index: 70; left: 50%; bottom: 32px; max-width: min(420px, calc(100vw - 32px));
+  padding: 12px 18px; border-radius: 999px; background: var(--sidebar-bg); color: var(--text);
+  box-shadow: var(--dock-shadow); backdrop-filter: saturate(180%) blur(24px); -webkit-backdrop-filter: saturate(180%) blur(24px);
+  font-size: 14px; font-weight: 600; text-align: center; pointer-events: none;
+  opacity: 0; transform: translate(-50%, 8px);
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+.has-session #toast { bottom: 104px; }
+@media (max-width: 1120px) {
+  #toast { bottom: calc(104px + env(safe-area-inset-bottom)); }
+  .has-session #toast { bottom: calc(184px + env(safe-area-inset-bottom)); }
+}
+.session-return small { text-transform: none; letter-spacing: 0; font-size: 12px; }
+
+/* Calendar controls: borderless circles, accent "Today" chip, readable legend. */
+.cal-nav button { border-color: transparent; background: var(--panel); }
+.cal-nav button[data-cal="today"] { color: var(--accent-dark); background: var(--accent-soft); font-size: 13px; font-weight: 600; padding-inline: 14px; }
+:root[data-theme="light"] .cal-nav button[data-cal="today"] { color: var(--accent); }
+.legend, .badge, .cal-wd { font-size: 12px; }
+
+/* Welcome: brand and actions share a centre line; example metadata stays readable. */
+.welcome-top .brand { margin: 0; }
+.preview-habits span:not(.profile-feature-icon):not(.preview-check), .preview-footer, .demo-badge { font-size: 13px; }
+.welcome-copy .account-note { font-size: 13px !important; color: var(--muted); }
+.welcome-features .profile-feature-icon { background: var(--accent-soft); color: var(--accent-dark); }
+:root[data-theme="light"] .welcome-features .profile-feature-icon { color: var(--accent); }
+
+/* Sign-in entry: iOS-style back link and the same 16px gutter as the app. */
+.entry-back { background: transparent; color: var(--accent-dark); padding-inline: 4px 10px; gap: 2px; min-height: 44px; }
+.entry-back .app-icon { width: 20px; height: 20px; }
+:root[data-theme="light"] .entry-back { color: var(--accent); }
+@media (max-width: 760px) {
+  .entry-mode .workspace, .account-connecting .workspace { padding-inline: 0; }
+}
+
+/* Phones: one 16px gutter for header, stats and cards (Proximity). Minimum 12px metadata (Miller). */
+@media (max-width: 760px) {
+  .top { padding-inline: 16px; }
+  main { padding-inline: 16px; }
+}
+@media (max-width: 540px) {
+  .top { padding-inline: 16px; }
+  main { padding-inline: 16px; gap: 12px; }
+  .view-panel, .personal-root { gap: 12px; }
+  h1 { font-size: 34px; }
+  .card, .profile-card { padding: 20px; border-radius: 22px; }
+  .personal-hero { border-radius: 26px; padding: 24px 22px; }
+  .personal-hero h2 { font-size: 30px; margin-block: 14px 22px; }
+  .personal-hero .account-eyebrow { font-size: 13px; }
+  .personal-hero p:not(.account-eyebrow) { font-size: 14px; }
+  .personal-ring { top: 58px; right: 22px; }
+  .personal-week { border-radius: 22px; }
+  .habit-copy span { font-size: 13px; }
+  .personal-report-stats span { font-size: 12px; }
+  .personal-report-stats small { font-size: 12px; }
+  .goal-choice > b { font-size: 13px; }
+  .preview-habits b { font-size: 14px; }
+  .quick-nav > a { font-size: 11px; }
+}
+@media (max-width: 370px) {
+  .top, main { padding-inline: 12px; }
+}
+.brand small, .nav-caption { text-transform: none; letter-spacing: -.005em; font-size: 12px; font-weight: 600; color: var(--muted); }
+
+/* ---------- Motion (spring.js + motion.js), vertical layout ---------- */
+/* Springs drive the individual `scale`/`translate` properties, so CSS press scaling and
+   transform transitions step aside while they are active. */
+.motion-springs :is(button, .btn-like, .quick-nav a, summary):not(:disabled):active { transform: none; }
+.motion-tab-indicator { left: 0; top: 0; }
+.motion-springs #toast { transform: none; translate: -50% 18px; transition: none; }
+.motion-springs #toast.show { translate: -50% 0; }
+/* The sheet's backdrop dims with the sheet's position while it is dragged or thrown. */
+#routine-dialog::backdrop { opacity: var(--sheet-presence, 1); }
+#routine-dialog.is-dragging { user-select: none; cursor: grabbing; }
+@media (max-width: 520px) {
+  .sheet-handle { top: 0; left: 0; width: 100%; height: 28px; background: none; cursor: grab; }
+  .sheet-handle::after { content: ""; position: absolute; top: 9px; left: calc(50% - 18px); width: 36px; height: 5px; border-radius: 99px; background: var(--control-border); }
+}
+/* iOS large title: a frosted inline bar takes over once the big title scrolls away. */
+.compact-title {
+  position: fixed; z-index: 45; top: 0; left: 0; right: 0; display: none; place-items: end center;
+  height: calc(46px + env(safe-area-inset-top)); padding-bottom: 12px; opacity: 0; pointer-events: none;
+  background: var(--sidebar-bg); backdrop-filter: saturate(180%) blur(24px); -webkit-backdrop-filter: saturate(180%) blur(24px);
+  box-shadow: 0 .5px 0 var(--line);
+}
+.compact-title span { font-size: 17px; font-weight: 600; letter-spacing: -.02em; color: var(--text); }
+@media (max-width: 760px) {
+  .compact-title { display: grid; }
+  #page-title { transform-origin: left center; }
+}

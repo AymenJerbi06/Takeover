@@ -185,7 +185,7 @@ function renderHeader() {
   $('clock').textContent = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   const n = diffDays(state.startDate, todayKey()) + 1;
   $('challenge-day').textContent = state.experience === 'personal' ? `Day ${Math.max(1, n)}` : n < 1 ? `–${1 - n}` : `${Math.min(n, GOALS.days)}/${GOALS.days}`;
-  document.querySelector('.page-heading .eyebrow').textContent = state.experience === 'personal' ? 'YOUR DAILY RHYTHM' : '40 DAY RESET';
+  document.querySelector('.page-heading .eyebrow').textContent = state.experience === 'personal' ? 'Your daily rhythm' : '40-day reset';
   $('challenge-day').nextElementSibling.textContent = state.experience === 'personal' ? 'your journey' : 'challenge';
   $('streak').textContent = streak();
   $('today-score').textContent = pct(score(todayKey()));
@@ -205,11 +205,11 @@ function renderNow() {
   let left = '';
   if (cur) {
     const remain = (cur.e - t + 1440) % 1440;
-    left = `<div class="label">NOW · ${esc(cur.from)}–${esc(cur.to)}</div>
+    left = `<div class="label">Now · ${esc(cur.from)}–${esc(cur.to)}</div>
       <div class="title">${esc(cur.title)}</div>
       <div class="meta">${fmtMin(remain)} remaining</div>`;
   } else {
-    left = `<div class="label">FREE</div><div class="title">Open time</div>
+    left = `<div class="label">Right now</div><div class="title">Open time</div>
       <div class="meta">${next ? `Next ${esc(next.from)} · ${esc(next.title)}` : 'Edit plan to add a block'}</div>`;
   }
   const curFocus = cur && FOCUS.find(f => f.id === cur.link);
@@ -224,10 +224,10 @@ function renderNow() {
   }
 
   const right = runF
-    ? `<div class="label">FOCUS TIMER</div><div class="title">${esc(runF.label)}</div>
+    ? `<div class="label">Focus timer</div><div class="title">${esc(runF.label)}</div>
        <div class="running" id="run-clock">${fmtClock((Date.now() - r.start) / 1000)}</div>
        <div class="actions"><button data-start="${runF.id}" aria-label="Stop ${esc(runF.label)} timer">${icon('stop')} Stop</button></div>`
-    : `<span class="now-focus-icon">${icon('focus')}</span><div class="label">FOCUS TODAY</div><div class="title">${fmtMin(FOCUS.reduce((sum, f) => sum + focusMins(d, f.id, k), 0))}</div><a class="btn-like focus-link" href="#view-focus" data-view-target="focus">Sessions ${icon('arrowRight')}</a>`;
+    : `<span class="now-focus-icon">${icon('focus')}</span><div class="label">Focus today</div><div class="title">${fmtMin(FOCUS.reduce((sum, f) => sum + focusMins(d, f.id, k), 0))}</div><a class="btn-like focus-link" href="#view-focus" data-view-target="focus">Sessions ${icon('arrowRight')}</a>`;
 
   const remainingItems = (parts(k) || []).filter(([, v]) => v < 1).map(([n]) => n);
   $('now-card').innerHTML = `<div class="now-grid"><div>${left}${actions ? `<div class="actions">${actions}</div>` : ''}</div><div class="${runF ? 'now-active-session' : 'now-session-overview'}">${right}</div></div>
@@ -262,7 +262,7 @@ function renderFocus() {
     const m = focusMins(d, f.id, k);
     const on = state.running?.id === f.id;
     return `<article class="focus ${on ? 'running' : ''}" data-tone="${tones[f.id]}" aria-label="${esc(f.label)}">
-      <div class="focus-card-top"><span class="focus-symbol">${icon(symbols[f.id])}</span><span class="focus-number">${on ? 'IN SESSION' : String(i + 1).padStart(2, '0')}</span></div>
+      <div class="focus-card-top"><span class="focus-symbol">${icon(symbols[f.id])}</span><span class="focus-number">${on ? 'In session' : String(i + 1).padStart(2, '0')}</span></div>
       <div class="name">${esc(f.label)}</div>
       <div class="focus-measure"><b data-fminutes="${f.id}">${fmtMin(m)}</b><span>of ${fmtMin(f.goal)}</span></div>
       <div class="bar" aria-hidden="true"><i data-fbar="${f.id}" style="width:${pct(Math.min(m / f.goal, 1))}"></i></div>
@@ -285,7 +285,7 @@ function renderSessionDock() {
   dock.hidden = !session;
   document.body.classList.toggle('has-session', !!session);
   if (!session) { dock.innerHTML = ''; return; }
-  dock.innerHTML = `<a href="#view-focus" data-view-target="focus" class="session-return"><span class="session-indicator">${icon('focus')}</span><span><small>FOCUSING</small><b>${esc(session.label)}</b></span></a><span class="session-clock" id="session-clock">${fmtClock((Date.now() - r.start) / 1000)}</span><button type="button" data-start="${session.id}" aria-label="Finish and save ${esc(session.label)} session">${icon('stop')}<span>Finish</span></button>`;
+  dock.innerHTML = `<a href="#view-focus" data-view-target="focus" class="session-return"><span class="session-indicator">${icon('focus')}</span><span><small>Focusing</small><b>${esc(session.label)}</b></span></a><span class="session-clock" id="session-clock">${fmtClock((Date.now() - r.start) / 1000)}</span><button type="button" data-start="${session.id}" aria-label="Finish and save ${esc(session.label)} session">${icon('stop')}<span>Finish</span></button>`;
 }
 
 function renderBody() {
@@ -967,6 +967,7 @@ function activateView(name, { focus = false, skip = false } = {}) {
   if (view === 'progress' && state.experience !== 'personal') { renderTrends(); renderWeight(); }
   window.TakeoverPersonalUI?.render();
   if (previousView && previousView !== view) window.TakeoverMotion?.reveal(document.getElementById(`view-${view}`));
+  window.dispatchEvent(new CustomEvent('takeover:view', { detail: { view } }));
   if (focus) {
     if (skip) document.getElementById(`view-${view}`).focus();
     else {

@@ -4,7 +4,7 @@
 (() => {
   const preferenceKey = 'takeover.theme';
   const root = document.documentElement;
-  const colors = { dark: '#101113', light: '#f4f5f7' };
+  const colors = { dark: '#000000', light: '#f2f2f7' };
   const normalize = value => value === 'light' ? 'light' : 'dark';
   let theme = 'dark';
 
