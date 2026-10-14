@@ -951,6 +951,7 @@ function viewFromHash() {
 
 function activateView(name, { focus = false, skip = false } = {}) {
   const view = viewNames[name] ? name : 'today';
+  const previousView = document.body.dataset.view;
   viewPanels.forEach(panel => { panel.hidden = panel.dataset.view !== view; });
   viewLinks.forEach(link => {
     const active = link.dataset.viewTarget === view;
@@ -965,6 +966,7 @@ function activateView(name, { focus = false, skip = false } = {}) {
   // SVG charts need a measured panel width before they can be drawn.
   if (view === 'progress' && state.experience !== 'personal') { renderTrends(); renderWeight(); }
   window.TakeoverPersonalUI?.render();
+  if (previousView && previousView !== view) window.TakeoverMotion?.reveal(document.getElementById(`view-${view}`));
   if (focus) {
     if (skip) document.getElementById(`view-${view}`).focus();
     else {
