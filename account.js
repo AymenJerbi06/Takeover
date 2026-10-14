@@ -14,13 +14,38 @@
   let version = 0, profileRequest = 0, authBusy = false, recovery = false, pendingAvatar, profileRedrawPending = false;
   let notice = { text: '', kind: '' };
   const callbackHash = new URLSearchParams(location.hash.slice(1));
-  const callbackError = callbackHash.get('error_description') || new URLSearchParams(location.search).get('error_description');
-  const callbackRequested = callbackHash.has('access_token') || callbackHash.has('error') || new URLSearchParams(location.search).has('account');
+  const callbackQuery = new URLSearchParams(location.search);
+  const callbackError = callbackHash.get('error_description') || callbackQuery.get('error_description');
+  const callbackType = callbackHash.get('type') || callbackQuery.get('account');
+  const callbackRequested = callbackHash.has('access_token') || callbackHash.has('error') || callbackQuery.has('account') || callbackQuery.has('code');
+  // The query string only selects a screen. Confirmation must come from Auth.
+  const confirmationCallback = ['signup', 'confirm'].includes(callbackType);
+  const callbackHasCredential = callbackHash.has('access_token') || callbackQuery.has('code');
+  const confirmationKey = 'takeover:pending-confirmation';
+  let pendingEmail = '', restorePending = false, resendAfter = 0, resendTimer = null, confirmationRequest = 0, confirmationChecking = false;
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(confirmationKey) || 'null');
+    if (saved && typeof saved.email === 'string' && saved.email.length <= 254 && Date.now() - Number(saved.savedAt) < 86400000) {
+      pendingEmail = saved.email; resendAfter = Math.min(Number(saved.resendAfter) || 0, Date.now() + 60000);
+      restorePending = saved.active !== false;
+    }
+  } catch { /* Storage can be unavailable in private browsing. */ }
+  let confirmation = confirmationCallback ? { stage: 'checking', email: '' } : restorePending && !callbackRequested ? { stage: 'pending', email: pendingEmail } : null;
   const sb = cfg.supabaseUrl && cfg.supabaseAnonKey && window.supabase?.createClient
     ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
   const account = window.TakeoverAccount = { client: sb, user, profile, ready: false, refreshProfile,
-    openAuth(next = 'signin') { mode = next === 'signup' ? 'signup' : 'signin'; draw(); navigate(); },
-    get recovering() { return recovery; }
+    openAuth(next = 'signin') {
+      mode = next === 'signup' ? 'signup' : 'signin';
+      if (confirmation?.stage !== 'checking' && confirmation?.stage !== 'success') {
+        if (mode === 'signup' && pendingEmail) {
+          rememberConfirmation(pendingEmail); confirmation = { stage: 'pending', email: pendingEmail };
+        } else leaveConfirmation();
+      }
+      draw(); navigate();
+    },
+    dismissConfirmation() { leaveConfirmation(); draw(); publish(); },
+    get recovering() { return recovery; },
+    get confirming() { return !!confirmation; }
   };
 
   function navigate() {
@@ -62,6 +87,9 @@
     if (error?.code === 'PGRST205' || error?.code === '42P01') return 'Profiles are not available yet. Your dashboard is still saved. Try again shortly.';
     if (error?.code === 'invalid_credentials') return 'That email and password do not match. Please try again.';
     if (error?.code === 'email_not_confirmed') return 'Confirm your email first, then sign in.';
+    if (error?.code === 'over_email_send_rate_limit' || error?.status === 429) return 'Please wait a minute before requesting another email.';
+    if (error?.code === 'otp_expired') return 'This link has expired or has already been used. Request a new one, or sign in if you already confirmed.';
+    if (/sending confirmation email|error sending email/i.test(error?.message || '')) return 'The confirmation email could not be sent. Please try again shortly.';
     if (/fetch|network|timeout/i.test(error?.message || '')) return 'Could not connect. Please check your connection and try again.';
     return error?.message || 'Something went wrong. Please try again.';
   }
@@ -88,6 +116,9 @@
     form.dataset.busy = 'true'; form.setAttribute('aria-busy', 'true');
     const controls = [...form.querySelectorAll('button, input')];
     const previous = controls.map(control => control.disabled);
+    const submit = form.querySelector('button[type="submit"]');
+    const submitLabel = submit?.innerHTML;
+    if (submit && submit.id !== 'confirmation-resend') submit.textContent = 'Please wait…';
     controls.forEach(control => { control.disabled = true; });
     status(form, 'Working…'); authBusy = true;
     try { await task(); }
@@ -95,6 +126,7 @@
     finally {
       authBusy = false;
       controls.forEach((control, index) => { control.disabled = previous[index]; });
+      if (submit && submitLabel !== undefined && submit.id !== 'confirmation-resend') submit.innerHTML = submitLabel;
       delete form.dataset.busy; form.removeAttribute('aria-busy');
       if (profileRedrawPending) { profileRedrawPending = false; draw(); }
     }
@@ -104,7 +136,106 @@
     return `${location.origin}${location.pathname}?account=${encodeURIComponent(type)}`;
   }
 
+  function rememberConfirmation(email, cooldown = false, active = true) {
+    pendingEmail = email;
+    if (cooldown) resendAfter = Date.now() + 60000;
+    try { sessionStorage.setItem(confirmationKey, JSON.stringify({ email, resendAfter, active, savedAt: Date.now() })); } catch { /* Optional convenience only. */ }
+  }
+
+  function leaveConfirmation() {
+    confirmationRequest++; confirmationChecking = false; confirmation = null;
+    if (pendingEmail) rememberConfirmation(pendingEmail, false, false);
+  }
+
+  function forgetConfirmation() {
+    pendingEmail = ''; resendAfter = 0;
+    try { sessionStorage.removeItem(confirmationKey); } catch { /* Optional convenience only. */ }
+  }
+
+  function showConfirmation(stage, email = pendingEmail, error = '') {
+    confirmation = { stage, email, error };
+    draw(); navigate(); publish();
+    window.TakeoverMotion?.reveal(root.querySelector('.confirmation-card'));
+    document.getElementById('confirmation-title')?.focus({ preventScroll: true });
+  }
+
+  function updateResend() {
+    clearTimeout(resendTimer);
+    const button = document.getElementById('confirmation-resend');
+    if (!button) return;
+    const seconds = Math.max(0, Math.ceil((resendAfter - Date.now()) / 1000));
+    button.disabled = seconds > 0 || authBusy;
+    button.textContent = seconds ? `Resend in ${seconds}s` : 'Resend confirmation';
+    if (seconds || authBusy) resendTimer = setTimeout(updateResend, 1000);
+  }
+
+  function drawConfirmation() {
+    const { stage, email, error } = confirmation;
+    const checking = stage === 'checking', success = stage === 'success', failed = stage === 'error';
+    const title = checking ? 'Confirming your email' : success ? 'Email confirmed' : failed ? 'Let’s try that link again' : 'Check your inbox';
+    const copy = checking ? 'Opening your secure confirmation…' : success ? 'Your account is ready.' : failed ? (error || 'This link has expired or has already been used.') : email ? `Use the confirmation link for ${email} to finish setting up your account.` : 'Enter your email to request a fresh confirmation link.';
+    root.innerHTML = `<section class="profile-card account-portal confirmation-card" data-confirmation="${stage}" ${checking ? 'aria-busy="true"' : ''}>
+      <div class="account-hero"><span class="profile-avatar confirmation-symbol">${icon(success ? 'check' : failed ? 'mail' : checking ? 'shield' : 'mail')}</span><div><p class="account-eyebrow">${success ? 'YOU’RE ALL SET' : 'ONE LAST STEP'}</p><h2 id="confirmation-title" tabindex="-1">${title}</h2><p class="account-copy" role="status">${esc(copy)}</p></div></div>
+      ${success ? `<button type="button" class="account-primary" id="confirmation-continue">${user ? 'Continue to Takeover' : 'Sign in'}${icon('arrowRight')}</button>` : checking ? '<div class="confirmation-progress" role="progressbar" aria-label="Checking confirmation"><span></span></div>' : `<form id="confirmation-form" class="account-form">
+        ${failed || !email ? `<div class="field"><label for="confirmation-email">Email address</label><input class="field-control" id="confirmation-email" name="email" type="email" autocomplete="email" maxlength="254" value="${esc(email)}" placeholder="you@example.com" required></div>` : ''}
+        <button type="submit" class="account-secondary" id="confirmation-resend">Resend confirmation</button><p class="account-status" role="status" aria-live="polite"></p></form>
+        <div class="account-actions"><button type="button" class="account-primary" id="confirmation-signin">${user ? 'Back to your account' : 'Sign in'} ${icon('arrowRight')}</button>${!failed ? '<button type="button" class="account-secondary" id="confirmation-change">Use another email</button>' : ''}</div><p class="account-note">Check your spam folder too. Already confirmed on another device? Sign in here.</p>`}
+    </section>`;
+    const signIn = () => {
+      if (authBusy) return;
+      const address = document.getElementById('confirmation-email')?.value.trim() || confirmation?.email || pendingEmail;
+      leaveConfirmation(); mode = 'signin'; notice = { text: '', kind: '' };
+      draw(); publish(); navigate();
+      const input = document.getElementById('auth-email'); if (input) { input.value = address; input.focus(); }
+    };
+    document.getElementById('confirmation-signin')?.addEventListener('click', signIn);
+    document.getElementById('confirmation-continue')?.addEventListener('click', () => {
+      leaveConfirmation(); mode = 'signin'; notice = { text: '', kind: '' };
+      draw(); publish();
+      if (user) window.Takeover?.navigate('today'); else { navigate(); document.getElementById('auth-email')?.focus(); }
+    });
+    document.getElementById('confirmation-change')?.addEventListener('click', () => {
+      if (authBusy) return;
+      forgetConfirmation(); confirmation = null; mode = 'signup'; notice = { text: '', kind: '' };
+      draw(); publish(); document.getElementById('auth-email')?.focus();
+    });
+    const form = document.getElementById('confirmation-form');
+    if (form) form.onsubmit = event => {
+      event.preventDefault();
+      if (Date.now() < resendAfter) return;
+      const address = form.elements.email?.value.trim() || email;
+      if (!address) return;
+      runForm(form, async () => {
+        rememberConfirmation(address, true); updateResend();
+        if (confirmation) confirmation.email = address;
+        const { error: resendError } = await sb.auth.resend({ type: 'signup', email: address, options: { emailRedirectTo: redirectUrl('confirm') } });
+        if (resendError) throw resendError;
+        status(form, 'If this address is awaiting confirmation, a new link is on its way. Use the newest email.', 'success');
+      }).finally(updateResend);
+    };
+    updateResend();
+  }
+
+  async function verifyConfirmation(session) {
+    if (confirmationChecking || !session?.user || !confirmation) return;
+    const request = ++confirmationRequest, id = session.user.id;
+    confirmationChecking = request;
+    try {
+      // An implicit callback must validate the token from that link, not an
+      // unrelated session already saved in this browser.
+      const { data, error } = await sb.auth.getUser(confirmationCallback ? callbackHash.get('access_token') || undefined : undefined);
+      if (request !== confirmationRequest || user?.id !== id) return;
+      if (error) throw error;
+      if (data.user?.id !== id || !data.user.email_confirmed_at) throw new Error('Your email is not confirmed yet. Open the newest confirmation email.');
+      user = data.user; forgetConfirmation();
+      showConfirmation('success', user.email);
+    } catch (error) {
+      if (request === confirmationRequest && user?.id === id) showConfirmation('error', pendingEmail, friendly(error));
+    } finally { if (confirmationChecking === request) confirmationChecking = false; }
+  }
+
   function draw() {
+    clearTimeout(resendTimer);
     const currentNotice = `<p id="account-message" class="account-status" role="status" aria-live="polite" data-kind="${esc(notice.kind)}">${esc(notice.text)}</p>`;
     if (!sb) {
       root.innerHTML = `<section class="profile-card"><div class="account-hero"><span class="profile-avatar">${icon('profile')}</span><div><p class="account-eyebrow">YOUR SPACE</p><h2>Your profile</h2><p class="account-copy">Your progress is saved on this device.</p></div></div><p class="account-status" role="status">${cfg.supabaseUrl ? 'Account services could not load. Reconnect and reload to sign in.' : 'Account services are not connected yet.'}</p><button class="account-secondary" type="button" id="account-reload">Reload</button></section>`;
@@ -130,6 +261,7 @@
       };
       return;
     }
+    if (confirmation && !recovery) { drawConfirmation(); return; }
     if (!user) { drawPortal(currentNotice); return; }
     const displayName = profile?.display_name || user.user_metadata?.display_name || 'Takeover member';
     const avatar = safeAvatar(profile?.avatar_data);
@@ -187,16 +319,22 @@
         <button class="account-primary" type="submit">${isReset ? 'Send reset link' : signup ? 'Create account' : 'Sign in'}${icon('arrowRight')}</button>
         <p class="account-status" role="status" aria-live="polite"></p>
       </form>
-      <div class="account-actions"><button class="account-secondary" type="button" data-auth-mode="${isReset ? 'signin' : 'reset'}">${isReset ? 'Back to sign in' : 'Forgot password?'}</button><a class="account-secondary" href="#view-today" data-view-target="today">Continue on this device</a></div>
+      <div class="account-actions"><button class="account-secondary" type="button" data-auth-mode="${isReset ? 'signin' : 'reset'}">${isReset ? 'Back to sign in' : 'Forgot password?'}</button>${!isReset && !signup ? '<button class="account-secondary" type="button" id="account-confirmation-help">Resend confirmation</button>' : ''}<a class="account-secondary" href="#view-today" data-view-target="today">Continue on this device</a></div>
       <p class="account-note">Your existing progress stays here when you sign in.</p>
     </section>`;
     wirePasswords();
+    const emailField = document.getElementById('auth-email');
+    if (emailField && pendingEmail) emailField.value = pendingEmail;
+    document.getElementById('account-confirmation-help')?.addEventListener('click', () => {
+      if (!authBusy) showConfirmation('pending', emailField?.validity.valid ? emailField.value.trim() : pendingEmail);
+    });
     root.querySelectorAll('[data-auth-mode]').forEach(button => { button.onclick = () => {
       if (authBusy) return;
       const email = document.getElementById('auth-email')?.value;
       mode = button.dataset.authMode; notice = { text: '', kind: '' }; draw();
+      window.TakeoverMotion?.reveal(root.querySelector('.account-form'));
       const field = document.getElementById('auth-email'); if (field) field.value = email || '';
-      document.getElementById(signup ? 'auth-email' : 'auth-name')?.focus();
+      document.getElementById(mode === 'signup' ? 'auth-name' : 'auth-email')?.focus();
     }; });
     document.getElementById('account-auth-form').onsubmit = event => {
       event.preventDefault(); const form = event.currentTarget;
@@ -214,10 +352,17 @@
           if (error) throw error;
           if (!data.session) {
             form.elements['auth-password'].value = '';
-            status(form, 'Check your inbox to confirm your email, then sign in here. If you already have an account, use Sign in.', 'success');
+            rememberConfirmation(email, true);
+            showConfirmation('pending', email);
           }
         } else {
           const { error } = await sb.auth.signInWithPassword({ email, password });
+          if (error?.code === 'email_not_confirmed') {
+            form.elements['auth-password'].value = '';
+            rememberConfirmation(email);
+            showConfirmation('pending', email);
+            return;
+          }
           if (error) throw error;
         }
       });
@@ -412,24 +557,45 @@
     const nextUser = session?.user || null;
     const changed = nextUser?.id !== user?.id;
     if (changed) {
+      if (user) leaveConfirmation();
       version++; profileRequest++; profile = null; profileError = ''; pendingAvatar = undefined; profileRedrawPending = false;
       recovery = false; notice = { text: '', kind: '' };
     }
     user = nextUser;
-    if (event === 'PASSWORD_RECOVERY' && user) recovery = true;
+    // A pending signup for one address must not cover a different signed-in
+    // account after refresh or an authentication event from another tab.
+    if (user && confirmation?.stage === 'pending' && user.email?.toLowerCase() !== pendingEmail.toLowerCase()) {
+      leaveConfirmation(); forgetConfirmation();
+    }
+    if (event === 'PASSWORD_RECOVERY' && user) {
+      recovery = true; leaveConfirmation();
+    }
+    const receivedConfirmation = !recovery && !callbackError && user && (
+      (confirmationCallback && callbackHasCredential && confirmation?.stage === 'checking') ||
+      (!confirmationCallback && callbackType !== 'recovery' && pendingEmail && (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && confirmation?.stage === 'pending')) && user.email?.toLowerCase() === pendingEmail.toLowerCase())
+    );
+    if (receivedConfirmation) confirmation = { stage: 'checking', email: user.email };
+    if (confirmationCallback && event === 'INITIAL_SESSION' && confirmation?.stage === 'checking' && (!callbackHasCredential || !user)) {
+      confirmation = { stage: 'error', email: pendingEmail, error: 'This confirmation link is incomplete or has expired. Request a new email, or sign in if you already confirmed.' };
+    }
     account.ready = true;
-    if (changed || event === 'INITIAL_SESSION' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') publish();
+    if (changed || receivedConfirmation || event === 'INITIAL_SESSION' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') publish();
     if (changed || event === 'INITIAL_SESSION' || event === 'PASSWORD_RECOVERY') {
       draw();
       if (user) refreshProfile();
     } else if (event === 'USER_UPDATED' && !authBusy) draw();
     if (event === 'PASSWORD_RECOVERY' || (callbackRequested && event === 'INITIAL_SESSION')) cleanCallback();
-    if (event === 'SIGNED_OUT') { mode = 'signin'; draw(); }
+    if (receivedConfirmation) { draw(); verifyConfirmation(session); }
+    if (event === 'SIGNED_OUT') { leaveConfirmation(); mode = 'signin'; draw(); publish(); }
   }
 
   draw(); updateHeader();
   if (!sb) { account.ready = true; publish(); return; }
-  if (callbackError) { message(callbackError, 'error'); cleanCallback(); }
+  if (callbackError) {
+    if (confirmationCallback) showConfirmation('error', pendingEmail, 'This confirmation link has expired or has already been used. Request a new email, or sign in if you already confirmed.');
+    else message(friendly({ message: callbackError }), 'error');
+    cleanCallback();
+  }
   // Keep Supabase API calls outside its auth lock; the callback itself stays synchronous.
   sb.auth.onAuthStateChange((event, session) => { setTimeout(() => handleSession(event, session), 0); });
 })();

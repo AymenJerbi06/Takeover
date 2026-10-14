@@ -10,7 +10,7 @@
   const label = key => new Date(`${key}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const uid = () => `h_${crypto.randomUUID().replace(/-/g, '')}`;
   const dialog = $('routine-dialog'), welcome = $('welcome-root');
-  let authEntry = !!new URLSearchParams(location.search).get('account') || /access_token|error_description/.test(location.hash);
+  let authEntry = !!new URLSearchParams(location.search).get('account') || /access_token|error_description/.test(location.hash) || location.hash === '#view-profile';
   let owner = A.user?.id || null, autoOpened = null, opener = null, wizard = null;
   let period = 'week', reportAnchor = today(), selectedDay = today(), timer = null;
   let syncMessage = 'Opening your saved progress…';
@@ -25,7 +25,7 @@
   const reportRoot = document.createElement('div'); reportRoot.id = 'personal-progress'; reportRoot.className = 'personal-root';
   $('progress-personal').prepend(reportRoot);
   const back = document.createElement('button'); back.type = 'button'; back.className = 'account-secondary entry-back';
-  back.textContent = 'Back to Takeover'; back.onclick = () => { authEntry = false; reconcile(); };
+  back.textContent = 'Back to Takeover'; back.onclick = () => { A.dismissConfirmation?.(); authEntry = false; reconcile(); };
   $('account-root').before(back);
 
   function drawWelcome() {
@@ -42,29 +42,32 @@
       if (dialog.open) dialog.close();
       if (user) authEntry = false;
     }
+    if (A.confirming) authEntry = true;
     const originalLocal = T.state.experience === 'legacy' && !T.state.syncUser;
-    const showWelcome = !user && !authEntry && !originalLocal;
+    const showWelcome = !user && !authEntry && !originalLocal && !A.confirming;
     welcome.hidden = !showWelcome;
     document.body.classList.toggle('welcome-mode', showWelcome);
-    document.body.classList.toggle('entry-mode', !user && authEntry);
+    document.body.classList.toggle('entry-mode', (!user && authEntry) || A.confirming);
     document.body.classList.toggle('account-connecting', !!user && !writable());
     back.hidden = !!user;
     if (showWelcome && !welcome.childElementCount) drawWelcome();
-    if ((!user && authEntry) || (user && !writable())) {
+    if ((!user && authEntry) || (user && !writable()) || A.confirming) {
       if (document.body.dataset.view !== 'profile') T.navigate('profile');
       $('profile-account-tab').click();
     }
-    if (user && writable() && T.state.experience === 'personal' && !T.state.personalPlan && autoOpened !== user.id && !A.recovering) {
+    if (user && writable() && T.state.experience === 'personal' && !T.state.personalPlan && autoOpened !== user.id && !A.recovering && !A.confirming) {
       autoOpened = user.id; openSetup();
     }
     render();
   }
 
   function showDialog(html) {
-    if (!dialog.open) opener = document.activeElement;
+    const opening = !dialog.open;
+    if (opening) opener = document.activeElement;
     dialog.innerHTML = `<div class="routine-sheet"><div class="sheet-handle" aria-hidden="true"></div><button class="sheet-close" type="button" data-personal-action="close" aria-label="Close">${icon('close')}</button>${html}</div>`;
     if (!dialog.open) dialog.showModal();
     dialog.querySelector('h2')?.focus({ preventScroll: true });
+    window.TakeoverMotion?.sheet(dialog, opening);
   }
   function sheetTitle(title) { return `<h2 id="routine-dialog-title" tabindex="-1">${title}</h2>`; }
   function showDay(date) {
@@ -72,7 +75,7 @@
     showDialog(`${sheetTitle(label(date))}<p class="account-note">Your scheduled habits · ${percent(P.dayScore(T.state,date))}</p>${habits.map(h=>habitRow(h,date)).join('') || '<p class="account-note">A rest day.</p>'}`);
   }
   dialog.addEventListener('close', () => { wizard = null; if (opener?.isConnected) opener.focus({ preventScroll: true }); });
-  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+  dialog.addEventListener('click', event => { if (event.target === dialog) { if (window.TakeoverMotion) window.TakeoverMotion.closeSheet(dialog); else dialog.close(); } });
 
   function openSetup() {
     if (!writable()) {
@@ -94,7 +97,9 @@
         event.preventDefault(); const form = event.currentTarget, selected = [...form.querySelectorAll('input:checked')].map(i => i.value);
         if (!selected.length || selected.length > 4) { form.querySelector('[role=status]').textContent = 'Choose between one and four areas.'; return; }
         w.goals = selected.map(category => ({ id: category, category, title: P.category(category).title }));
-        w.context.goalTitle = form.elements.goalTitle.value.trim(); w.step = 2; wizard = w; drawSetup();
+        w.context.goalTitle = form.elements.goalTitle.value.trim();
+        T.state.onboardingDraft = { goals: structuredClone(w.goals), context: structuredClone(w.context) }; T.save();
+        w.step = 2; wizard = w; drawSetup();
       };
     } else if (w.step === 2) {
       showDialog(`${progress}${sheetTitle('Make it fit your day.')}<p class="account-note">A small routine you can repeat is a good place to start.</p><form id="personal-context-form" class="account-form"><label>Time for your routine<select name="dailyMinutes">${[10,20,30,45,60,90,120].map(n => `<option value="${n}" ${Number(w.context.dailyMinutes) === n ? 'selected' : ''}>${n} minutes a day</option>`).join('')}</select></label><label>Best time of day<select name="preferredTime">${['Flexible','Morning','Afternoon','Evening'].map(t => `<option ${w.context.preferredTime === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label>What should your routine make room for?<textarea name="notes" maxlength="500" rows="3" placeholder="Classes, shifts, family time, rest days…">${esc(w.context.notes || '')}</textarea></label><details class="personal-details"><summary>Optional personal context</summary><p class="account-note">Private to your account. Skip anything you don’t want to share. This does not create a medical or financial plan.</p><label class="personal-field">Current weight (kg)<input name="weight" type="number" min="20" max="500" step="0.1" inputmode="decimal" value="${esc(w.context.weight ?? '')}"></label><label class="personal-field">Monthly income<input name="income" type="number" min="0" max="100000000" step="0.01" inputmode="decimal" value="${esc(w.context.income ?? '')}"></label><label class="personal-field">Currency<input name="currency" maxlength="5" placeholder="USD, CAD…" value="${esc(w.context.currency || '')}"></label></details><div class="account-actions">${action('setup-back','Back')}<button class="account-primary">See my options ${icon('arrowRight')}</button></div></form>`);
@@ -105,7 +110,7 @@
       };
     } else {
       const examples = P.suggestions(w.goals, w.context);
-      showDialog(`${progress}${sheetTitle('Your direction, made clear.')}<p class="account-note">${esc(w.context.goalTitle || w.goals.map(g => g.title).join(' · '))}<br>${w.context.dailyMinutes} minutes · ${esc(w.context.preferredTime.toLowerCase())}</p><div class="plan-preview"><span class="demo-badge">Example habits · preview</span>${examples.map(h => `<div class="preview-idea">${icon(P.category(h.category).icon)}<span>${esc(h.title)}</span><small>${h.target} ${esc(h.unit)}</small></div>`).join('')}</div><div class="billing-lock">${icon('lock')}<div><b>A tailored plan</b><p class="account-note">A complete schedule built around your goals and constraints. Paid plans are coming soon; checkout isn’t available yet.</p><button class="account-primary" disabled>Paid plan · not available yet</button></div></div><div class="manual-option"><h3>Prefer to build your own?</h3><p class="account-note">Create your own habits for free, track progress, and join your friends. You choose each target and schedule.</p>${action('manual',`Create my own routine ${icon('arrowRight')}`, '', 'account-secondary')}</div>${action('setup-back','Back')}`);
+      showDialog(`${progress}${sheetTitle('Your direction, made clear.')}<p class="account-note">${esc(w.context.goalTitle || w.goals.map(g => g.title).join(' · '))}<br>${w.context.dailyMinutes} minutes · ${esc(w.context.preferredTime.toLowerCase())}</p><div class="plan-preview"><span class="demo-badge">Example habits · preview</span>${examples.map(h => `<div class="preview-idea">${icon(P.category(h.category).icon)}<span>${esc(h.title)}</span><small>${h.target} ${esc(h.unit)}</small></div>`).join('')}</div><div class="manual-option"><h3>Build a routine that fits.</h3><p class="account-note">Create your own habits for free. Choose each target and schedule, track your progress, and join your friends.</p>${action('manual',`Create my routine ${icon('arrowRight')}`, '', 'account-primary')}</div><details class="personal-details plan-coming-soon"><summary>About tailored plans</summary><p class="account-note">Paid plans will build a schedule around your goals and availability. Pricing and checkout are not available yet.</p></details>${action('setup-back','Back')}`);
     }
   }
 
@@ -151,14 +156,20 @@
   }
   function setLog(id, date, value) {
     if (!writable()) return;
+    const before = P.dayScore(T.state, date);
+    const habit = P.scheduledHabits(T.state, date).find(h => h.id === id);
+    const previous = P.value(T.state, date, id);
     if (!T.state.days[date]) T.state.days[date] = { habits: {} };
     T.state.days[date].habits ||= {}; T.state.days[date].habits[id] = Math.max(0, value);
     commit('Check-in saved');
+    if (habit && value >= habit.target && previous < habit.target) {
+      requestAnimationFrame(() => window.TakeoverMotion?.complete(id, date, before, P.dayScore(T.state, date)));
+    }
   }
 
   function habitRow(h, date, editable = true) {
     const v = P.value(T.state, date, h.id), done = v >= h.target, c = P.category(h.category);
-    return `<div class="personal-habit ${done ? 'is-done' : ''}"><span class="profile-feature-icon ${c.tone}">${icon(c.icon)}</span><div class="habit-copy"><b>${esc(h.title)}</b><span>${v.toLocaleString()} / ${h.target.toLocaleString()} ${esc(h.unit)}</span><div class="habit-meter" role="progressbar" aria-label="${esc(h.title)}" aria-valuenow="${Math.round(Math.min(1, v / h.target) * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.min(100, v / h.target * 100)}%"></i></div></div>${editable ? action(h.unit === 'times' && h.target === 1 ? 'toggle-habit' : 'log', icon(done ? 'check' : 'plus'), `data-habit="${h.id}" data-date="${date}" aria-label="${done ? 'Edit' : 'Log'} ${esc(h.title)}" ${h.unit === 'times' && h.target === 1 ? `aria-pressed="${done}"` : ''}`, 'habit-check') : `<span class="muted">${percent(Math.min(1,v / h.target))}</span>`}</div>`;
+    return `<div class="personal-habit ${done ? 'is-done' : ''}" data-habit-row="${h.id}" data-log-date="${date}"><span class="profile-feature-icon ${c.tone}">${icon(c.icon)}</span><div class="habit-copy"><b>${esc(h.title)}</b><span>${v.toLocaleString()} / ${h.target.toLocaleString()} ${esc(h.unit)}</span><div class="habit-meter" role="progressbar" aria-label="${esc(h.title)}" aria-valuenow="${Math.round(Math.min(1, v / h.target) * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.min(100, v / h.target * 100)}%"></i></div></div>${editable ? action(h.unit === 'times' && h.target === 1 ? 'toggle-habit' : 'log', icon(done ? 'check' : 'plus'), `data-habit="${h.id}" data-date="${date}" aria-label="${done ? 'Edit' : 'Log'} ${esc(h.title)}" ${h.unit === 'times' && h.target === 1 ? `aria-pressed="${done}"` : ''}`, 'habit-check') : `<span class="muted">${percent(Math.min(1,v / h.target))}</span>`}</div>`;
   }
 
   function renderToday() {
@@ -178,9 +189,10 @@
     $('personal-focus').innerHTML = card(`${heading('ONE THING AT A TIME','A little space to focus.','Choose a timed habit. Your session is saved when you finish.')}<div class="personal-timer" id="personal-timer">${timer ? timerMarkup() : `${icon('focus')}<b>Ready when you are.</b><p class="account-note">A quieter moment for your next small step.</p>`}</div>${habits.map(h => `<div class="personal-habit"><span class="profile-feature-icon ${P.category(h.category).tone}">${icon(P.category(h.category).icon)}</span><div class="habit-copy"><b>${esc(h.title)}</b><span>${h.target} minutes · ${P.value(T.state,today(),h.id)} logged</span></div>${action('timer',timer?.id === h.id ? 'Finish' : 'Start', `data-habit="${h.id}" ${timer && timer.id !== h.id ? 'disabled' : ''}`)}</div>`).join('') || `<p class="account-note">Add a habit measured in minutes to use focus sessions.</p>${action('add',`${icon('plus')} Add a timed habit`)}`}<p class="account-note">Keep this tab open during a session. Check-ins can also be entered manually.</p>`);
   }
   function timerText() { const elapsed = Math.max(0, Math.floor((Date.now()-timer.start)/1000)); return `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2,'0')}`; }
-  function timerMarkup() { return `<span class="account-eyebrow">${esc(timer.title)}</span><b id="personal-elapsed">${timerText()}</b>${action('timer','Finish & save',`data-habit="${timer.id}"`,'account-primary')}`; }
+  function timerMarkup() { return `<span class="account-eyebrow">${esc(timer.title)}</span><b id="personal-elapsed">${timerText()}</b><p class="account-note">${timer.target} minute target · stop whenever you need</p>${action('timer','Finish & save',`data-habit="${timer.id}"`,'account-primary')}`; }
   function renderTimerDock() {
     const dock = $('session-dock'); dock.hidden = !timer;
+    document.body.classList.toggle('has-session', !!timer);
     if (timer) dock.innerHTML = `<a class="session-return" href="#view-focus" data-view-target="focus"><span class="session-indicator">${icon('focus')}</span><span><small>FOCUSING</small><b>${esc(timer.title)}</b></span></a><span class="session-clock" id="personal-dock-clock">${timerText()}</span>${action('timer','Finish',`data-habit="${timer.id}"`,'account-secondary')}`;
   }
 
@@ -190,6 +202,8 @@
   }
 
   function renderReports() {
+    const scroll = reportRoot.querySelector('.personal-bars')?.scrollLeft || 0;
+    const disclosureOpen = !!reportRoot.querySelector('.commitment-disclosure')?.open;
     const r = P.report(T.state,period,reportAnchor), prev = P.report(T.state,period,P.shift(r.start,-1)), delta = r.average !== null && prev.average !== null ? Math.round((r.average - prev.average)*100) : null;
     const selected = r.days.find(d => d.key === selectedDay) || r.days.findLast(d => !d.future) || r.days[0];
     selectedDay = selected.key;
@@ -199,10 +213,13 @@
     reportRoot.innerHTML = card(`<div class="personal-card-head"><div>${heading('YOUR PROGRESS','Small steps add up.')}</div><div class="destination-tabs" role="group" aria-label="Report period">${[['day','Day'],['week','Week'],['month','Month']].map(([id,title]) => action('period',title,`data-period="${id}" aria-pressed="${period === id}"`)).join('')}</div></div><div class="report-navigation">${action('previous',icon('chevronLeft'),'aria-label="Previous period"')}<div><b>${label(r.start)}${r.start !== r.end ? ` – ${label(r.end)}` : ''}</b><span>${r.complete ? 'Completed report' : 'In progress'}</span></div>${action('next',icon('chevronRight'),`aria-label="Next period" ${r.end >= today() ? 'disabled' : ''}`)}</div><div class="personal-report-stats"><div><span>Completion</span><b>${percent(r.average)}</b><small>${delta === null ? 'Your own scheduled habits' : `${delta >= 0 ? '+' : ''}${delta} pts vs previous period`}</small></div><div><span>Strong days</span><b>${r.wins}<small> / ${r.scheduled}</small></b><small>At least 80% complete</small></div><div><span>Progress points</span><b>${r.points}</b><small>Up to 100 per scheduled day</small></div></div><div class="personal-bars" role="group" aria-label="Daily completion in this period">${r.days.map(d => `<button type="button" data-personal-action="report-day" data-date="${d.key}" aria-label="${label(d.key)}: ${d.future ? 'upcoming' : d.score === null ? 'rest day' : percent(d.score)}" aria-pressed="${d.key === selectedDay}" ${d.future ? 'disabled' : ''}><span><i style="height:${d.score === null ? 0 : Math.max(2, d.score*100)}%"></i></span><small>${Number(d.key.slice(-2))}</small></button>`).join('')}</div><div class="report-day-detail" aria-live="polite"><b>${label(selectedDay)} · ${selected.future ? 'Upcoming' : selected.score === null ? 'No scheduled habits' : percent(selected.score)}</b><span>Rest days are excluded. Unlogged scheduled habits count as zero.</span></div><div class="report-habits">${r.habits.map(h => `<div><span>${esc(h.title)}</span><b>${h.completed}/${h.scheduled}</b><small>completed</small></div>`).join('') || '<p class="account-note">Your first report starts with your first scheduled habit.</p>'}</div>`) +
       card(`${heading('PAUSE & REFLECT','Your completed reports')}<div class="completed-reports">${archive.map((a,i) => `<button type="button" data-personal-action="archive" data-period="${i ? 'month' : 'week'}" data-date="${a.start}"><span class="profile-feature-icon ${i ? 'violet' : 'mint'}">${icon('progress')}</span><span><b>Last ${i ? 'month' : 'week'}</b><small>${label(a.start)} – ${label(a.end)}</small></span><strong>${percent(a.average)}</strong>${icon('chevronRight')}</button>`).join('')}</div><p class="account-note">Reports update automatically from your saved logs. A full review is available after each week and month ends.</p>`) +
       (r.complete && r.scheduled ? card(`${heading('YOUR NEXT SMALL STEP',r.average >= .85 ? 'Ready for a little more?' : 'Find your sustainable pace.', r.average >= .85 ? 'Keep your routine, or review one small adjustment. You stay in control.' : 'Try keeping your targets manageable and making room for the habits you enjoy.')}<div>${r.recommendations.slice(0,2).map(h => `<div class="personal-habit"><div class="habit-copy"><b>${esc(h.title)}</b><span>Try ${h.target} minutes on the same days</span></div>${action('recommend','Review',`data-habit="${h.id}" data-target="${h.target}"`)}</div>`).join('') || action('manage','Review my routine')}</div><p class="account-note">Suggestions use your logged completion. They never change your plan automatically.</p>`) : '') + renderCommitmentCard();
+    const bars = reportRoot.querySelector('.personal-bars'); if (bars) bars.scrollLeft = scroll;
+    const disclosure = reportRoot.querySelector('.commitment-disclosure'); if (disclosure) disclosure.open = disclosureOpen;
   }
 
   function renderCommitmentCard() {
     const total = P.commitment(T.state), active = T.state.personalPlan?.commitments?.find(c => !c.endsOn);
+    if (!T.state.personalPlan?.commitments?.length) return `<details class="profile-card commitment-disclosure"><summary><span>${icon('money')} Explore a commitment demo</span>${icon('chevronRight')}</summary><p class="account-note">An optional way to explore accountability. All amounts are pretend; your progress works with or without it.</p>${action('billing','See how it works')}</details>`;
     return card(`<div class="personal-card-head"><h2>Show up for yourself</h2><span class="demo-badge">Demo · no real money</span></div><p class="account-note">Try a pretend $5 or $10 commitment on scheduled days. Reach 100% to keep it. This is a simulation, not a wallet.</p><div class="demo-totals"><span><small>Kept in demo</small><b>$${total.kept}</b></span><span><small>Missed in demo</small><b>$${total.lost}</b></span><span><small>Today’s demo</small><b>$${total.pending}</b></span></div><p class="account-note">${active ? `$${active.amount}/day · starts ${label(active.startedOn)}${active.startedOn > today() ? ' (tomorrow)' : ''}` : 'Optional. Your real balance is always $0.'}</p>${action('billing',active ? 'Manage demo' : 'Explore the demo')}`);
   }
   function openBilling() {
@@ -237,7 +254,7 @@
   document.addEventListener('click', event => {
     const button = event.target.closest('[data-personal-action]'); if (!button || button.disabled) return;
     const name = button.dataset.personalAction, id = button.dataset.habit, date = button.dataset.date || today();
-    if (name === 'close') { dialog.close(); return; }
+    if (name === 'close') { if (window.TakeoverMotion) window.TakeoverMotion.closeSheet(dialog); else dialog.close(); return; }
     if (name === 'theme') { $('theme-toggle').click(); return; }
     if (name === 'signup' || name === 'signin') { authEntry = true; A.openAuth(name); reconcile(); return; }
     if (['setup','billing'].includes(name)) { if (name === 'setup') openSetup(); else openBilling(); return; }
@@ -264,8 +281,14 @@
     if (name === 'friends') { T.navigate('progress'); $('progress-friends-tab').click(); }
     if (name === 'period') { period = button.dataset.period; reportAnchor = today(); renderReports(); }
     if (name === 'previous' || name === 'next') { const r = P.bounds(period,reportAnchor); reportAnchor = P.shift(name === 'previous' ? r.start : r.end,name === 'previous' ? -1 : 1); renderReports(); }
-    if (name === 'report-day') { selectedDay = date; renderReports(); }
+    if (name === 'report-day') {
+      const offset = reportRoot.querySelector('.personal-bars')?.scrollLeft || 0;
+      selectedDay = date; renderReports();
+      const bars = reportRoot.querySelector('.personal-bars'); if (bars) bars.scrollLeft = offset;
+      bars?.querySelector('[aria-pressed="true"]')?.focus({preventScroll:true});
+    }
     if (name === 'archive') { period = button.dataset.period; reportAnchor = date; renderReports(); }
+    if (['period','previous','next','archive'].includes(name)) window.TakeoverMotion?.reveal(reportRoot.querySelector('.profile-card'));
     if (name === 'start-demo') {
       const amount = Number(button.dataset.amount); if (![5,10].includes(amount)) return;
       const rounds = T.state.personalPlan.commitments ||= [];
@@ -275,7 +298,7 @@
     if (name === 'stop-demo') { const c = T.state.personalPlan.commitments.find(c=>!c.endsOn); if(c)c.endsOn=P.shift(today(),1); commit('Demo ends after today.'); openBilling(); }
     if (name === 'timer' && h) {
       if (timer?.id === id) { const minutes = Math.round((Date.now()-timer.start)/6000)/10; const session = timer; timer=null; setLog(id,session.day,P.value(T.state,session.day,id)+minutes); }
-      else if (!timer) { timer={id, title:h.title,day:today(),start:Date.now()}; renderFocus(); }
+      else if (!timer) { timer={id, title:h.title,target:h.target,day:today(),start:Date.now()}; renderFocus(); }
       renderTimerDock();
     }
   });
