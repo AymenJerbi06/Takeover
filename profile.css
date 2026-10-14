@@ -23,7 +23,10 @@ body[data-view="profile"] .sync-indicator { min-height: 28px; }
 .profile-card h2 { font-size: 23px; line-height: 1.25; letter-spacing: -.035em; margin: 0; }
 .profile-card h3 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
 .account-hero { display: flex; align-items: center; gap: 20px; margin: -32px -32px 28px; padding: 34px 32px; border-radius: 29px 29px 0 0; background: linear-gradient(130deg, var(--violet-surface), var(--blue-surface)); }
-.account-hero > .profile-avatar { width: 82px; height: 82px; font-size: 28px; background: var(--card); color: var(--violet-ink); box-shadow: 0 0 0 5px color-mix(in srgb, var(--card) 28%, transparent); }
+.account-hero > .profile-avatar, .avatar-edit-trigger .profile-avatar { width: 82px; height: 82px; font-size: 28px; background: var(--card); color: var(--violet-ink); box-shadow: 0 0 0 5px color-mix(in srgb, var(--card) 28%, transparent); }
+.avatar-edit-trigger { position: relative; flex: none; padding: 0; border: 0; border-radius: 50%; background: transparent; }
+.avatar-edit-badge { position: absolute; right: -3px; bottom: -3px; display: grid; place-items: center; width: 30px; height: 30px; border: 3px solid var(--card); border-radius: 50%; background: var(--accent); color: var(--accent-ink); }
+.avatar-edit-badge .app-icon { width: 15px; height: 15px; }
 .account-hero > div { min-width: 0; flex: 1; }
 .account-hero h2, .account-email { overflow-wrap: anywhere; }
 .account-hero p.account-copy { margin: 8px 0 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
@@ -70,13 +73,20 @@ body[data-view="profile"] .sync-indicator { min-height: 28px; }
 .account-security-grid { display: grid; gap: 26px; }
 .account-security-grid .account-form + .account-form { padding-top: 26px; border-top: 1px solid var(--control-border); }
 .account-row { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.avatar-editor { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; }
-.avatar-editor .profile-avatar { width: 72px; height: 72px; }
-.avatar-editor > div { min-width: 0; flex: 1; }
-.avatar-editor input { font-size: 13px; padding: 10px; }
-.avatar-editor input::file-selector-button { border: 0; border-radius: 999px; padding: 8px 12px; margin-right: 10px; background: var(--card); color: var(--text); font: inherit; }
-.avatar-editor .account-note { margin-top: 8px; }
-.avatar-editor #profile-photo-remove { margin-top: 8px; }
+.avatar-editor { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: center; gap: 24px; padding-block: 8px 20px; border-bottom: 1px solid var(--line-subtle); }
+.avatar-editor .profile-avatar { width: 112px; height: 112px; font-size: 32px; box-shadow: 0 0 0 6px var(--card); }
+.avatar-editor .profile-avatar[aria-busy="true"] { opacity: .55; }
+.avatar-editor-controls { min-width: 0; }
+.avatar-editor [hidden] { display: none !important; }
+.avatar-editor .account-note { margin: 6px 0 16px; }
+.photo-source-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.photo-source-actions .account-secondary { flex-direction: column; gap: 9px; min-height: 78px; padding: 12px 8px; border-radius: 18px; background: var(--card); font-size: 13px; }
+.photo-source-actions .app-icon { width: 24px; height: 24px; color: var(--violet-ink); }
+.photo-source-actions #profile-photo-take .app-icon { color: var(--blue-ink); }
+.photo-edit-actions { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.photo-text-action { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
+.avatar-editor .photo-size-note { margin: 12px 0 0; font-size: 11px; }
+#profile-edit-section { scroll-margin-top: 24px; }
 .profile-section-heading { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
 .profile-section-heading .account-note { margin: 5px 0 0; }
 .profile-feature-icon { display: grid; flex: none; place-items: center; width: 48px; height: 48px; border-radius: 17px; background: var(--violet-surface); color: var(--violet-ink); }
@@ -147,7 +157,10 @@ body[data-view="profile"] .sync-indicator { min-height: 28px; }
   .destination-tabs button { flex: 1; min-width: 0; padding-inline: 10px; font-size: 12px; }
   .profile-card { padding: 24px; border-radius: 28px; }
   .account-hero { margin: -24px -24px 24px; padding: 28px 24px; border-radius: 27px 27px 0 0; gap: 16px; }
-  .account-hero > .profile-avatar { width: 66px; height: 66px; font-size: 23px; }
+  .account-hero > .profile-avatar, .avatar-edit-trigger .profile-avatar { width: 66px; height: 66px; font-size: 23px; }
+  .avatar-editor { grid-template-columns: minmax(0, 1fr); gap: 22px; text-align: center; padding-top: 14px; }
+  .avatar-editor .profile-avatar { justify-self: center; }
+  .photo-edit-actions { justify-content: center; }
   .account-copy h2 { font-size: 25px; }
   .account-copy p { font-size: 12px; }
   .profile-section-heading { align-items: flex-start; gap: 12px; }

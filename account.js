@@ -130,13 +130,25 @@
     const displayName = profile?.display_name || user.user_metadata?.display_name || 'Takeover member';
     const avatar = safeAvatar(profile?.avatar_data);
     root.innerHTML = `<section class="profile-card">
-      <div class="account-hero"><span class="profile-avatar">${avatar ? `<img src="${avatar}" alt="Your profile photo" width="80" height="80">` : esc(initials(displayName))}</span><div><p class="account-eyebrow">YOUR ACCOUNT</p><h2>${esc(displayName)}</h2><p class="account-copy account-email">${esc(user.email)}</p><span class="account-badge">${icon('shield')} ${user.email_confirmed_at ? 'Email verified' : 'Email confirmation pending'}</span></div></div>
+      <div class="account-hero"><button type="button" class="avatar-edit-trigger" id="profile-photo-edit" aria-label="Change profile picture" aria-controls="profile-edit-section" ${!profile ? 'disabled' : ''}><span class="profile-avatar">${avatar ? `<img src="${avatar}" alt="" width="80" height="80">` : esc(initials(displayName))}</span><span class="avatar-edit-badge">${icon('camera')}</span></button><div><p class="account-eyebrow">YOUR ACCOUNT</p><h2>${esc(displayName)}</h2><p class="account-copy account-email">${esc(user.email)}</p><span class="account-badge">${icon('shield')} ${user.email_confirmed_at ? 'Email verified' : 'Email confirmation pending'}</span></div></div>
       ${currentNotice}
       ${profileError ? `<div class="account-note" role="status">${esc(profileError)} <button class="account-secondary" type="button" id="profile-retry">Try again</button></div>` : ''}
       ${profileLoading ? '<p class="account-note" role="status">Loading your profile…</p>' : ''}
       <details class="account-section" id="profile-edit-section"><summary><span class="account-row-icon">${icon('profile')}</span><span><b>Edit profile</b><small>Your name and photo</small></span>${icon('chevronRight')}</summary>
         <form id="profile-edit" class="account-form">
-          <div class="avatar-editor"><span class="profile-avatar" id="avatar-preview">${avatar ? `<img src="${avatar}" alt="Profile photo preview" width="80" height="80">` : esc(initials(displayName))}</span><div><label for="profile-photo" class="account-secondary">${icon('camera')} Choose photo</label><input id="profile-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" ${!profile ? 'disabled' : ''}><button type="button" class="account-secondary" id="profile-photo-remove" ${!profile ? 'disabled' : ''}>Remove photo</button><p class="account-note">JPG, PNG or WebP · up to 8 MB</p></div></div>
+          <div class="avatar-editor">
+            <span class="profile-avatar" id="avatar-preview" role="img" aria-label="Profile picture preview">${avatar ? `<img src="${avatar}" alt="" width="112" height="112">` : esc(initials(displayName))}</span>
+            <div class="avatar-editor-controls"><h3>Profile picture</h3><p class="account-note" id="profile-photo-hint">Choose a photo or take a new one.</p>
+              <div class="photo-source-actions">
+                <button type="button" class="account-secondary" id="profile-photo-library" aria-describedby="profile-photo-hint" ${!profile ? 'disabled' : ''}>${icon('image')} Photo library</button>
+                <button type="button" class="account-secondary" id="profile-photo-take" aria-describedby="profile-photo-hint" ${!profile ? 'disabled' : ''}>${icon('camera')} Take photo</button>
+              </div>
+              <input id="profile-photo" name="photo" type="file" accept="image/*" aria-label="Choose a profile picture from your photo library" hidden ${!profile ? 'disabled' : ''}>
+              <input id="profile-camera" name="camera" type="file" accept="image/*" capture="user" aria-label="Take a profile picture" hidden ${!profile ? 'disabled' : ''}>
+              <div class="photo-edit-actions"><button type="button" class="photo-text-action" id="profile-photo-remove" ${avatar ? '' : 'hidden'} ${!profile ? 'disabled' : ''}>Remove photo</button><button type="button" class="photo-text-action" id="profile-photo-undo" hidden>Undo change</button></div>
+              <p class="account-note photo-size-note">Up to 25 MB · Resized automatically</p>
+            </div>
+          </div>
           <div class="field"><label for="profile-name">Display name</label><input class="field-control" id="profile-name" name="displayName" autocomplete="nickname" maxlength="40" value="${esc(displayName)}" required ${!profile ? 'disabled' : ''}></div>
           <p class="account-note">Friends you connect with can see your name and photo.</p><button class="account-primary" type="submit" ${!profile ? 'disabled' : ''}>Save profile</button><p class="account-status" role="status" aria-live="polite"></p>
         </form>
@@ -245,48 +257,94 @@
   }
 
   async function photoData(file) {
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPG, PNG or WebP image.');
-    if (file.size > 8 * 1024 * 1024) throw new Error('Choose a photo smaller than 8 MB.');
+    const photoType = /^image\/(jpeg|png|webp|heic|heif|heic-sequence|heif-sequence|avif|gif|bmp)$/i;
+    const photoName = /\.(jpe?g|png|webp|heic|heif|avif|gif|bmp)$/i;
+    if (!(file.type ? photoType.test(file.type) : photoName.test(file.name))) throw new Error('Choose an image from your photo library, or take a new photo.');
+    if (!file.size) throw new Error('This photo is empty. Please choose another one.');
+    if (file.size > 25 * 1024 * 1024) throw new Error('Choose a photo smaller than 25 MB.');
     const url = URL.createObjectURL(file);
+    const picture = new Image();
     try {
-      const picture = new Image(); picture.src = url; await picture.decode();
+      picture.src = url;
+      try { await picture.decode(); }
+      catch { throw new Error('Your browser could not open this photo. Choose a JPG or PNG, or use Take photo.'); }
       const size = Math.min(picture.naturalWidth, picture.naturalHeight);
       if (!size) throw new Error('This image could not be opened. Try another photo.');
       const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
-      const ctx = canvas.getContext('2d'); ctx.fillStyle = '#f2f1f6'; ctx.fillRect(0, 0, 256, 256);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('This photo could not be prepared. Please try again.');
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      ctx.fillStyle = '#f2f1f6'; ctx.fillRect(0, 0, 256, 256);
       ctx.drawImage(picture, (picture.naturalWidth - size) / 2, (picture.naturalHeight - size) / 2, size, size, 0, 0, 256, 256);
       const result = canvas.toDataURL('image/jpeg', 0.82);
       if (!safeAvatar(result)) throw new Error('This photo is too large to save. Choose another image.');
       return result;
-    } finally { URL.revokeObjectURL(url); }
+    } finally { picture.removeAttribute('src'); URL.revokeObjectURL(url); }
   }
 
   function wireProfile() {
     const form = document.getElementById('profile-edit');
-    let photoVersion = 0;
-    document.getElementById('profile-photo').onchange = async event => {
-      const file = event.target.files?.[0]; if (!file) return;
-      const request = ++photoVersion, id = user?.id;
-      form.querySelector('[type="submit"]').disabled = true;
+    const library = document.getElementById('profile-photo');
+    const camera = document.getElementById('profile-camera');
+    const libraryButton = document.getElementById('profile-photo-library');
+    const cameraButton = document.getElementById('profile-photo-take');
+    const removeButton = document.getElementById('profile-photo-remove');
+    const undoButton = document.getElementById('profile-photo-undo');
+    const preview = document.getElementById('avatar-preview');
+    const submit = form.querySelector('[type="submit"]');
+    let photoVersion = 0, photoPreparing = false;
+    const photoControls = [library, camera, libraryButton, cameraButton, removeButton, undoButton, submit];
+    function updatePhoto() {
+      const image = pendingAvatar === undefined ? safeAvatar(profile?.avatar_data) : pendingAvatar;
+      preview.innerHTML = image ? `<img src="${image}" alt="" width="112" height="112">` : esc(initials(form.elements.displayName.value));
+      preview.setAttribute('aria-label', image ? 'Profile picture preview' : 'No profile picture');
+      removeButton.hidden = !image;
+      undoButton.hidden = pendingAvatar === undefined;
+      photoControls.forEach(control => { control.disabled = !profile || photoPreparing || Boolean(form.dataset.busy); });
+    }
+    document.getElementById('profile-photo-edit').onclick = () => {
+      const section = document.getElementById('profile-edit-section');
+      section.open = true;
+      libraryButton.focus({ preventScroll: true });
+      section.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    };
+    // Keep picker opening inside the tap event so mobile browsers allow it.
+    libraryButton.onclick = () => { if (!authBusy && !photoPreparing) library.click(); };
+    cameraButton.onclick = () => { if (!authBusy && !photoPreparing) camera.click(); };
+    async function choosePhoto(event) {
+      const file = event.target.files?.[0];
+      event.target.value = ''; // Choosing the same image again should still fire change.
+      if (!file || authBusy || !user || !profile) return;
+      const request = ++photoVersion, id = user.id, generation = version;
+      photoPreparing = true; updatePhoto();
+      preview.setAttribute('aria-busy', 'true');
       status(form, 'Preparing your photo…');
+      const current = () => request === photoVersion && user?.id === id && version === generation && form.isConnected;
       try {
         const image = await photoData(file);
-        if (request !== photoVersion || user?.id !== id || !form.isConnected) return;
+        if (!current()) return;
         pendingAvatar = image;
-        document.getElementById('avatar-preview').innerHTML = `<img src="${image}" alt="New photo preview" width="80" height="80">`;
         status(form, 'Photo ready. Save your profile to apply it.');
-      } catch (error) { if (request === photoVersion && form.isConnected) status(form, friendly(error), 'error'); }
-      finally { if (request === photoVersion && form.isConnected) form.querySelector('[type="submit"]').disabled = !profile; }
-    };
-    document.getElementById('profile-photo-remove').onclick = () => {
+      } catch (error) { if (current()) status(form, friendly(error), 'error'); }
+      finally {
+        if (current()) { photoPreparing = false; preview.removeAttribute('aria-busy'); updatePhoto(); }
+      }
+    }
+    library.onchange = choosePhoto; camera.onchange = choosePhoto;
+    removeButton.onclick = () => {
       photoVersion++; pendingAvatar = null;
-      document.getElementById('profile-photo').value = '';
-      document.getElementById('avatar-preview').textContent = initials(form.elements.displayName.value);
-      form.querySelector('[type="submit"]').disabled = !profile;
+      updatePhoto();
+      undoButton.focus({ preventScroll: true });
       status(form, 'Save your profile to remove the photo.');
+    };
+    undoButton.onclick = () => {
+      photoVersion++; pendingAvatar = undefined;
+      updatePhoto(); status(form, 'Photo change undone.');
+      libraryButton.focus({ preventScroll: true });
     };
     form.onsubmit = event => {
       event.preventDefault();
+      if (photoPreparing) return status(form, 'Wait for your photo to finish preparing.');
       const name = form.elements.displayName.value.trim();
       if (!name) return status(form, 'Please add your name.', 'error');
       if (!profile || !user) return status(form, 'Wait for your profile to load, then try again.', 'error');

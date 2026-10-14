@@ -74,7 +74,9 @@ If the app says **Saved on this device only**, check that both `SUPABASE_URL` an
 
 ## Profiles and friends
 
-**Profile → Account** lets you change your display name, upload or remove a profile photo, change your email, and change or reset your password. Photos are cropped locally to a small JPEG before saving. Account identity is stored separately from the dashboard backup.
+**Profile → Account** lets you change your display name, upload or remove a profile photo, change your email, and change or reset your password. Tap your avatar or open **Edit profile**, then choose **Photo library** or **Take photo**. On supported phones, Take photo opens the front camera; other browsers can show a file picker. Review the circular preview and tap **Save profile**. You can undo a photo change before saving.
+
+Photos up to 25 MB are cropped and resized locally to a small JPEG, which strips source metadata before saving to your account. HEIC/HEIF photos work when the browser can decode them; otherwise the app asks for a JPG/PNG or a new camera photo. The original file is never uploaded. Account identity is stored separately from the dashboard backup.
 
 **Profile → Friends** provides a private invitation code. Requests must be accepted before shared scores become visible. Friends see names and profile photos; email addresses, individual goals, and personal logs stay private. Score sharing starts off. Turning it off removes that account's shared score history without removing its private dashboard.
 
