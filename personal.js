@@ -10,7 +10,7 @@
   const label = key => new Date(`${key}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const uid = () => `h_${crypto.randomUUID().replace(/-/g, '')}`;
   const dialog = $('routine-dialog'), welcome = $('welcome-root');
-  let authEntry = !!new URLSearchParams(location.search).get('account') || /access_token|error_description/.test(location.hash) || location.hash === '#view-profile';
+  let authEntry = !!new URLSearchParams(location.search).get('account') || /access_token|error_description/.test(location.hash);
   let owner = A.user?.id || null, autoOpened = null, opener = null, wizard = null;
   let period = 'week', reportAnchor = today(), selectedDay = today(), timer = null;
   let syncMessage = 'Opening your saved progress…';
@@ -51,7 +51,9 @@
     document.body.classList.toggle('account-connecting', !!user && !writable());
     back.hidden = !!user;
     if (showWelcome && !welcome.childElementCount) drawWelcome();
-    if ((!user && authEntry) || (user && !writable()) || A.confirming) {
+    // Only the sign-in and email-confirmation flows take over the screen. A signed-in person whose
+    // sync is still starting stays where they are (edits already wait for sync), so the app opens on Today.
+    if ((!user && authEntry) || A.confirming) {
       if (document.body.dataset.view !== 'profile') T.navigate('profile');
       $('profile-account-tab').click();
     }

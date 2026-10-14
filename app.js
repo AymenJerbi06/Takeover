@@ -311,7 +311,21 @@ function renderBody() {
   setIfIdle($('sleep-form').sleep, d.sleep ?? '');
   setIfIdle($('screen-form').screen, d.screen ?? '');
   setIfIdle($('steps-form').steps, d.steps || '');
+  // A typed check-in confirms itself like the tap ones: green "Saved" once today's value is stored.
+  [['sleep-form', 'sleep', d.sleep], ['screen-form', 'screen', d.screen], ['steps-form', 'steps', d.steps || null]].forEach(([id, field, saved]) => markSaved($(id), field, saved));
 }
+function markSaved(form, field, saved) {
+  const button = form.querySelector('button'), input = form[field];
+  const isSaved = saved !== null && saved !== undefined && String(saved) === String(input.value).trim();
+  button.classList.toggle('is-saved', isSaved);
+  button.innerHTML = isSaved ? `${icon('check')} Saved` : 'Save';
+  button.setAttribute('aria-label', isSaved ? `${field} saved` : `Save ${field}`);
+}
+// Editing a saved number turns the button back into "Save" until it is saved again.
+['sleep-form', 'screen-form', 'steps-form'].forEach(id => $(id).addEventListener('input', () => {
+  const field = { 'sleep-form': 'sleep', 'screen-form': 'screen', 'steps-form': 'steps' }[id], d = day();
+  markSaved($(id), field, field === 'steps' ? (d.steps || null) : d[field]);
+}));
 function setIfIdle(input, v) { if (document.activeElement !== input) input.value = v; }
 
 const C = window.TakeoverCharts;
@@ -1066,6 +1080,8 @@ function activateView(name, { focus = false, skip = false } = {}) {
   window.TakeoverPersonalUI?.render();
   if (previousView && previousView !== view) window.TakeoverMotion?.reveal(document.getElementById(`view-${view}`));
   window.dispatchEvent(new CustomEvent('takeover:view', { detail: { view } }));
+  // Choosing Today from the tab bar (or any link) always lands on the home overview, never on Check in.
+  if (view === 'today' && focus && !document.getElementById('daily-overview')?.matches(':not([hidden])')) activateDailyTab('overview');
   if (focus) {
     if (skip) document.getElementById(`view-${view}`).focus();
     else {
@@ -1085,6 +1101,8 @@ document.addEventListener('click', event => {
   activateView(view, { focus: true, skip: link.classList.contains('skip-link') });
 });
 
+// A fresh open lands on Today, like an app; the hash still drives navigation once it is running.
+if (/^#view-/.test(location.hash) && location.hash !== '#view-today') history.replaceState(null, '', `${location.pathname}${location.search}#view-today`);
 activateView(viewFromHash());
 applyDailyHash();
 if (location.hash && !location.hash.startsWith('#view-') && !/(access_token|refresh_token|error|type)=/.test(location.hash)) {
