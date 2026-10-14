@@ -52,6 +52,7 @@
     if (showWelcome && !welcome.childElementCount) drawWelcome();
     if ((!user && authEntry) || (user && !writable())) {
       if (document.body.dataset.view !== 'profile') T.navigate('profile');
+      $('profile-account-tab').click();
     }
     if (user && writable() && T.state.experience === 'personal' && !T.state.personalPlan && autoOpened !== user.id && !A.recovering) {
       autoOpened = user.id; openSetup();
@@ -66,6 +67,10 @@
     dialog.querySelector('h2')?.focus({ preventScroll: true });
   }
   function sheetTitle(title) { return `<h2 id="routine-dialog-title" tabindex="-1">${title}</h2>`; }
+  function showDay(date) {
+    const habits = P.scheduledHabits(T.state,date);
+    showDialog(`${sheetTitle(label(date))}<p class="account-note">Your scheduled habits · ${percent(P.dayScore(T.state,date))}</p>${habits.map(h=>habitRow(h,date)).join('') || '<p class="account-note">A rest day.</p>'}`);
+  }
   dialog.addEventListener('close', () => { wizard = null; if (opener?.isConnected) opener.focus({ preventScroll: true }); });
   dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
 
@@ -246,8 +251,15 @@
     if (name === 'edit' || name === 'recommend') editHabit(id, Number(button.dataset.target) || undefined);
     if (name === 'remove' && h) { h.endsOn = P.shift(today(),1); commit('Habit stops after today. Past scores are kept.'); manage(); }
     if (name === 'log') logHabit(id,date);
-    if (name === 'toggle-habit' && h) setLog(id,date,P.value(T.state,date,id) >= h.target ? 0 : h.target);
-    if (name === 'day') { const habits = P.scheduledHabits(T.state,date); showDialog(`${sheetTitle(label(date))}<p class="account-note">Your scheduled habits · ${percent(P.dayScore(T.state,date))}</p>${habits.map(h=>habitRow(h,date)).join('') || '<p class="account-note">A rest day.</p>'}`); }
+    if (name === 'toggle-habit' && h) {
+      const inDaySheet = dialog.contains(button);
+      setLog(id,date,P.value(T.state,date,id) >= h.target ? 0 : h.target);
+      if (inDaySheet) {
+        showDay(date);
+        [...dialog.querySelectorAll('[data-personal-action="toggle-habit"]')].find(b => b.dataset.habit === id)?.focus({preventScroll:true});
+      }
+    }
+    if (name === 'day') showDay(date);
     if (name === 'reports') T.navigate('progress');
     if (name === 'friends') { T.navigate('progress'); $('progress-friends-tab').click(); }
     if (name === 'period') { period = button.dataset.period; reportAnchor = today(); renderReports(); }
@@ -269,7 +281,7 @@
   });
   window.addEventListener('takeover:account', reconcile);
   window.addEventListener('takeover:sync-ready', reconcile);
-  window.addEventListener('takeover:sync-choice', () => { T.navigate('profile'); });
+  window.addEventListener('takeover:sync-choice', () => { T.navigate('profile'); $('profile-account-tab').click(); });
   window.addEventListener('takeover:sync-status', event => { syncMessage = event.detail.text; if (!T.state.personalPlan) render(); });
   window.addEventListener('takeover:section', event => { if (event.detail.group === 'progress' && event.detail.name === 'personal') renderReports(); });
   window.addEventListener('hashchange', () => { if (!A.user && authEntry && !location.hash.includes('profile')) reconcile(); });

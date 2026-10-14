@@ -26,6 +26,7 @@
   function navigate() {
     if (window.Takeover?.navigate) window.Takeover.navigate('profile');
     else location.hash = 'view-profile';
+    document.getElementById('profile-account-tab')?.click();
   }
 
   function publish() {
