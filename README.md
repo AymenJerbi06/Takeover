@@ -4,6 +4,10 @@ A personal daily tracker: what to do today, what's done, and what you're doing r
 
 Open `index.html` in any browser for local tracking (no build step). Host the app over HTTPS for accounts and sync. Progress is saved in the browser; use **Profile → Preferences → Export backup** to keep a copy.
 
+## Product planning
+
+The [product and 40-day program roadmap](docs/Takeover-Product-Roadmap.md) proposes onboarding, personalization, daily actions, reviews and a phased implementation plan. The [slide-analysis notes](docs/planning/slide-analysis-working-notes.md) preserve the supporting research. These documents describe proposed work; they do not indicate that the features are implemented.
+
 ## What it tracks
 
 | Area | Daily target |
