@@ -1,7 +1,7 @@
 'use strict';
 /* Personal onboarding and routines use the existing account, sync and design system. */
 (() => {
-  const T = window.Takeover, P = window.TakeoverPersonal, A = window.TakeoverAccount;
+  const T = window.JourMax, P = window.TakeoverPersonal, A = window.TakeoverAccount;
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const icon = name => window.TakeoverIcons.svg(name);
@@ -25,14 +25,14 @@
   const reportRoot = document.createElement('div'); reportRoot.id = 'personal-progress'; reportRoot.className = 'personal-root';
   $('progress-personal').prepend(reportRoot);
   const back = document.createElement('button'); back.type = 'button'; back.className = 'account-secondary entry-back';
-  back.innerHTML = `${window.TakeoverIcons.svg('chevronLeft')}Back to Takeover`; back.onclick = () => { A.dismissConfirmation?.(); authEntry = false; reconcile(); };
+  back.innerHTML = `${window.TakeoverIcons.svg('chevronLeft')}Back to JourMax`; back.onclick = () => { A.dismissConfirmation?.(); authEntry = false; reconcile(); };
   $('account-root').before(back);
 
   function drawWelcome() {
-    welcome.innerHTML = `<div class="welcome-inner"><header class="welcome-top"><a class="brand" href="#"><span class="brand-icon">${icon('brand')}</span><b>Takeover</b></a><div class="account-actions">${action('theme', icon('sun'), 'aria-label="Switch color theme"')}${action('signin', 'Sign in')}</div></header>
+    welcome.innerHTML = `<div class="welcome-inner"><header class="welcome-top"><a class="brand" href="#"><span class="brand-icon">${icon('brand')}</span><b>JourMax</b></a><div class="account-actions">${action('theme', icon('sun'), 'aria-label="Switch color theme"')}${action('signin', 'Sign in')}</div></header>
       <div class="welcome-grid"><div class="welcome-copy"><p class="account-eyebrow">Your life. Your rhythm.</p><h1>Small habits.<br>A life that<br>feels like you.</h1><p>Choose what matters. Make a little room for it every day. See how far you’ve come.</p><div class="account-actions">${action('signup', `Make it yours ${icon('arrowRight')}`, '', 'account-primary')}</div><p class="account-note">Your own goals. A little encouragement from friends.</p></div>
       <div class="welcome-preview" aria-label="Example dashboard"><div class="preview-heading"><span>Your day, simplified</span><span class="demo-badge">Example</span></div><div class="preview-score"><b>75<span>%</span></b><span>A little better, every day.</span></div><div class="preview-habits">${[['exams','Learn something','20 min','blue'],['body','Get moving','15 min','mint'],['plan','Read a few pages','5 pages','violet']].map(([i,t,v,c],n) => `<div><span class="profile-feature-icon ${c}">${icon(i)}</span><b>${t}</b><span>${v}</span><span class="preview-check">${icon(n < 2 ? 'check' : 'plus')}</span></div>`).join('')}</div><div class="preview-footer">${icon('progress')} Progress that belongs to you.</div></div></div>
-      <div class="welcome-features">${[['plan','A routine that fits','Start with your goals and the time you actually have.'],['progress','See the bigger picture','Daily check-ins. Weekly insights. Monthly reflections.'],['users','Grow with your circle','Compare completion, while keeping personal details private.']].map(([i,t,c]) => `<div><span class="profile-feature-icon">${icon(i)}</span><h2>${t}</h2><p>${c}</p></div>`).join('')}</div><footer class="welcome-foot">Takeover · One day at a time.</footer></div>`;
+      <div class="welcome-features">${[['plan','A routine that fits','Start with your goals and the time you actually have.'],['progress','See the bigger picture','Daily check-ins. Weekly insights. Monthly reflections.'],['users','Grow with your circle','Compare completion, while keeping personal details private.']].map(([i,t,c]) => `<div><span class="profile-feature-icon">${icon(i)}</span><h2>${t}</h2><p>${c}</p></div>`).join('')}</div><footer class="welcome-foot">JourMax · One day at a time.</footer></div>`;
   }
 
   function reconcile() {

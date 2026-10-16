@@ -106,7 +106,7 @@ function render(a) {
 
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#f4f5f7;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#15171c">
 <div style="max-width:600px;margin:0 auto;padding:20px 16px">
-  <div style="font-size:13px;color:#6b7280">Takeover · ${esc(range)}</div>
+  <div style="font-size:13px;color:#6b7280">JourMax · ${esc(range)}</div>
   <h1 style="margin:4px 0 2px;font-size:22px">Day ${a.challengeDay} of ${GOALS.days} — ${pct(a.avg)} average</h1>
   <div style="font-size:14px;color:#6b7280;margin-bottom:16px">${delta == null ? '' : `${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta)} pt${Math.abs(delta) === 1 ? "" : "s"} vs the 3 days before · `}streak: ${a.streak} day${a.streak === 1 ? '' : 's'} at 80%+</div>
 
@@ -137,12 +137,12 @@ function render(a) {
   <p style="font-size:14px;color:#6b7280;font-style:italic;text-align:center;margin:20px 8px">“${esc(ayah)}” — ${esc(ref)}</p>
 </div></body></html>`;
 
-  const text = [`Takeover · ${range}`, `Day ${a.challengeDay}/${GOALS.days} — ${pct(a.avg)} average`, verdict, '',
+  const text = [`JourMax · ${range}`, `Day ${a.challengeDay}/${GOALS.days} — ${pct(a.avg)} average`, verdict, '',
     ...a.rows.map(([n, v]) => `${n}: ${v}`),
     weak.length ? `\nFocus next: ${weak.map(([n]) => n).join(', ')}` : '',
     `\n“${ayah}” — ${ref}`].join('\n');
 
-  return { subject: `Takeover · Day ${a.challengeDay}/${GOALS.days} — ${pct(a.avg)} over the last 3 days`, html, text };
+  return { subject: `JourMax · Day ${a.challengeDay}/${GOALS.days} — ${pct(a.avg)} over the last 3 days`, html, text };
 }
 
 async function loadState() {
@@ -162,7 +162,7 @@ async function send({ subject, html, text }) {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: process.env.REPORT_FROM || 'Takeover <onboarding@resend.dev>',
+      from: process.env.REPORT_FROM || 'JourMax <onboarding@resend.dev>',
       to: process.env.REPORT_TO.split(',').map(s => s.trim()),
       subject, html, text,
     }),

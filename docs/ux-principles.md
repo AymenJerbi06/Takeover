@@ -1,4 +1,4 @@
-# Takeover: twenty principles, applied deliberately
+# JourMax: twenty principles, applied deliberately
 
 Review date: October 14, 2026. Scope: welcome, authentication, onboarding, Today, Focus, Progress, Plan, Profile, friends, and the original dashboard.
 

@@ -154,7 +154,7 @@
 
   async function publishScores() {
     if (publishing) { publishQueued = true; return; }
-    const state = window.Takeover.state, user = A.user;
+    const state = window.JourMax.state, user = A.user;
     if (!user || !A.profile?.share_progress || syncedRevision !== (state.updatedAt || 0) || state.syncUser !== user.id) return;
     const today = dateKey(new Date()), key = `${user.id}:${syncedRevision}:${today}`;
     if (lastPublished === key) return;

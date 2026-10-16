@@ -1,4 +1,4 @@
-# Takeover — 40-day dashboard
+# JourMax — 40-day dashboard
 
 A personal daily tracker: what to do today, what's done, and what you're doing right now.
 
@@ -108,7 +108,17 @@ The social migration uses row-level security for owned profiles and scoped datab
 3. Redeploy (Deployments → … → Redeploy) so the variables and the cron take effect.
 4. Test it: open `https://<your-app>.vercel.app/api/report?key=<CRON_SECRET>&preview=1` to see the email, or `&force=1` instead of `&preview=1` to send it now.
 
-Without your own domain, Resend's `onboarding@resend.dev` sender can only email the address on your Resend account. To send from your own address, verify a domain in Resend and set `REPORT_FROM`, e.g. `Takeover <report@yourdomain.com>`.
+Without your own domain, Resend's `onboarding@resend.dev` sender can only email the address on your Resend account. To send from your own address, verify a domain in Resend and set `REPORT_FROM`, e.g. `JourMax <report@jourmax.com>`.
+
+## Account emails through Resend
+
+Supabase does not send the account emails (sign-up confirmation, resend confirmation, password reset, email change). Its **Send Email hook** calls `api/auth-email.mjs`, which checks the hook signature and sends each email through Resend with the JourMax look. The links still go through Supabase's verify endpoint and land on `/?account=confirm`, `/?account=recovery` and `/?account=email`, so the account screens work unchanged.
+
+1. Supabase → **Authentication → Hooks** (Auth Hooks) → **Send Email hook** → type **HTTPS**, URL `https://<your-app>.vercel.app/api/auth-email` → **Generate secret** → save and enable.
+2. In Vercel → **Settings → Environment Variables**, add `SEND_EMAIL_HOOK_SECRET` (the generated `v1,whsec_…` value), plus `RESEND_API_KEY` and `SUPABASE_URL` if they are not there yet. Optional: `AUTH_EMAIL_FROM`, e.g. `JourMax <account@jourmax.com>` (falls back to `REPORT_FROM`, then `onboarding@resend.dev`).
+3. Redeploy, then create a test account: the confirmation email should come from Resend (it appears in Resend → **Emails**).
+
+If Resend refuses an email, Supabase reports "error sending email" and the app shows "The confirmation email could not be sent". With the `onboarding@resend.dev` sender Resend only delivers to your own Resend address, so verify a domain in Resend before other people sign up.
 
 ## Personal routines
 
@@ -124,4 +134,4 @@ The $5/$10 commitment feature is explicitly a simulation. It starts tomorrow, co
 
 The legacy email cron now requires `REPORT_USER_ID` and queries only that account. With no owner configured it sends nothing. Personal routines are excluded from that old report renderer. Do not configure a recipient for another person's account.
 
-Before public signup, finish the deferred custom SMTP/domain configuration in Supabase. Email confirmation, recovery and secure email changes remain enabled; the app cannot bypass email delivery restrictions.
+Before public signup, verify a sending domain in Resend (see **Account emails through Resend**). Email confirmation, recovery and secure email changes remain enabled; the app cannot bypass email delivery restrictions.

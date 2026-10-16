@@ -6,7 +6,7 @@
  * Source: https://github.com/phosphor-icons/core
  * Revision: 2b75f3ad12b420c9504ef05df8d2564a28f8500e
  * MIT license: assets/icons/PHOSPHOR-LICENSE.txt
- * The Takeover brand mark is original and retained separately.
+ * The JourMax brand mark is original and retained separately.
  */
 window.TakeoverIcons = (() => {
   const paths = Object.freeze({
@@ -84,7 +84,7 @@ window.TakeoverIcons = (() => {
 
   function svg(name) {
     if (!Object.prototype.hasOwnProperty.call(paths, name)) {
-      throw new Error(`Unknown Takeover icon: ${name}`);
+      throw new Error(`Unknown JourMax icon: ${name}`);
     }
     const shape = filledPaths[name]
       ? `<g class="icon-regular">${paths[name]}</g><g class="icon-filled" display="none">${filledPaths[name]}</g>`

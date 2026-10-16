@@ -843,8 +843,8 @@ document.addEventListener('click', e => {
     if (ds.focusField) document.querySelector(ds.focusField)?.focus({ preventScroll: true });
     return;
   }
-  if (ds.goto) { window.Takeover.navigate(ds.goto); if (ds.gotoTab) selectDestination(ds.goto, ds.gotoTab); return; }
-  if (ds.weekDay) { calSel = ds.weekDay; calMonth = ds.weekDay.slice(0, 7); window.Takeover.navigate('planner'); return renderCalendar(); }
+  if (ds.goto) { window.JourMax.navigate(ds.goto); if (ds.gotoTab) selectDestination(ds.goto, ds.gotoTab); return; }
+  if (ds.weekDay) { calSel = ds.weekDay; calMonth = ds.weekDay.slice(0, 7); window.JourMax.navigate('planner'); return renderCalendar(); }
   const d = day();
   if (ds.start) return startTimer(ds.start);
   if (ds.day) { calSel = ds.day; calMonth = ds.day.slice(0, 7); return renderCalendar(); }
@@ -925,7 +925,7 @@ document.addEventListener('click', e => {
     case 'export': {
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = `takeover-backup-${todayKey()}.json`; a.click();
+      a.href = URL.createObjectURL(blob); a.download = `jourmax-backup-${todayKey()}.json`; a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       return;
     }
@@ -976,7 +976,7 @@ $('import').addEventListener('change', async e => {
     if (!confirm('Replace everything on this device with the backup?')) return;
     state = restoreState(data);
     commit('Backup restored');
-  } catch { toast('That file is not a Takeover backup'); }
+  } catch { toast('That file is not a JourMax backup'); }
   e.target.value = '';
 });
 
@@ -996,7 +996,7 @@ function applyUrlParams() {
 }
 
 // Hooks for sync.js
-window.Takeover = {
+window.JourMax = {
   get state() { return state; },
   set state(v) { state = restoreState(v); },
   save, render, toast,
@@ -1073,7 +1073,7 @@ function activateView(name, { focus = false, skip = false } = {}) {
   });
   pageTitle.textContent = viewNames[view];
   document.body.dataset.view = view;
-  document.title = `${viewNames[view]} · Takeover`;
+  document.title = `${viewNames[view]} · JourMax`;
 
   // SVG charts need a measured panel width before they can be drawn.
   if (view === 'progress' && state.experience !== 'personal') { renderTrends(); renderWeight(); }
@@ -1114,7 +1114,7 @@ $('trend-details').addEventListener('toggle', event => {
 $('sync-indicator').addEventListener('click', event => {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
   event.preventDefault();
-  window.Takeover.navigate('profile');
+  window.JourMax.navigate('profile');
   selectDestination('profile', 'account');
 });
 window.addEventListener('hashchange', () => {
@@ -1126,8 +1126,8 @@ document.addEventListener('visibilitychange', () => {
   state = load(); render();
 });
 
-$('view-back').addEventListener('click', () => window.Takeover.navigate(returnView));
-window.Takeover.navigate = view => {
+$('view-back').addEventListener('click', () => window.JourMax.navigate(returnView));
+window.JourMax.navigate = view => {
   history.pushState(null, '', `#view-${view}`);
   activateView(view, { focus: true });
 };
@@ -1159,6 +1159,6 @@ function selectDestination(group, name, focus = false) {
 });
 document.addEventListener('click', event => {
   if (event.target.closest('[data-open-preferences]')) selectDestination('profile', 'preferences', true);
-  if (event.target.closest('[data-open-friends]')) { window.Takeover.navigate('profile'); selectDestination('profile', 'friends', true); }
-  if (event.target.closest('[data-open-account]')) { window.Takeover.navigate('profile'); selectDestination('profile', 'account', true); }
+  if (event.target.closest('[data-open-friends]')) { window.JourMax.navigate('profile'); selectDestination('profile', 'friends', true); }
+  if (event.target.closest('[data-open-account]')) { window.JourMax.navigate('profile'); selectDestination('profile', 'account', true); }
 });

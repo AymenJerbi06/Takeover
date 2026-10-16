@@ -2,7 +2,7 @@
 /* One cloud row per account. Sync cycles are serialized and compare the remote row
    revision before writing; the dashboard with the newer updatedAt still wins. */
 (() => {
-  const T = window.Takeover;
+  const T = window.JourMax;
   // config.js wins when filled in; otherwise use the keys Vercel serves from its env vars (api/config.js).
   const local = window.TAKEOVER_CONFIG || {}, env = window.TAKEOVER_ENV || {};
   const cfg = local.supabaseUrl && local.supabaseAnonKey ? local : env;
@@ -111,7 +111,7 @@
         return;
       }
       if (!remote && firstTimeHere && firstChoice === 'cloud') {
-        // Takeover's state setter fills in the fresh dashboard defaults.
+        // JourMax's state setter fills in the fresh dashboard defaults.
         T.state = { updatedAt: Date.now(), syncUser: account };
         T.save(false); T.render();
       }

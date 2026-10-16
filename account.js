@@ -49,7 +49,7 @@
   };
 
   function navigate() {
-    if (window.Takeover?.navigate) window.Takeover.navigate('profile');
+    if (window.JourMax?.navigate) window.JourMax.navigate('profile');
     else location.hash = 'view-profile';
     document.getElementById('profile-account-tab')?.click();
   }
@@ -176,7 +176,7 @@
     const copy = checking ? 'Opening your secure confirmation…' : success ? 'Your account is ready.' : failed ? (error || 'This link has expired or has already been used.') : email ? `Use the confirmation link for ${email} to finish setting up your account.` : 'Enter your email to request a fresh confirmation link.';
     root.innerHTML = `<section class="profile-card account-portal confirmation-card" data-confirmation="${stage}" ${checking ? 'aria-busy="true"' : ''}>
       <div class="account-hero"><span class="profile-avatar confirmation-symbol">${icon(success ? 'check' : failed ? 'mail' : checking ? 'shield' : 'mail')}</span><div><p class="account-eyebrow">${success ? 'You’re all set' : 'One last step'}</p><h2 id="confirmation-title" tabindex="-1">${title}</h2><p class="account-copy" role="status">${esc(copy)}</p></div></div>
-      ${success ? `<button type="button" class="account-primary" id="confirmation-continue">${user ? 'Continue to Takeover' : 'Sign in'}${icon('arrowRight')}</button>` : checking ? '<div class="confirmation-progress" role="progressbar" aria-label="Checking confirmation"><span></span></div>' : `<form id="confirmation-form" class="account-form">
+      ${success ? `<button type="button" class="account-primary" id="confirmation-continue">${user ? 'Continue to JourMax' : 'Sign in'}${icon('arrowRight')}</button>` : checking ? '<div class="confirmation-progress" role="progressbar" aria-label="Checking confirmation"><span></span></div>' : `<form id="confirmation-form" class="account-form">
         ${failed || !email ? `<div class="field"><label for="confirmation-email">Email address</label><input class="field-control" id="confirmation-email" name="email" type="email" autocomplete="email" maxlength="254" value="${esc(email)}" placeholder="you@example.com" required></div>` : ''}
         <button type="submit" class="account-secondary" id="confirmation-resend">Resend confirmation</button><p class="account-status" role="status" aria-live="polite"></p></form>
         <div class="account-actions"><button type="button" class="account-primary" id="confirmation-signin">${user ? 'Back to your account' : 'Sign in'} ${icon('arrowRight')}</button>${!failed ? '<button type="button" class="account-secondary" id="confirmation-change">Use another email</button>' : ''}</div><p class="account-note">Check your spam folder too. Already confirmed on another device? Sign in here.</p>`}
@@ -192,7 +192,7 @@
     document.getElementById('confirmation-continue')?.addEventListener('click', () => {
       leaveConfirmation(); mode = 'signin'; notice = { text: '', kind: '' };
       draw(); publish();
-      if (user) window.Takeover?.navigate('today'); else { navigate(); document.getElementById('auth-email')?.focus(); }
+      if (user) window.JourMax?.navigate('today'); else { navigate(); document.getElementById('auth-email')?.focus(); }
     });
     document.getElementById('confirmation-change')?.addEventListener('click', () => {
       if (authBusy) return;
@@ -263,7 +263,7 @@
     }
     if (confirmation && !recovery) { drawConfirmation(); return; }
     if (!user) { drawPortal(currentNotice); return; }
-    const displayName = profile?.display_name || user.user_metadata?.display_name || 'Takeover member';
+    const displayName = profile?.display_name || user.user_metadata?.display_name || 'JourMax member';
     const avatar = safeAvatar(profile?.avatar_data);
     root.innerHTML = `<section class="profile-card">
       <div class="account-hero"><button type="button" class="avatar-edit-trigger" id="profile-photo-edit" aria-label="Change profile picture" aria-controls="profile-edit-section" ${!profile ? 'disabled' : ''}><span class="profile-avatar">${avatar ? `<img src="${avatar}" alt="" width="80" height="80">` : esc(initials(displayName))}</span><span class="avatar-edit-badge">${icon('camera')}</span></button><div><p class="account-eyebrow">Your account</p><h2>${esc(displayName)}</h2><p class="account-copy account-email">${esc(user.email)}</p><span class="account-badge">${icon('shield')} ${user.email_confirmed_at ? 'Email verified' : 'Email confirmation pending'}</span></div></div>
@@ -379,7 +379,7 @@
       if (!current()) return null;
       if (error) throw error;
       if (!data) {
-        const display_name = String(user.user_metadata?.display_name || 'Takeover member').trim().slice(0, 40) || 'Takeover member';
+        const display_name = String(user.user_metadata?.display_name || 'JourMax member').trim().slice(0, 40) || 'JourMax member';
         const created = await sb.from('takeover_profiles').insert({ id, display_name }).select('id,display_name,avatar_data,friend_code,share_progress').single();
         if (!current()) return null;
         if (created.error?.code === '23505') {

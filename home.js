@@ -47,7 +47,7 @@
   const dateKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const shift = (key, n) => { const d = new Date(`${key}T12:00:00`); d.setDate(d.getDate() + n); return dateKey(d); };
   function model() {
-    const s = window.Takeover?.state; if (!s) return null;
+    const s = window.JourMax?.state; if (!s) return null;
     const k = dateKey(new Date());
     if (s.experience === 'personal') {
       if (!s.personalPlan) return null;
@@ -70,7 +70,7 @@
 
   function notes() {
     const m = model(); if (!m) return [];
-    const s = window.Takeover.state, out = [], now = new Date();
+    const s = window.JourMax.state, out = [], now = new Date();
     const minutesLeft = 24 * 60 - (now.getHours() * 60 + now.getMinutes());
     const hoursLeft = Math.max(1, Math.ceil(minutesLeft / 60));
     const today = m.score(m.k);
@@ -152,7 +152,7 @@
     const dialog = document.getElementById('routine-dialog');
     const go = () => {
       if (note.dataset.noteFilter) { filter = note.dataset.noteFilter; try { sessionStorage.setItem(FILTER_KEY, filter); } catch { /* per-tab */ } }
-      window.Takeover.navigate(note.dataset.noteGo);
+      window.JourMax.navigate(note.dataset.noteGo);
       document.querySelectorAll('.personal-root').forEach(applyFilter);
       if (note.dataset.noteGo === 'today') requestAnimationFrame(() => document.querySelector('.personal-root:not([hidden]) .home-categories, #legacy-today .home-categories')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
     };
