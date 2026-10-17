@@ -105,6 +105,25 @@
 .goal-choice:has(input:checked) .choice-check { display: grid; place-items: center; position: absolute; top: 5px; right: 5px; width: 17px; height: 17px; border-radius: 50%; background: var(--blue-fill); color: var(--tone-button-ink); }
 .choice-check .app-icon { width: 12px; height: 12px; }
 .goal-choice:has(input:focus-visible), .habit-days label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* Setup step 1: every life area is included; remove what doesn't apply, add your own. */
+.area-list { list-style: none; display: grid; gap: 8px; margin: 22px 0 14px; padding: 0; }
+.area-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 6px 8px 12px; border: 1px solid var(--control-border); border-radius: 18px; background: var(--card); }
+.area-row > b { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.area-row .profile-feature-icon { width: 35px; height: 35px; border-radius: 50%; flex: none; }
+.area-row .profile-feature-icon .app-icon { width: 19px; }
+.area-remove { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+.area-remove .app-icon { width: 16px; height: 16px; }
+.area-remove:hover { background: var(--panel); color: var(--text); }
+.area-remove:focus-visible, .area-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.area-add { display: grid; gap: 10px; }
+.area-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.area-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1px dashed var(--control-border); border-radius: 999px; background: transparent; color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.area-chip .app-icon { width: 14px; height: 14px; }
+.area-chip:hover { border-color: var(--accent); background: var(--accent-soft); }
+.area-custom { display: flex; gap: 8px; }
+.area-custom input { flex: 1; min-width: 0; min-height: 48px; border: 1px solid var(--control-border); padding: 10px 14px; border-radius: 16px; background: var(--input-bg); color: var(--text); font: inherit; font-size: 16px; }
+.area-custom .account-secondary { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 48px; width: auto; padding: 0 16px; }
+.area-custom .account-secondary .app-icon { width: 14px; height: 14px; }
 .personal-field { display: flex; flex-direction: column; min-width: 0; gap: 9px; margin-block: 16px; color: var(--text); font-size: 13px; }
 .personal-field input, .personal-field select, .account-form textarea { width: 100%; min-height: 50px; border: 1px solid var(--control-border); padding: 12px 14px; border-radius: 16px; background: var(--input-bg); color: var(--text); font: inherit; font-size: 16px; }
 .account-form textarea { resize: vertical; }

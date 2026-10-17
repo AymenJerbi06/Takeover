@@ -88,7 +88,8 @@
       return;
     }
     const draft = T.state.onboardingDraft || T.state.personalPlan || {};
-    wizard = { step: 1, goals: structuredClone(draft.goals || []), context: { dailyMinutes: 30, preferredTime: 'Flexible', ...draft.context } };
+    const goals = draft.goals?.length ? structuredClone(draft.goals) : P.categories.filter(c => c.id !== 'other').map(c => ({ id: c.id, category: c.id, title: c.title }));
+    wizard = { step: 1, goals, context: { dailyMinutes: 30, preferredTime: 'Flexible', ...draft.context } };
     drawSetup();
   }
   function drawSetup() {
@@ -96,12 +97,42 @@
     if (!w) return;
     const progress = `<div class="setup-progress" aria-label="Step ${w.step} of 3">${[1,2,3].map(n => `<span class="${n <= w.step ? 'active' : ''}"></span>`).join('')}</div><p class="account-eyebrow">Make it yours · ${w.step} / 3</p>`;
     if (w.step === 1) {
-      showDialog(`${progress}${sheetTitle('What matters to you?')}<p class="account-note">Choose up to four areas. You can change them later.</p><form id="personal-goals-form"><div class="goal-choices">${P.categories.map(c => `<label class="goal-choice"><input type="checkbox" name="category" value="${c.id}" ${w.goals.some(g => g.category === c.id) ? 'checked' : ''}><span class="profile-feature-icon ${c.tone}">${icon(c.icon)}</span><b>${c.title}</b><span class="choice-check">${icon('check')}</span></label>`).join('')}</div><label class="personal-field">What would you like to work toward?<input name="goalTitle" maxlength="160" placeholder="e.g. Feel stronger and finish two books" value="${esc(w.context.goalTitle || '')}"></label><p class="account-status" role="status"></p><button class="account-primary sheet-primary">Continue ${icon('arrowRight')}</button></form>`);
-      $('personal-goals-form').onsubmit = event => {
-        event.preventDefault(); const form = event.currentTarget, selected = [...form.querySelectorAll('input:checked')].map(i => i.value);
-        if (!selected.length || selected.length > 4) { form.querySelector('[role=status]').textContent = 'Choose between one and four areas.'; return; }
-        w.goals = selected.map(category => ({ id: category, category, title: P.category(category).title }));
-        w.context.goalTitle = form.elements.goalTitle.value.trim();
+      // JourMax looks after the whole of your life: every area starts included. People remove what
+      // doesn't apply to them and add their own, instead of being limited to a few.
+      const included = new Set(w.goals.map(g => g.id));
+      const missing = P.categories.filter(c => c.id !== 'other' && !included.has(c.id));
+      const area = g => { const c = P.category(g.category); return `<li class="area-row"><span class="profile-feature-icon ${c.tone}">${icon(c.icon)}</span><b>${esc(g.title)}</b><button type="button" class="area-remove" data-area-remove="${esc(g.id)}" aria-label="Remove ${esc(g.title)}">${icon('close')}</button></li>`; };
+      showDialog(`${progress}${sheetTitle('Your whole life, one routine.')}<p class="account-note">These are the areas you’ll focus on. Remove any that don’t apply to you, or add your own.</p><form id="personal-goals-form"><ul class="area-list" aria-label="Your areas">${w.goals.map(area).join('')}</ul>${w.goals.length ? '' : '<p class="account-note">Add at least one area to continue.</p>'}<div class="area-add">${missing.length ? `<div class="area-chips" aria-label="Add an area back">${missing.map(c => `<button type="button" class="area-chip" data-area-add="${c.id}">${icon('plus')}${c.title}</button>`).join('')}</div>` : ''}<div class="area-custom"><input name="customArea" maxlength="40" placeholder="Add your own area, e.g. Career" aria-label="Add your own area"><button type="button" class="account-secondary" data-area-custom>${icon('plus')}Add</button></div></div><label class="personal-field">What would you like to work toward?<input name="goalTitle" maxlength="160" placeholder="e.g. Feel stronger and finish two books" value="${esc(w.context.goalTitle || '')}"></label><p class="account-status" role="status"></p><button class="account-primary sheet-primary">Continue ${icon('arrowRight')}</button></form>`);
+      const form = $('personal-goals-form');
+      const keepTitle = () => { w.context.goalTitle = form.elements.goalTitle.value.trim(); };
+      // Built-in areas keep their usual order; the person's own areas follow.
+      const rank = g => { const i = P.categories.findIndex(c => c.id === g.id); return i < 0 ? P.categories.length : i; };
+      const redraw = focus => {
+        keepTitle(); w.goals.sort((a, b) => rank(a) - rank(b));
+        const scrollers = [dialog, ...dialog.querySelectorAll('*')].filter(el => el.scrollTop > 0).map(el => [el.className, el.scrollTop]);
+        drawSetup();
+        scrollers.forEach(([cls, top]) => { const el = cls === dialog.className ? dialog : dialog.getElementsByClassName(cls.split(' ')[0])[0]; if (el) el.scrollTop = top; });
+        if (focus) dialog.querySelector(focus)?.focus({ preventScroll: true });
+      };
+      form.onclick = event => {
+        const remove = event.target.closest('[data-area-remove]'), add = event.target.closest('[data-area-add]'), custom = event.target.closest('[data-area-custom]');
+        if (remove) { w.goals = w.goals.filter(g => g.id !== remove.dataset.areaRemove); redraw('.area-chip:last-child'); }
+        else if (add) { const c = P.category(add.dataset.areaAdd); w.goals.push({ id: c.id, category: c.id, title: c.title }); redraw(); }
+        else if (custom) addCustom();
+      };
+      const addCustom = () => {
+        const title = form.elements.customArea.value.trim().replace(/\s+/g, ' ');
+        const status = form.querySelector('[role=status]');
+        if (!title) { status.textContent = 'Type the name of the area first.'; form.elements.customArea.focus(); return; }
+        if (w.goals.some(g => g.title.toLowerCase() === title.toLowerCase())) { status.textContent = `${title} is already in your areas.`; return; }
+        w.goals.push({ id: `custom-${Date.now().toString(36)}`, category: 'other', title });
+        redraw('input[name=customArea]');
+      };
+      form.elements.customArea.onkeydown = event => { if (event.key === 'Enter') { event.preventDefault(); addCustom(); } };
+      form.onsubmit = event => {
+        event.preventDefault();
+        if (!w.goals.length) { form.querySelector('[role=status]').textContent = 'Keep at least one area to build your routine around.'; return; }
+        keepTitle();
         T.state.onboardingDraft = { goals: structuredClone(w.goals), context: structuredClone(w.context) }; T.save();
         w.step = 2; wizard = w; drawSetup();
       };

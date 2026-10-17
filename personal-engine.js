@@ -34,7 +34,7 @@
     const minutes = Math.max(1, Math.min(15, Math.floor((Number(context.dailyMinutes) || 30) / Math.max(goals.length, 1))));
     return goals.map(g => {
       const c = category(g.category);
-      return { category: c.id, title: c.idea, target: c.unit === 'minutes' ? minutes : c.unit === 'pages' ? Math.min(5, minutes) : 1, unit: c.unit };
+      return { category: c.id, title: c.id === 'other' && g.title ? `A small step for ${g.title}` : c.idea, target: c.unit === 'minutes' ? minutes : c.unit === 'pages' ? Math.min(5, minutes) : 1, unit: c.unit };
     });
   }
   function bounds(period, anchor) {
