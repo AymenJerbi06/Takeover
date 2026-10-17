@@ -120,6 +120,12 @@ Supabase does not send the account emails (sign-up confirmation, resend confirma
 
 If Resend refuses an email, Supabase reports "error sending email" and the app shows "The confirmation email could not be sent". With the `onboarding@resend.dev` sender Resend only delivers to your own Resend address, so verify a domain in Resend before other people sign up.
 
+## Setup flow and AI habit ideas
+
+"Make it yours" opens with every life area included (remove what doesn't apply, add your own), then goes through the areas one by one: what the person wants to improve, how much time they can give it and how often, then 4–5 habit options to pick from. A review screen shows the whole routine before the habits are created.
+
+Options come from `api/plan-ideas.mjs`, which asks Claude for five habits fitted to the person's words and time, using the founder's 40-day plan as the example of a complete plan. It only answers signed-in users. Add `ANTHROPIC_API_KEY` in Vercel (optional `PLAN_AI_MODEL`, default `claude-sonnet-5-5`) and redeploy. Without the key, or if the call fails, the app uses the built-in ideas in `personal-engine.js` (`areaOptions`), so setup always works.
+
 ## Personal routines
 
 New visitors see the welcome page and account portal. New accounts start with an empty dashboard, never the original owner's debts or routine. Existing saved dashboards remain in legacy mode until their owner chooses **Profile → Preferences → Customize my routine**.

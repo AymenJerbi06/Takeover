@@ -20,6 +20,7 @@
   const heading = (kicker, title, copy = '') => `<p class="account-eyebrow">${kicker}</p><h2>${title}</h2>${copy ? `<p class="account-note">${copy}</p>` : ''}`;
   const card = (content, cls = '') => `<section class="profile-card ${cls}">${content}</section>`;
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MAX_HABITS = 20;
 
   // Keep existing charts in the document for the original personal dashboard.
   const reportRoot = document.createElement('div'); reportRoot.id = 'personal-progress'; reportRoot.className = 'personal-root';
@@ -92,61 +93,131 @@
     wizard = { step: 1, goals, context: { dailyMinutes: 30, preferredTime: 'Flexible', ...draft.context } };
     drawSetup();
   }
+  // "Make it yours": 1 · your areas → one screen per area (what to improve, time, options) → your day → review.
+  const stepCount = w => w.goals.length + 3;
+  const defaultMinutes = c => ({ learning: 60, fitness: 30, reading: 15, faith: 15, money: 15, wellbeing: 15, connection: 10 })[c] || 15;
+  const perWeekLabel = n => n >= 7 ? 'Every day' : n === 5 ? 'Weekdays' : n === 1 ? 'Once a week' : `${n} days a week`;
+  const repeatLabel = days => days.length === 7 ? 'every day' : days.join('') === '12345' ? 'weekdays' : days.join('') === '06' ? 'weekends' : days.map(d => dayNames[d]).join(', ');
+  const amount = (n, unit) => `${n} ${n === 1 ? ({ times: 'time', glasses: 'glass' })[unit] || unit.replace(/s$/, '') : unit}`;
+  const optionKey = o => `${o.title}|${o.target}|${o.unit}`;
+
   function drawSetup() {
     const w = wizard;
     if (!w) return;
-    const progress = `<div class="setup-progress" aria-label="Step ${w.step} of 3">${[1,2,3].map(n => `<span class="${n <= w.step ? 'active' : ''}"></span>`).join('')}</div><p class="account-eyebrow">Make it yours · ${w.step} / 3</p>`;
-    if (w.step === 1) {
-      // JourMax looks after the whole of your life: every area starts included. People remove what
-      // doesn't apply to them and add their own, instead of being limited to a few.
-      const included = new Set(w.goals.map(g => g.id));
-      const missing = P.categories.filter(c => c.id !== 'other' && !included.has(c.id));
-      const area = g => { const c = P.category(g.category); return `<li class="area-row"><span class="profile-feature-icon ${c.tone}">${icon(c.icon)}</span><b>${esc(g.title)}</b><button type="button" class="area-remove" data-area-remove="${esc(g.id)}" aria-label="Remove ${esc(g.title)}">${icon('close')}</button></li>`; };
-      showDialog(`${progress}${sheetTitle('Your whole life, one routine.')}<p class="account-note">These are the areas you’ll focus on. Remove any that don’t apply to you, or add your own.</p><form id="personal-goals-form"><ul class="area-list" aria-label="Your areas">${w.goals.map(area).join('')}</ul>${w.goals.length ? '' : '<p class="account-note">Add at least one area to continue.</p>'}<div class="area-add">${missing.length ? `<div class="area-chips" aria-label="Add an area back">${missing.map(c => `<button type="button" class="area-chip" data-area-add="${c.id}">${icon('plus')}${c.title}</button>`).join('')}</div>` : ''}<div class="area-custom"><input name="customArea" maxlength="40" placeholder="Add your own area, e.g. Career" aria-label="Add your own area"><button type="button" class="account-secondary" data-area-custom>${icon('plus')}Add</button></div></div><label class="personal-field">What would you like to work toward?<input name="goalTitle" maxlength="160" placeholder="e.g. Feel stronger and finish two books" value="${esc(w.context.goalTitle || '')}"></label><p class="account-status" role="status"></p><button class="account-primary sheet-primary">Continue ${icon('arrowRight')}</button></form>`);
-      const form = $('personal-goals-form');
-      const keepTitle = () => { w.context.goalTitle = form.elements.goalTitle.value.trim(); };
-      // Built-in areas keep their usual order; the person's own areas follow.
-      const rank = g => { const i = P.categories.findIndex(c => c.id === g.id); return i < 0 ? P.categories.length : i; };
-      const redraw = focus => {
-        keepTitle(); w.goals.sort((a, b) => rank(a) - rank(b));
-        const scrollers = [dialog, ...dialog.querySelectorAll('*')].filter(el => el.scrollTop > 0).map(el => [el.className, el.scrollTop]);
-        drawSetup();
-        scrollers.forEach(([cls, top]) => { const el = cls === dialog.className ? dialog : dialog.getElementsByClassName(cls.split(' ')[0])[0]; if (el) el.scrollTop = top; });
-        if (focus) dialog.querySelector(focus)?.focus({ preventScroll: true });
-      };
-      form.onclick = event => {
-        const remove = event.target.closest('[data-area-remove]'), add = event.target.closest('[data-area-add]'), custom = event.target.closest('[data-area-custom]');
-        if (remove) { w.goals = w.goals.filter(g => g.id !== remove.dataset.areaRemove); redraw('.area-chip:last-child'); }
-        else if (add) { const c = P.category(add.dataset.areaAdd); w.goals.push({ id: c.id, category: c.id, title: c.title }); redraw(); }
-        else if (custom) addCustom();
-      };
-      const addCustom = () => {
-        const title = form.elements.customArea.value.trim().replace(/\s+/g, ' ');
-        const status = form.querySelector('[role=status]');
-        if (!title) { status.textContent = 'Type the name of the area first.'; form.elements.customArea.focus(); return; }
-        if (w.goals.some(g => g.title.toLowerCase() === title.toLowerCase())) { status.textContent = `${title} is already in your areas.`; return; }
-        w.goals.push({ id: `custom-${Date.now().toString(36)}`, category: 'other', title });
-        redraw('input[name=customArea]');
-      };
-      form.elements.customArea.onkeydown = event => { if (event.key === 'Enter') { event.preventDefault(); addCustom(); } };
-      form.onsubmit = event => {
-        event.preventDefault();
-        if (!w.goals.length) { form.querySelector('[role=status]').textContent = 'Keep at least one area to build your routine around.'; return; }
-        keepTitle();
-        T.state.onboardingDraft = { goals: structuredClone(w.goals), context: structuredClone(w.context) }; T.save();
-        w.step = 2; wizard = w; drawSetup();
-      };
-    } else if (w.step === 2) {
-      showDialog(`${progress}${sheetTitle('Make it fit your day.')}<p class="account-note">A small routine you can repeat is a good place to start.</p><form id="personal-context-form" class="account-form"><label>Time for your routine<select name="dailyMinutes">${[10,20,30,45,60,90,120].map(n => `<option value="${n}" ${Number(w.context.dailyMinutes) === n ? 'selected' : ''}>${n} minutes a day</option>`).join('')}</select></label><label>Best time of day<select name="preferredTime">${['Flexible','Morning','Afternoon','Evening'].map(t => `<option ${w.context.preferredTime === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label>What should your routine make room for?<textarea name="notes" maxlength="500" rows="3" placeholder="Classes, shifts, family time, rest days…">${esc(w.context.notes || '')}</textarea></label><details class="personal-details"><summary>Optional personal context</summary><p class="account-note">Private to your account. Skip anything you don’t want to share. This does not create a medical or financial plan.</p><label class="personal-field">Current weight (kg)<input name="weight" type="number" min="20" max="500" step="0.1" inputmode="decimal" value="${esc(w.context.weight ?? '')}"></label><label class="personal-field">Monthly income<input name="income" type="number" min="0" max="100000000" step="0.01" inputmode="decimal" value="${esc(w.context.income ?? '')}"></label><label class="personal-field">Currency<input name="currency" maxlength="5" placeholder="USD, CAD…" value="${esc(w.context.currency || '')}"></label></details><div class="account-actions">${action('setup-back','Back')}<button class="account-primary">See my options ${icon('arrowRight')}</button></div></form>`);
-      $('personal-context-form').onsubmit = event => {
-        event.preventDefault(); const data = new FormData(event.currentTarget);
-        w.context = { ...w.context, dailyMinutes: Number(data.get('dailyMinutes')), preferredTime: data.get('preferredTime'), notes: data.get('notes').trim(), weight: data.get('weight') ? Number(data.get('weight')) : null, income: data.get('income') ? Number(data.get('income')) : null, currency: data.get('currency').trim() };
-        T.state.onboardingDraft = { goals: w.goals, context: w.context }; T.save(); w.step = 3; wizard = w; drawSetup();
-      };
-    } else {
-      const examples = P.suggestions(w.goals, w.context);
-      showDialog(`${progress}${sheetTitle('Your direction, made clear.')}<p class="account-note">${esc(w.context.goalTitle || w.goals.map(g => g.title).join(' · '))}<br>${w.context.dailyMinutes} minutes · ${esc(w.context.preferredTime.toLowerCase())}</p><div class="plan-preview"><span class="demo-badge">Example habits · preview</span>${examples.map(h => `<div class="preview-idea">${icon(P.category(h.category).icon)}<span>${esc(h.title)}</span><small>${h.target} ${esc(h.unit)}</small></div>`).join('')}</div><div class="manual-option"><h3>Build a routine that fits.</h3><p class="account-note">Create your own habits for free. Choose each target and schedule, track your progress, and join your friends.</p>${action('manual',`Create my routine ${icon('arrowRight')}`, '', 'account-primary')}</div><details class="personal-details plan-coming-soon"><summary>About tailored plans</summary><p class="account-note">Paid plans will build a schedule around your goals and availability. Pricing and checkout are not available yet.</p></details>${action('setup-back','Back')}`);
-    }
+    const total = stepCount(w), at = Math.min(w.step, total);
+    const progress = `<div class="setup-progress setup-progress-fluid" aria-label="Step ${at} of ${total}"><span style="--done:${(at / total).toFixed(3)}"></span></div>`;
+    const eyebrow = text => `<p class="account-eyebrow">Make it yours · ${text}</p>`;
+    if (w.step === 1) return drawAreas(w, progress + eyebrow('Your areas'));
+    if (w.step <= w.goals.length + 1) return drawArea(w, w.step - 2, progress + eyebrow(`Area ${w.step - 1} of ${w.goals.length}`));
+    if (w.step === w.goals.length + 2) return drawDay(w, progress + eyebrow('Your day'));
+    return drawReview(w, progress + eyebrow('Your routine'));
+  }
+
+  function saveDraft(w) {
+    T.state.onboardingDraft = { goals: structuredClone(w.goals.map(({ loading, ...g }) => g)), context: structuredClone(w.context) }; T.save();
+  }
+
+  function drawAreas(w, top) {
+    // JourMax looks after the whole of your life: every area starts included. People remove what
+    // doesn't apply to them and add their own, instead of being limited to a few.
+    const included = new Set(w.goals.map(g => g.id));
+    const missing = P.categories.filter(c => c.id !== 'other' && !included.has(c.id));
+    const area = g => { const c = P.category(g.category); return `<li class="area-row"><span class="profile-feature-icon ${c.tone}">${icon(c.icon)}</span><b>${esc(g.title)}</b><button type="button" class="area-remove" data-area-remove="${esc(g.id)}" aria-label="Remove ${esc(g.title)}">${icon('close')}</button></li>`; };
+    showDialog(`${top}${sheetTitle('Your whole life, one routine.')}<p class="account-note">These are the areas you’ll focus on. Remove any that don’t apply to you, or add your own. Next, we’ll go through them one by one.</p><form id="personal-goals-form"><ul class="area-list" aria-label="Your areas">${w.goals.map(area).join('')}</ul>${w.goals.length ? '' : '<p class="account-note">Add at least one area to continue.</p>'}<div class="area-add">${missing.length ? `<div class="area-chips" aria-label="Add an area back">${missing.map(c => `<button type="button" class="area-chip" data-area-add="${c.id}">${icon('plus')}${c.title}</button>`).join('')}</div>` : ''}<div class="area-custom"><input name="customArea" maxlength="40" placeholder="Add your own area, e.g. Career" aria-label="Add your own area"><button type="button" class="account-secondary" data-area-custom>${icon('plus')}Add</button></div></div><p class="account-status" role="status"></p><button class="account-primary sheet-primary">Start with ${esc(w.goals[0]?.title || 'your first area')} ${icon('arrowRight')}</button></form>`);
+    const form = $('personal-goals-form');
+    // Built-in areas keep their usual order; the person's own areas follow.
+    const rank = g => { const i = P.categories.findIndex(c => c.id === g.id); return i < 0 ? P.categories.length : i; };
+    const redraw = focus => {
+      w.goals.sort((a, b) => rank(a) - rank(b));
+      const scrollers = [dialog, ...dialog.querySelectorAll('*')].filter(el => el.scrollTop > 0).map(el => [el.className, el.scrollTop]);
+      drawSetup();
+      scrollers.forEach(([cls, top]) => { const el = cls === dialog.className ? dialog : dialog.getElementsByClassName(cls.split(' ')[0])[0]; if (el) el.scrollTop = top; });
+      if (focus) dialog.querySelector(focus)?.focus({ preventScroll: true });
+    };
+    const addCustom = () => {
+      const title = form.elements.customArea.value.trim().replace(/\s+/g, ' ');
+      const status = form.querySelector('[role=status]');
+      if (!title) { status.textContent = 'Type the name of the area first.'; form.elements.customArea.focus(); return; }
+      if (w.goals.some(g => g.title.toLowerCase() === title.toLowerCase())) { status.textContent = `${title} is already in your areas.`; return; }
+      w.goals.push({ id: `custom-${Date.now().toString(36)}`, category: 'other', title });
+      redraw('input[name=customArea]');
+    };
+    form.onclick = event => {
+      const remove = event.target.closest('[data-area-remove]'), add = event.target.closest('[data-area-add]');
+      if (remove) { w.goals = w.goals.filter(g => g.id !== remove.dataset.areaRemove); redraw('.area-chip:last-child'); }
+      else if (add) { const c = P.category(add.dataset.areaAdd); w.goals.push({ id: c.id, category: c.id, title: c.title }); redraw(); }
+      else if (event.target.closest('[data-area-custom]')) addCustom();
+    };
+    form.elements.customArea.onkeydown = event => { if (event.key === 'Enter') { event.preventDefault(); addCustom(); } };
+    form.onsubmit = event => {
+      event.preventDefault();
+      if (!w.goals.length) { form.querySelector('[role=status]').textContent = 'Keep at least one area to build your routine around.'; return; }
+      saveDraft(w); w.step = 2; drawSetup();
+    };
+  }
+
+  function drawArea(w, index, top) {
+    const g = w.goals[index], c = P.category(g.category), last = index === w.goals.length - 1;
+    g.minutes ??= defaultMinutes(g.category); g.daysPerWeek ??= 7; g.picked ??= [];
+    const aims = P.aims[g.category] || [];
+    const picked = new Set(g.picked.map(optionKey));
+    const options = g.loading
+      ? `<div class="area-options-loading" role="status"><span class="area-spinner" aria-hidden="true"></span>Finding options that fit you…</div>`
+      : g.options ? `<p class="area-options-note">${g.source === 'ai' ? 'Suggested for you. ' : ''}Pick as many as you like. You can change any target later.</p><div class="area-options">${g.options.map((o, i) => `<label class="area-option"><input type="checkbox" name="option" value="${i}" ${picked.has(optionKey(o)) ? 'checked' : ''}><span class="area-option-copy"><b>${esc(o.title)}</b><span>${esc(amount(o.target, o.unit))} · ${repeatLabel(o.days)}</span>${o.why ? `<small>${esc(o.why)}</small>` : ''}</span><span class="choice-check">${icon('check')}</span></label>`).join('')}</div>` : '';
+    showDialog(`${top}<div class="area-head"><span class="profile-feature-icon ${c.tone}">${icon(c.icon)}</span>${sheetTitle(esc(g.title))}</div><form id="personal-area-form"><label class="personal-field">What do you want to improve in ${esc(g.title.toLowerCase())}?<textarea name="aim" maxlength="300" rows="2" placeholder="In your own words">${esc(g.aim || '')}</textarea></label>${aims.length ? `<div class="area-chips area-aims">${aims.map(a => `<button type="button" class="area-chip" data-aim="${esc(a)}">${esc(a)}</button>`).join('')}</div>` : ''}<div class="personal-form-row"><label class="personal-field">Time you can give it<select name="minutes">${[5,10,15,20,30,45,60,90,120,180,240].map(n => `<option value="${n}" ${g.minutes === n ? 'selected' : ''}>${n < 60 ? `${n} min` : `${n / 60} h`} a day</option>`).join('')}</select></label><label class="personal-field">How often<select name="daysPerWeek">${[7,6,5,4,3,2,1].map(n => `<option value="${n}" ${g.daysPerWeek === n ? 'selected' : ''}>${perWeekLabel(n)}</option>`).join('')}</select></label></div><button type="button" class="${g.options ? 'account-secondary' : 'account-primary'} area-suggest" data-area-suggest ${g.loading ? 'disabled' : ''}>${icon('spark')}${g.options ? 'Suggest again' : 'Show me options'}</button>${options}<p class="account-status" role="status"></p><div class="account-actions">${action('setup-back', 'Back')}<button class="account-primary">${g.picked.length ? (last ? 'Next' : 'Next area') : (last ? 'Skip for now' : 'Skip this area')} ${icon('arrowRight')}</button></div></form>`);
+    const form = $('personal-area-form');
+    const keep = () => { g.aim = form.elements.aim.value.trim(); g.minutes = Number(form.elements.minutes.value); g.daysPerWeek = Number(form.elements.daysPerWeek.value); };
+    form.onchange = event => {
+      if (event.target.name === 'option') {
+        const o = g.options[Number(event.target.value)];
+        g.picked = event.target.checked ? [...g.picked, o] : g.picked.filter(p => optionKey(p) !== optionKey(o));
+        form.querySelector('.account-actions .account-primary').innerHTML = `${g.picked.length ? (last ? 'Next' : 'Next area') : (last ? 'Skip for now' : 'Skip this area')} ${icon('arrowRight')}`;
+      } else keep();
+    };
+    form.onclick = event => {
+      const aim = event.target.closest('[data-aim]');
+      if (aim) { const box = form.elements.aim; box.value = box.value.trim() ? `${box.value.trim()}, ${aim.dataset.aim.toLowerCase()}` : aim.dataset.aim; keep(); box.focus(); return; }
+      if (event.target.closest('[data-area-suggest]')) { keep(); suggest(w, g); }
+    };
+    form.onsubmit = event => { event.preventDefault(); keep(); saveDraft(w); w.step++; drawSetup(); };
+  }
+
+  async function suggest(w, g) {
+    g.loading = true; drawSetup();
+    let options = null, source = 'local';
+    try {
+      const token = (await A.client?.auth.getSession())?.data.session?.access_token;
+      const r = await fetch('/api/plan-ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ area: g.title, aim: g.aim, minutes: g.minutes, daysPerWeek: g.daysPerWeek, preferredTime: w.context.preferredTime, otherAreas: w.goals.map(x => x.title) }),
+      });
+      if (r.ok) { options = (await r.json()).options?.map(P.cleanOption).filter(Boolean); source = 'ai'; }
+    } catch { /* fall back to built-in ideas */ }
+    if (!options?.length) { options = P.areaOptions(g).map(P.cleanOption); source = 'local'; }
+    g.loading = false; g.options = options; g.source = source;
+    if (wizard === w && w.goals[w.step - 2] === g) drawSetup();
+  }
+
+  function drawDay(w, top) {
+    showDialog(`${top}${sheetTitle('Make it fit your day.')}<p class="account-note">Last details before your routine is ready.</p><form id="personal-context-form" class="account-form"><label>Best time of day<select name="preferredTime">${['Flexible','Morning','Afternoon','Evening'].map(t => `<option ${w.context.preferredTime === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label><label>What should your routine make room for?<textarea name="notes" maxlength="500" rows="3" placeholder="Classes, shifts, family time, rest days…">${esc(w.context.notes || '')}</textarea></label><details class="personal-details"><summary>Optional personal context</summary><p class="account-note">Private to your account. Skip anything you don’t want to share. This does not create a medical or financial plan.</p><label class="personal-field">Current weight (kg)<input name="weight" type="number" min="20" max="500" step="0.1" inputmode="decimal" value="${esc(w.context.weight ?? '')}"></label><label class="personal-field">Monthly income<input name="income" type="number" min="0" max="100000000" step="0.01" inputmode="decimal" value="${esc(w.context.income ?? '')}"></label><label class="personal-field">Currency<input name="currency" maxlength="5" placeholder="USD, CAD…" value="${esc(w.context.currency || '')}"></label></details><div class="account-actions">${action('setup-back','Back')}<button class="account-primary">Review my routine ${icon('arrowRight')}</button></div></form>`);
+    $('personal-context-form').onsubmit = event => {
+      event.preventDefault(); const data = new FormData(event.currentTarget);
+      w.context = { ...w.context, preferredTime: data.get('preferredTime'), notes: data.get('notes').trim(), weight: data.get('weight') ? Number(data.get('weight')) : null, income: data.get('income') ? Number(data.get('income')) : null, currency: data.get('currency').trim() };
+      saveDraft(w); w.step++; drawSetup();
+    };
+  }
+
+  function drawReview(w, top) {
+    const chosen = w.goals.flatMap(g => (g.picked || []).map(o => ({ g, o })));
+    const minutes = Math.round(chosen.filter(({ o }) => o.unit === 'minutes').reduce((sum, { o }) => sum + o.target * o.days.length / 7, 0) + chosen.filter(({ o }) => o.unit === 'hours' && !/sleep/i.test(o.title)).reduce((sum, { o }) => sum + o.target * 60 * o.days.length / 7, 0));
+    const group = g => `<section class="review-area"><h3>${icon(P.category(g.category).icon)}${esc(g.title)}</h3>${(g.picked || []).length ? g.picked.map(o => `<div class="review-habit"><div><b>${esc(o.title)}</b><span>${esc(amount(o.target, o.unit))} · ${repeatLabel(o.days)}</span></div><button type="button" class="area-remove" data-review-remove="${esc(g.id)}" data-key="${esc(optionKey(o))}" aria-label="Remove ${esc(o.title)}">${icon('close')}</button></div>`).join('') : '<p class="account-note">Nothing yet. You can add a habit here anytime.</p>'}</section>`;
+    showDialog(`${top}${sheetTitle('Your routine is ready.')}<p class="account-note">${chosen.length} habit${chosen.length === 1 ? '' : 's'} across ${w.goals.length} area${w.goals.length === 1 ? '' : 's'}${minutes ? ` · about ${minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60 ? `${minutes % 60} min` : ''}` : `${minutes} min`} a day of focused time` : ''}.</p><div class="review-list">${w.goals.map(group).join('')}</div><div class="account-actions">${action('setup-back','Back')}${action('manual', `Create my routine ${icon('arrowRight')}`, '', 'account-primary')}</div>`);
+    dialog.querySelector('.review-list').onclick = event => {
+      const remove = event.target.closest('[data-review-remove]'); if (!remove) return;
+      const g = w.goals.find(x => x.id === remove.dataset.reviewRemove);
+      if (g) { g.picked = g.picked.filter(o => optionKey(o) !== remove.dataset.key); saveDraft(w); drawSetup(); }
+    };
   }
 
   function createManual() {
@@ -157,10 +228,25 @@
       T.state.personalPlan = { version: 1, startedOn: today(), createdAt: new Date().toISOString(), habits: [], commitments: [], source: 'manual' };
       T.state.startDate = today(); T.state.plan = ''; T.state.running = null;
     }
+    const plan = T.state.personalPlan;
     T.state.experience = 'personal';
-    T.state.personalPlan.goals = structuredClone(wizard.goals); T.state.personalPlan.context = structuredClone(wizard.context);
+    plan.goals = wizard.goals.map(({ id, category, title, aim, minutes, daysPerWeek }) => ({ id, category, title, aim, minutes, daysPerWeek }));
+    plan.context = { ...structuredClone(wizard.context), dailyMinutes: Math.min(600, wizard.goals.reduce((sum, g) => sum + (g.picked?.length ? g.minutes || 0 : 0), 0)) || 30 };
+    // Chosen options become habits. Existing routines change from tomorrow, like any edit.
+    const starts = plan.habits.length ? P.shift(today(), 1) : today();
+    const active = () => plan.habits.filter(h => !h.endsOn || h.endsOn > starts);
+    let added = 0, skipped = 0;
+    for (const g of wizard.goals) for (const o of g.picked || []) {
+      if (active().some(h => h.title.toLowerCase() === o.title.toLowerCase())) continue;
+      if (active().length >= MAX_HABITS) { skipped++; continue; }
+      plan.habits.push({ id: uid(), title: o.title, target: o.target, unit: o.unit, category: g.category, area: g.title, days: o.days, startsOn: starts });
+      added++;
+    }
     delete T.state.onboardingDraft;
-    dialog.close(); commit('Your space is ready. Add your first habit.'); T.navigate('today'); editHabit();
+    dialog.close();
+    if (!added && !plan.habits.length) { commit('Your space is ready. Add your first habit.'); T.navigate('today'); editHabit(); return; }
+    commit(skipped ? `${added} habits added · ${skipped} left out (limit ${MAX_HABITS})` : `Your routine is ready · ${added} habit${added === 1 ? '' : 's'}`);
+    T.navigate('today');
   }
 
   function editHabit(id, suggestion) {
@@ -170,13 +256,13 @@
     const h = old || { title: '', category: T.state.personalPlan.goals?.[0]?.category || 'other', target: 1, unit: 'times', days: [0,1,2,3,4,5,6] };
     const hasHabits = T.state.personalPlan.habits.length > 0;
     const starts = hasHabits ? P.shift(today(), 1) : today();
-    showDialog(`${sheetTitle(old ? 'Adjust your habit' : 'A small step, your way.')}<p class="account-note">${hasHabits ? `Changes start ${label(starts)}. Today’s targets and past scores stay the same.` : 'Choose a realistic target. You can make it bigger later.'}</p><form id="habit-form" class="account-form"><label>Habit name<input name="title" maxlength="70" placeholder="e.g. Read before bed" value="${esc(h.title)}" required></label><div class="personal-form-row"><label class="personal-field">Target<input name="target" type="number" min="0.1" max="100000" step="0.1" inputmode="decimal" value="${suggestion || h.target}" required></label><label class="personal-field">Measure<select name="unit">${['times','minutes','pages','steps','hours','sessions'].map(u => `<option ${h.unit === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div><label>Area<select name="category">${P.categories.map(c => `<option value="${c.id}" ${c.id === h.category ? 'selected' : ''}>${c.title}</option>`).join('')}</select></label><fieldset class="habit-days"><legend>Repeat on</legend>${[1,2,3,4,5,6,0].map(n => `<label><input type="checkbox" name="days" value="${n}" ${h.days.includes(n) ? 'checked' : ''}><span>${dayNames[n]}</span></label>`).join('')}</fieldset><p class="account-status" role="status"></p><button class="account-primary">${old ? 'Save adjustment' : 'Add habit'}</button></form>`);
+    showDialog(`${sheetTitle(old ? 'Adjust your habit' : 'A small step, your way.')}<p class="account-note">${hasHabits ? `Changes start ${label(starts)}. Today’s targets and past scores stay the same.` : 'Choose a realistic target. You can make it bigger later.'}</p><form id="habit-form" class="account-form"><label>Habit name<input name="title" maxlength="70" placeholder="e.g. Read before bed" value="${esc(h.title)}" required></label><div class="personal-form-row"><label class="personal-field">Target<input name="target" type="number" min="0.1" max="100000" step="0.1" inputmode="decimal" value="${suggestion || h.target}" required></label><label class="personal-field">Measure<select name="unit">${P.UNITS.map(u => `<option ${h.unit === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div><label>Area<select name="category">${P.categories.map(c => `<option value="${c.id}" ${c.id === h.category ? 'selected' : ''}>${c.title}</option>`).join('')}</select></label><fieldset class="habit-days"><legend>Repeat on</legend>${[1,2,3,4,5,6,0].map(n => `<label><input type="checkbox" name="days" value="${n}" ${h.days.includes(n) ? 'checked' : ''}><span>${dayNames[n]}</span></label>`).join('')}</fieldset><p class="account-status" role="status"></p><button class="account-primary">${old ? 'Save adjustment' : 'Add habit'}</button></form>`);
     $('habit-form').onsubmit = event => {
       event.preventDefault(); if (!writable()) return;
       const form = event.currentTarget, data = new FormData(form), days = data.getAll('days').map(Number), title = data.get('title').trim();
       if (!days.length || !title) { form.querySelector('[role=status]').textContent = 'Add a name and at least one day.'; return; }
       const activeHabits = T.state.personalPlan.habits.filter(h => !h.endsOn || h.endsOn > starts);
-      if (!old && activeHabits.length >= 12) { form.querySelector('[role=status]').textContent = 'Keep your routine focused with up to 12 active habits.'; return; }
+      if (!old && activeHabits.length >= MAX_HABITS) { form.querySelector('[role=status]').textContent = `Keep your routine focused with up to ${MAX_HABITS} active habits.`; return; }
       if (old) old.endsOn = starts;
       T.state.personalPlan.habits.push({ id: uid(), title, target: Number(data.get('target')), unit: data.get('unit'), category: data.get('category'), days, startsOn: starts });
       dialog.close(); commit(`Habit ${old ? 'updated' : 'added'} · starts ${label(starts)}`);

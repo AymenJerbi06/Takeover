@@ -37,6 +37,116 @@
       return { category: c.id, title: c.id === 'other' && g.title ? `A small step for ${g.title}` : c.idea, target: c.unit === 'minutes' ? minutes : c.unit === 'pages' ? Math.min(5, minutes) : 1, unit: c.unit };
     });
   }
+  // ---- Per-area planning: what someone wants to improve + the time they have -> habit options ----
+  const UNITS = ['times', 'minutes', 'pages', 'steps', 'hours', 'sessions', 'glasses'];
+  // Quick answers to "What do you want to improve in ...?" (tap to fill in).
+  const aims = {
+    fitness: ['Lose weight', 'Build strength', 'Have more energy', 'Move more every day'],
+    learning: ['Do well in my exams', 'Learn to code', 'Learn a language', 'Finish an online course'],
+    reading: ['Read more books', 'Read every day', 'Read instead of scrolling'],
+    faith: ['Pray on time', 'Read Quran every day', 'Make more dhikr', 'Feel calmer and grateful'],
+    money: ['Save money', 'Pay off debt', 'Spend less', 'Earn extra income'],
+    wellbeing: ['Sleep better', 'Less screen time', 'Feel less stressed', 'Drink more water'],
+    connection: ['Stay close to my family', 'See friends more', 'Be kinder to people'],
+  };
+  const daysFor = n => ({ 7: [0,1,2,3,4,5,6], 6: [1,2,3,4,5,6], 5: [1,2,3,4,5], 4: [1,2,4,5], 3: [1,3,5], 2: [2,5], 1: [6] })[Math.max(1, Math.min(7, Math.round(n) || 7))];
+  const round5 = n => Math.max(5, Math.round(n / 5) * 5);
+  // Each idea: [keywords (empty = fits any aim), title, unit, target from minutes m, days per week (null = the person's choice), group (ideas in a group are alternatives)].
+  const catalog = {
+    fitness: [
+      [['weight', 'lose', 'fat', 'slim'], 'Walk every day', 'steps', m => Math.min(20000, 6000 + m * 150), 7, 'walk'],
+      [['weight', 'lose', 'fat', 'slim', 'eat'], 'Log everything you eat', 'times', () => 3, 7],
+      [['weight', 'lose', 'sugar', 'eat'], 'Skip sugary drinks', 'times', () => 1, 7],
+      [['strength', 'strong', 'muscle', 'gym'], 'Strength training', 'sessions', () => 1, 3],
+      [['strength', 'strong', 'muscle'], 'Push-ups', 'times', m => Math.min(100, 10 + m), null],
+      [['energy', 'tired'], 'Morning stretch', 'minutes', () => 10, 7],
+      [[], 'Workout', 'minutes', m => round5(m), null],
+      [[], 'Walk', 'steps', m => Math.min(15000, 5000 + m * 100), 7, 'walk'],
+      [[], 'Stretch', 'minutes', () => 10, null],
+      [[], 'Drink water', 'glasses', () => 8, 7],
+    ],
+    learning: [
+      [['exam', 'university', 'school', 'class', 'study', 'grade'], 'Focused study block', 'minutes', m => round5(m), null, 'study'],
+      [['exam', 'university', 'school', 'class', 'grade'], 'Practice questions', 'times', m => Math.max(5, Math.min(30, Math.round(m / 4))), null],
+      [['exam', 'university', 'school', 'class'], 'Review today’s notes', 'minutes', () => 15, 5],
+      [['code', 'coding', 'program', 'developer', 'dev', 'web'], 'Code on a project', 'minutes', m => round5(m), null],
+      [['code', 'coding', 'program', 'developer', 'dev'], 'Solve a coding exercise', 'times', () => 1, null],
+      [['language', 'english', 'french', 'arabic', 'spanish'], 'Language practice', 'minutes', m => round5(Math.min(m, 30)), 7],
+      [['language', 'english', 'french', 'arabic', 'spanish'], 'Learn new words', 'times', () => 10, 7],
+      [['course', 'online'], 'Watch a course lesson', 'times', () => 1, null],
+      [[], 'Focused learning', 'minutes', m => round5(m), null, 'study'],
+      [[], 'Write down one thing you learned', 'times', () => 1, 7],
+      [[], 'Review what you learned', 'minutes', () => 10, null],
+    ],
+    reading: [
+      [[], 'Read', 'pages', m => Math.max(5, Math.round(m * 0.8)), 7],
+      [[], 'Read before bed', 'minutes', m => round5(Math.min(m, 30)), 7],
+      [['book', 'books', 'finish'], 'Finish a chapter', 'times', () => 1, null],
+      [['scroll', 'phone'], 'Read instead of your phone in the morning', 'minutes', () => 10, 7],
+      [[], 'Note one idea from what you read', 'times', () => 1, null],
+    ],
+    faith: [
+      [['pray', 'prayer', 'salah', 'salat', 'time'], 'Pray the five daily prayers', 'times', () => 5, 7],
+      [['quran', 'koran'], 'Read Quran', 'pages', m => Math.max(1, Math.min(20, Math.round(m / 4))), 7],
+      [['dhikr', 'tasbih', 'zikr', 'remember'], 'Dhikr / tasbih', 'times', () => 100, 7],
+      [['calm', 'grateful', 'gratitude', 'peace'], 'Write three things you’re grateful for', 'times', () => 3, 7],
+      [[], 'Quiet reflection', 'minutes', m => round5(Math.min(m, 20)), 7],
+      [[], 'Learn about your faith', 'minutes', m => round5(Math.min(m, 30)), null],
+      [[], 'Do one good deed', 'times', () => 1, 7],
+    ],
+    money: [
+      [['save', 'saving'], 'Put money aside', 'times', () => 1, null],
+      [['debt', 'owe', 'loan'], 'Pay something toward a debt', 'times', () => 1, 1],
+      [['spend', 'less', 'budget'], 'No-spend day', 'times', () => 1, 3],
+      [['earn', 'income', 'side', 'business'], 'Work on extra income', 'minutes', m => round5(m), null],
+      [[], 'Write down today’s spending', 'times', () => 1, 7],
+      [[], 'Learn about money', 'minutes', m => round5(Math.min(m, 20)), null],
+      [[], 'Check your budget', 'minutes', () => 10, 1],
+    ],
+    wellbeing: [
+      [['sleep', 'tired', 'rest'], 'Sleep', 'hours', () => 8, 7, 'sleep'],
+      [['sleep', 'screen', 'phone'], 'No screens before bed', 'minutes', () => 30, 7],
+      [['screen', 'phone', 'social'], 'Phone-free time', 'minutes', m => round5(Math.max(m, 30)), 7],
+      [['stress', 'calm', 'anxious', 'anxiety'], 'Breathing or meditation', 'minutes', m => round5(Math.min(m, 15)), 7],
+      [['water', 'hydrate'], 'Drink water', 'glasses', () => 8, 7],
+      [[], 'Time outside', 'minutes', m => round5(Math.min(m, 30)), null],
+      [[], 'Journal for a few minutes', 'minutes', () => 5, 7],
+      [[], 'Sleep', 'hours', () => 7, 7, 'sleep'],
+      [[], 'Stretch and unwind', 'minutes', () => 10, 7],
+    ],
+    connection: [
+      [['family', 'parents', 'mom', 'dad'], 'Call your family', 'times', () => 1, 7],
+      [['friend', 'friends'], 'Message a friend', 'times', () => 1, 7],
+      [['friend', 'friends', 'see'], 'Spend time with friends', 'sessions', () => 1, 2],
+      [['kind', 'help'], 'Do something kind for someone', 'times', () => 1, 7],
+      [[], 'Check in with someone you care about', 'times', () => 1, 7],
+      [[], 'Phone-free time with people', 'minutes', m => round5(Math.min(m, 60)), null],
+    ],
+  };
+  // Five options for one area, fitted to the person's own words and time. Used when AI suggestions are unavailable.
+  function areaOptions({ category: id, title = '', aim = '', minutes = 15, daysPerWeek = 7 }) {
+    const words = String(aim).toLowerCase(), m = Math.max(5, Math.min(240, Number(minutes) || 15));
+    const ideas = catalog[id] || [
+      [[], `Work on ${title}`, 'minutes', mm => round5(mm), null],
+      [[], `One small step for ${title}`, 'times', () => 1, 7],
+      [[], `Learn about ${title}`, 'minutes', mm => round5(Math.min(mm, 20)), null],
+      [[], `Plan tomorrow’s ${title} step`, 'minutes', () => 5, 7],
+      [[], `Practise ${title}`, 'sessions', () => 1, null],
+    ];
+    const matches = ideas.filter(([keys]) => keys.some(k => words.includes(k)));
+    const general = ideas.filter(([keys]) => !keys.length);
+    const key = idea => idea[5] || idea[1];
+    const picked = [...matches, ...general].filter((idea, i, list) => list.findIndex(x => key(x) === key(idea)) === i).slice(0, 5);
+    return picked.map(([, name, unit, target, perWeek]) => ({ title: name, unit, target: target(m), days: daysFor(perWeek || daysPerWeek) }));
+  }
+  // Clean up options from any source (AI or local) before they reach the screen.
+  function cleanOption(o) {
+    const title = String(o?.title || '').replace(/\s+/g, ' ').trim().slice(0, 70);
+    const unit = UNITS.includes(o?.unit) ? o.unit : 'times';
+    const target = Math.max(0.1, Math.min(100000, Math.round((Number(o?.target) || 1) * 10) / 10));
+    const given = Array.isArray(o?.days) ? [...new Set(o.days.map(Number).filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort() : [];
+    return title ? { title, unit, target, days: given.length ? given : daysFor(o?.daysPerWeek), why: String(o?.why || '').slice(0, 120) } : null;
+  }
   function bounds(period, anchor) {
     const d = parse(anchor);
     if (period === 'month') {
@@ -101,5 +211,5 @@
     }
     return { kept, lost, pending };
   }
-  return { dateKey, shift, categories, category, scheduledHabits, dayParts, dayScore, value, suggestions, bounds, report, streak, commitment };
+  return { dateKey, shift, categories, category, scheduledHabits, dayParts, dayScore, value, suggestions, bounds, report, streak, commitment, UNITS, aims, daysFor, areaOptions, cleanOption };
 });
