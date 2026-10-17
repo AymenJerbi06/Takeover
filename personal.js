@@ -43,6 +43,8 @@
       if (user) authEntry = false;
     }
     if (A.confirming) authEntry = true;
+    // A password reset owns the screen until the new password is saved.
+    if (A.recovering && dialog.open) dialog.close();
     const originalLocal = T.state.experience === 'legacy' && !T.state.syncUser;
     const showWelcome = !user && !authEntry && !originalLocal && !A.confirming;
     welcome.hidden = !showWelcome;
@@ -57,7 +59,7 @@
       if (document.body.dataset.view !== 'profile') T.navigate('profile');
       $('profile-account-tab').click();
     }
-    if (user && writable() && T.state.experience === 'personal' && !T.state.personalPlan && autoOpened !== user.id && !A.recovering && !A.confirming) {
+    if (user && writable() && T.state.experience === 'personal' && !T.state.personalPlan && autoOpened !== user.id && !A.recovering && !A.recoveryPending && !A.confirming) {
       autoOpened = user.id; openSetup();
     }
     render();

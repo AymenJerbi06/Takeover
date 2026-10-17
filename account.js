@@ -11,7 +11,7 @@
   const safeAvatar = value => typeof value === 'string' && value.length <= 180000 && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(value) ? value : null;
   const initials = name => (name || 'You').trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
   let user = null, profile = null, mode = 'signin', profileError = '', profileLoading = false;
-  let version = 0, profileRequest = 0, authBusy = false, recovery = false, pendingAvatar, profileRedrawPending = false;
+  let version = 0, profileRequest = 0, authBusy = false, recovery = false, recoveryArrived = false, pendingAvatar, profileRedrawPending = false;
   let notice = { text: '', kind: '' };
   const callbackHash = new URLSearchParams(location.hash.slice(1));
   const callbackQuery = new URLSearchParams(location.search);
@@ -45,6 +45,8 @@
     },
     dismissConfirmation() { leaveConfirmation(); draw(); publish(); },
     get recovering() { return recovery; },
+    // A reset link is being opened: only used to hold other screens back, never to grant anything.
+    get recoveryPending() { return callbackType === 'recovery' && callbackHasCredential && !callbackError && !recoveryArrived; },
     get confirming() { return !!confirmation; }
   };
 
@@ -568,7 +570,7 @@
       leaveConfirmation(); forgetConfirmation();
     }
     if (event === 'PASSWORD_RECOVERY' && user) {
-      recovery = true; leaveConfirmation();
+      recovery = true; recoveryArrived = true; leaveConfirmation();
     }
     const receivedConfirmation = !recovery && !callbackError && user && (
       (confirmationCallback && callbackHasCredential && confirmation?.stage === 'checking') ||
