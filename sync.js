@@ -46,6 +46,28 @@
     window.dispatchEvent(new CustomEvent('takeover:sync-ready', { detail: { userId: account } }));
   }
   const POLL_MS = 10000;
+  // A browser's dashboard belongs to the account it last synced with. When that account signs out or
+  // another one signs in, its copy is parked under its own key (unsynced edits survive) and the
+  // screen starts empty, so one account never sees or inherits another's goals and progress.
+  const parkedKey = id => `takeover.v1.account:${id}`;
+  function park(state) {
+    if (!state?.syncUser) return;
+    try { localStorage.setItem(parkedKey(state.syncUser), JSON.stringify(state)); } catch { /* the cloud still has the synced copy */ }
+  }
+  function unpark(id) {
+    try {
+      const raw = localStorage.getItem(parkedKey(id));
+      localStorage.removeItem(parkedKey(id));
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+  function separate(nextId) {
+    const state = T.state;
+    if (!state.syncUser || state.syncUser === nextId) return;
+    park(state);
+    T.state = (nextId && unpark(nextId)) || {};
+    T.save(false); T.render();
+  }
   const editing = () => !document.hidden && document.activeElement?.matches('input, textarea, select, [contenteditable="true"]');
 
   function draw() {
@@ -91,20 +113,19 @@
         .eq('user_id', account).maybeSingle().abortSignal(controller.signal);
       if (!current()) return;
       if (error) throw error;
+      // Another account's dashboard is never shown to, offered to or written into this one.
+      separate(account);
       const local = T.state, remote = row?.data;
       const firstTimeHere = local.syncUser !== account;
       let useRemote = remote && (remote.updatedAt || 0) > (local.updatedAt || 0);
-      // A browser can still hold the previous account's private dashboard after
-      // sign-out. Never copy that dashboard into a new account implicitly.
-      const belongsToAnotherAccount = local.syncUser && local.syncUser !== account;
-      if (firstTimeHere && !firstChoice && ((remote && local.updatedAt) || belongsToAnotherAccount)) {
+      // Only progress made here while signed out (no owner yet) can be offered to this account.
+      if (firstTimeHere && !firstChoice && remote && local.updatedAt) {
         needsChoice = true;
         clearTimeout(timer); timer = null; pending = false;
-        box.querySelector('#sync-choice-description').textContent = remote
-          ? 'Your account and this device have separate saves. Export a backup in Preferences before replacing either copy.'
-          : 'This device holds another account’s progress. Start fresh for this account, or explicitly copy the device’s progress into it. Export a backup in Preferences before starting fresh.';
-        box.querySelector('#sync-use-cloud').textContent = remote ? 'Use account progress' : 'Start fresh';
-        box.querySelector('#sync-use-device').textContent = remote ? 'Use this device’s progress' : 'Copy device progress to this account';
+        box.querySelector('#sync-choice-description').textContent =
+          'Your account and this device have separate saves. Export a backup in Preferences before replacing either copy.';
+        box.querySelector('#sync-use-cloud').textContent = 'Use account progress';
+        box.querySelector('#sync-use-device').textContent = 'Use this device’s progress';
         box.querySelector('#sync-choice').hidden = false;
         setStatus('busy', 'Choose which progress to keep in Profile → Account.', 'Choose progress');
         window.dispatchEvent(new CustomEvent('takeover:sync-choice'));
@@ -213,6 +234,7 @@
     active?.abort();
     clearTimeout(timer); timer = null;
     pending = false; deferredRemote = false; firstChoice = null; needsChoice = false;
+    if (u || user) separate(u?.id || null);
     user = u;
     readyUser = null;
     draw();
