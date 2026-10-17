@@ -102,15 +102,27 @@ function compose(user, data) {
   }
 }
 
-async function send({ to, subject, html, text }) {
-  const r = await fetch('https://api.resend.com/emails', {
+const TEST_SENDER = 'JourMax <onboarding@resend.dev>';
+
+async function deliver(from, { to, subject, html, text }) {
+  return fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: process.env.AUTH_EMAIL_FROM || process.env.REPORT_FROM || 'JourMax <onboarding@resend.dev>',
-      to: [to], subject, html, text,
-    }),
+    body: JSON.stringify({ from, to: [to], subject, html, text }),
   });
+}
+
+async function send(mail) {
+  const from = process.env.AUTH_EMAIL_FROM || process.env.REPORT_FROM || TEST_SENDER;
+  let r = await deliver(from, mail);
+  // While the sending domain is still being verified, Resend refuses it: use the test sender
+  // (it only reaches the Resend account owner) so nothing breaks in the meantime.
+  if (r.status === 403 && from !== TEST_SENDER) {
+    const reason = await r.text();
+    if (!/domain/i.test(reason)) throw new Error(`Resend 403: ${reason.slice(0, 300)}`);
+    console.warn(`Sender ${from} refused (${reason.slice(0, 120)}); retrying with the test sender.`);
+    r = await deliver(TEST_SENDER, mail);
+  }
   if (!r.ok) throw new Error(`Resend ${r.status}: ${(await r.text()).slice(0, 300)}`);
 }
 
