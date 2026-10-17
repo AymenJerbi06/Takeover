@@ -11,7 +11,7 @@
   const safeAvatar = value => typeof value === 'string' && value.length <= 180000 && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(value) ? value : null;
   const initials = name => (name || 'You').trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase();
   let user = null, profile = null, mode = 'signin', profileError = '', profileLoading = false;
-  let version = 0, profileRequest = 0, authBusy = false, recovery = false, recoveryArrived = false, pendingAvatar, profileRedrawPending = false;
+  let version = 0, profileRequest = 0, authBusy = false, recovery = false, recoveryArrived = false, linkRetried = false, pendingAvatar, profileRedrawPending = false;
   let notice = { text: '', kind: '' };
   const callbackHash = new URLSearchParams(location.hash.slice(1));
   const callbackQuery = new URLSearchParams(location.search);
@@ -216,6 +216,19 @@
       }).finally(updateResend);
     };
     updateResend();
+  }
+
+  async function confirmFromLink() {
+    const access_token = callbackHash.get('access_token'), refresh_token = callbackHash.get('refresh_token');
+    try {
+      const { data, error } = await sb.auth.getUser(access_token);
+      if (error || !data.user?.email_confirmed_at) throw error || new Error('not confirmed');
+      // Restore the sign-in from the link; SIGNED_IN then finishes the confirmation as usual.
+      const restored = refresh_token ? await sb.auth.setSession({ access_token, refresh_token }) : { error: true };
+      if (restored.error && confirmation?.stage === 'checking') { forgetConfirmation(); showConfirmation('success', data.user.email); }
+    } catch {
+      if (confirmation?.stage === 'checking') showConfirmation('error', pendingEmail, 'This confirmation link is incomplete or has expired. Request a new email, or sign in if you already confirmed.');
+    }
   }
 
   async function verifyConfirmation(session) {
@@ -578,7 +591,10 @@
     );
     if (receivedConfirmation) confirmation = { stage: 'checking', email: user.email };
     if (confirmationCallback && event === 'INITIAL_SESSION' && confirmation?.stage === 'checking' && (!callbackHasCredential || !user)) {
-      confirmation = { stage: 'error', email: pendingEmail, error: 'This confirmation link is incomplete or has expired. Request a new email, or sign in if you already confirmed.' };
+      // The link carries its own session. If the browser's saved sign-in was cleared meanwhile
+      // (e.g. another tab signed out), check the link itself before calling it expired.
+      if (callbackHash.get('access_token') && !linkRetried) { linkRetried = true; confirmFromLink(); }
+      else confirmation = { stage: 'error', email: pendingEmail, error: 'This confirmation link is incomplete or has expired. Request a new email, or sign in if you already confirmed.' };
     }
     account.ready = true;
     if (changed || receivedConfirmation || event === 'INITIAL_SESSION' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') publish();
