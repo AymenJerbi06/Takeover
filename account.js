@@ -212,7 +212,7 @@
         if (confirmation) confirmation.email = address;
         const { error: resendError } = await sb.auth.resend({ type: 'signup', email: address, options: { emailRedirectTo: redirectUrl('confirm') } });
         if (resendError) throw resendError;
-        status(form, 'If this address is awaiting confirmation, a new link is on its way. Use the newest email.', 'success');
+        status(form, 'If this address is still waiting for confirmation, a new link is on its way (check spam too). Already confirmed? No email is sent: just sign in.', 'success');
       }).finally(updateResend);
     };
     updateResend();
@@ -365,6 +365,12 @@
         } else if (signup) {
           const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: displayName }, emailRedirectTo: redirectUrl('confirm') } });
           if (error) throw error;
+          // Supabase answers an already-registered email with an empty user and sends nothing.
+          if (data.user && !data.session && (data.user.identities?.length ?? 1) === 0) {
+            form.elements['auth-password'].value = '';
+            mode = 'signin'; notice = { text: 'This email already has an account, so no email was sent. Sign in, or use “Forgot password” if you don’t remember it.', kind: 'error' };
+            draw(); return;
+          }
           if (!data.session) {
             form.elements['auth-password'].value = '';
             rememberConfirmation(email, true);
